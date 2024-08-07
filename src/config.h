@@ -3,9 +3,11 @@
 #include <cstdint>
 #include <stdexcept>
 
-#ifndef BOARD_SIZE
-#define BOARD_SIZE 9
+#ifndef GRID_SIZE
+#define GRID_SIZE 3
 #endif
+
+#define BOARD_SIZE (GRID_SIZE * GRID_SIZE)
 
 #define ASSERT(cond, faild_reason) \
 if (!(cond)) { throw std::runtime_error("Assertion failed: " #cond " " faild_reason); }

@@ -24,12 +24,30 @@ int main()
 
     std::cout << "--------" << std::endl;
     std::cout << board.get(3, 4) << std::endl;
+    std::cout << board[{3, 4}] << std::endl;
+
     board.set(3, 4, 1);
     std::cout << board.get(3, 4) << std::endl;
 
     int row=1;
     for (int col=0; col<BOARD_SIZE; col++){
-        board.set(col, row, 1);
+        board.set(row, col, 1);
+    }
+
+    auto row_ptr = board.get_row(row + 1);
+    for (int i=0; i<BOARD_SIZE; i++){
+        *(row_ptr.get())[i] = 2;
+    }
+
+    int col=2;
+    auto col_ptr = board.get_col(col);
+    for (int i=0; i<BOARD_SIZE; i++){
+        *col_ptr.get()[i] = 3;
+    }
+
+    auto grid_ptr = board.get_grid(1, 1);
+    for (int i=0; i<BOARD_SIZE; i++){
+        *(grid_ptr.get())[i] = 4;
     }
 
     board.save_to_file("./output/2.txt");

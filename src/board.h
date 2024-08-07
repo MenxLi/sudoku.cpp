@@ -6,7 +6,14 @@ providing methods to read / dump the board state.
 #pragma once
 #include <iostream>
 #include <string>
+#include <memory>
 #include "config.h"
+
+struct Coord
+{
+    int row;
+    int col;
+};
 
 class Board
 {
@@ -16,12 +23,23 @@ public:
 
     void clear(val_t val);
 
-    val_t get(int col, int row) const;
-    void set(int col, int row, val_t value);
+    val_t get(int row, int col) const;
+    val_t get(const Coord& coord) const;
+    val_t& get_(int row, int col);
+    val_t& get_(const Coord& coord);
+    std::unique_ptr<val_t*> get_row(int row);
+    std::unique_ptr<val_t*> get_col(int col);
+    std::unique_ptr<val_t*> get_grid(int grid_row, int grid_col);
+    std::unique_ptr<val_t*> get_grid(const Coord& coord);
+
+    void set(int row, int col, val_t value);
+    void set(const Coord& coord, val_t value);
 
     void load_from_file(const std::string& filename);
     void save_to_file(const std::string& filename) const;
     std::string to_string() const;
+
+    val_t operator[](Coord coord);
 
     friend std::ostream& operator<<(std::ostream& os, const Board& board);
 

@@ -8,11 +8,11 @@ _dst:
 	mkdir -p $(BIN_DIR) && mkdir -p $(LIB_DIR) && mkdir -p output
 
 obj: _dst
-	$(CXX) $(STD_FLAGS) -o $(LIB_DIR)//util.o -c src/util.cpp
+	$(CXX) $(STD_FLAGS) -o $(LIB_DIR)/util.o -c src/util.cpp
 	$(CXX) $(STD_FLAGS) -o $(LIB_DIR)/board.o -c src/board.cpp
 
 test: obj
-	$(CXX) $(STD_FLAGS) -o $(BIN_DIR)//util_test \
+	$(CXX) $(STD_FLAGS) -o $(BIN_DIR)/util_test \
 		$(LIB_DIR)/util.o \
 		src/util_test.cpp
 	$(CXX) $(STD_FLAGS) -o $(BIN_DIR)/board_test \
