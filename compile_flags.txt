@@ -1,0 +1,4 @@
+# this file is for clangd.
+
+g++
+-std=c++17
