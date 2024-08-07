@@ -105,6 +105,39 @@ void Board::set(const Coord& coord, val_t value)
     set(coord.row, coord.col, value);
 };
 
+
+bool Board::is_valid()
+{
+    auto check_validity = [](val_t** arr)->bool{
+        std::vector<bool> found(BOARD_SIZE, false);
+        for (int i = 0; i < BOARD_SIZE; i++){
+            if (*arr[i] == 0){ // not filled
+                std::cout << "not filled" << std::endl;
+                return false;
+            }
+            if (found[*arr[i] - 1]){ // duplicate
+                std::cout << "duplicate" << std::endl;
+                return false;
+            }
+            found[*arr[i] - 1] = true;
+        }
+        return true;
+    };
+
+    for (unsigned int i = 0; i < BOARD_SIZE; i++){
+        if (!check_validity(get_row(i).get())) return false;
+    }
+    for (unsigned int i = 0; i < BOARD_SIZE; i++){
+        if (!check_validity(get_col(i).get())) return false;
+    }
+    for (unsigned int i = 0; i < GRID_SIZE; i++){
+        for (unsigned int j = 0; j < GRID_SIZE; j++){
+            if (!check_validity(get_grid(i, j).get())) return false;
+        }
+    }
+    return true;
+};
+
 void Board::load_from_file(const std::string& filename)
 {
     std::ifstream file(filename, std::ios::in);

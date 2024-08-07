@@ -3,6 +3,6 @@
 
 bin
 output
-puzzles
+puzzles_tmp
 
 compile_commands.json

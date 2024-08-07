@@ -3,7 +3,7 @@ To get the board from: https://sugoku.onrender.com/
 Refer to: https://github.com/bertoort/sugoku for API documentation
 """
 
-import requests, os, concurrent.futures
+import requests, concurrent.futures, pathlib
 
 def get_board(difficulty: str = 'random') -> list[list[int]]:
     """
@@ -25,15 +25,15 @@ def dump_board(board: list[list[int]], file_path: str) -> None:
             file.write("\n")
 
 if __name__ == "__main__":
-    if not os.path.exists("puzzles"):
-        os.mkdir("puzzles")
+    puzzle_dir = pathlib.Path("puzzles_tmp")
+    puzzle_dir.mkdir(exist_ok=True)
     
     def dump_puzzle_to_file(i):
-        output_file = f"puzzles/{i}.txt"
-        if os.path.exists(output_file):
+        output_file = puzzle_dir / f"puzzle_{i}.txt"
+        if output_file.exists():
             return
 
-        board = get_board("easy")
+        board = get_board("random")
         dump_board(board, output_file)
         print(f"Board dumped to {output_file}")
     

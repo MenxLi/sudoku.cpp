@@ -15,6 +15,8 @@ public:
     bool step_by_crossover();
 
 private:
+    // cadidate refers to the possible values for a cell, 
+    // based on the values of other cells in the same row, column, and grid
     val_t m_candidates[BOARD_SIZE][BOARD_SIZE][CANDIDATE_SIZE];
     void update_candidate_for(int row, int col);
     void update_candidates();

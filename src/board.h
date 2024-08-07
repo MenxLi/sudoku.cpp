@@ -44,6 +44,11 @@ public:
     void set(int row, int col, val_t value);
     void set(const Coord& coord, val_t value);
 
+    // check if the board is valid, 
+    // the board should be all filled with valid values
+    bool is_valid();
+
+    void load_data(std::istream& is);
     void load_from_file(const std::string& filename);
     void save_to_file(const std::string& filename) const;
     std::string to_string() const;
@@ -54,6 +59,5 @@ public:
 
 private:
     val_t m_board[BOARD_SIZE][BOARD_SIZE];
-    void load_data(std::istream& is);
     std::string to_string_raw() const;
 };
