@@ -29,5 +29,4 @@ private:
     unsigned char m_cross_map_col[BOARD_SIZE][BOARD_SIZE];
     bool update_by_cross(val_t value);
     void clear_cross_map();
-    void _print_cross_map();
 };

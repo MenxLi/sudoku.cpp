@@ -3,6 +3,21 @@
 
 #define CANDIDATE_SIZE BOARD_SIZE
 
+// #define DEBUG_PRINT(x) std::cout << x << std::endl;
+#define DEBUG_PRINT(x);
+static std::string _fmt_cross_map(val_t m_cross_map[BOARD_SIZE][BOARD_SIZE]){
+    std::string ret = "";
+    for (int i = 0; i < BOARD_SIZE; i++)
+    {
+        for (int j = 0; j < BOARD_SIZE; j++)
+        {
+            ret += std::to_string(static_cast<int>(m_cross_map[i][j])) + " ";
+        }
+        ret += "\n";
+    }
+    return ret;
+};
+
 SolverV1::SolverV1(Board& board) : Solver(board) {
     clear_candidates();
 };
@@ -26,8 +41,11 @@ bool SolverV1::step_by_crossover(){
 };
 
 bool SolverV1::step(){
+    DEBUG_PRINT("SolverV1::step()");
     if (step_by_candidate()) return true;
+    DEBUG_PRINT("SolverV1::step() - step_by_candidate() failed");
     if (step_by_crossover()) return true;
+    DEBUG_PRINT("SolverV1::step() - step_by_crossover() failed");
     return false;
 };
 
@@ -209,6 +227,15 @@ bool SolverV1::update_by_cross(val_t value){
         }
     }
 
+    // std::cout << "Cross map for value " << static_cast<int>(value) << std::endl;
+    // std::cout << "----------------" << std::endl;
+    DEBUG_PRINT("Cross map for value " << static_cast<int>(value));
+    DEBUG_PRINT("----------------");
+    DEBUG_PRINT(_fmt_cross_map(m_cross_map));
+    DEBUG_PRINT("Current board");
+    DEBUG_PRINT("----------------");
+    DEBUG_PRINT(this->board());
+
     // iterate over grid, 
     // if there is only one cell in the grid that is unsoved and not marked, fill it in
     for (unsigned int g_row = 0; g_row < GRID_SIZE; g_row++)
@@ -221,12 +248,23 @@ bool SolverV1::update_by_cross(val_t value){
 
             unsigned int aim_grid_row_idx = 0;
             unsigned int aim_grid_col_idx = 0;
-            // iterate over the grid
+
+            // iterate over the grid, 
+            bool skip_grid_flag = false;
             for (unsigned int i = 0; i < GRID_SIZE; i++)
             {
                 for (unsigned int j = 0; j < GRID_SIZE; j++)
                 {
-                    if (m_cross_map[row_base + i][col_base + j] == 0 && this->cell(row_base + i, col_base + j).value() == 0){
+                    if (this->cell(row_base + i, col_base + j).value() == value){
+                        // the value is already in the grid, skip this grid!
+                        skip_grid_flag = true;
+                        count = 0; // reset count, make sure we don't fill in the grid
+                    }
+                    if (
+                        !skip_grid_flag &&
+                        m_cross_map[row_base + i][col_base + j] == 0 && 
+                        this->cell(row_base + i, col_base + j).value() == 0
+                        ){
                         aim_grid_row_idx = i;
                         aim_grid_col_idx = j;
                         count++;
@@ -236,6 +274,7 @@ bool SolverV1::update_by_cross(val_t value){
             if (count == 1){
                 this->cell(row_base + aim_grid_row_idx, col_base + aim_grid_col_idx).value() = value;
                 ret = true;
+                DEBUG_PRINT("Found a cell to fill in: " << row_base + aim_grid_row_idx << ", " << col_base + aim_grid_col_idx << " with value " << static_cast<int>(value));
             }
         }
     }
@@ -251,16 +290,5 @@ void SolverV1::clear_cross_map(){
             m_cross_map_row[i][j] = 0;
             m_cross_map_col[i][j] = 0;
         }
-    }
-};
-
-void SolverV1::_print_cross_map(){
-    for (int i = 0; i < BOARD_SIZE; i++)
-    {
-        for (int j = 0; j < BOARD_SIZE; j++)
-        {
-            std::cout << static_cast<int>(m_cross_map[i][j]) << " ";
-        }
-        std::cout << std::endl;
     }
 };

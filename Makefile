@@ -1,6 +1,6 @@
 
 CXX := g++
-STD_FLAGS := -std=c++17 -Wall -Wextra -Werror -pedantic -O2 -DSTRICT
+STD_FLAGS := -std=c++17 -Wall -Wextra -pedantic -O2 -DSTRICT
 LIB_DIR := bin/lib
 BIN_DIR := bin
 
