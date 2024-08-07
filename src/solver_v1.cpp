@@ -26,7 +26,9 @@ bool SolverV1::step_by_crossover(){
 };
 
 bool SolverV1::step(){
-    return step_by_crossover() || step_by_candidate();
+    if (step_by_candidate()) return true;
+    if (step_by_crossover()) return true;
+    return false;
 };
 
 void SolverV1::update_candidate_for(int row, int col){
@@ -126,13 +128,8 @@ bool SolverV1::update_values(){
 bool SolverV1::update_by_cross(val_t value){
     bool ret = false;
     // first, clear the cross map
-    for (int i = 0; i < BOARD_SIZE; i++)
-    {
-        for (int j = 0; j < BOARD_SIZE; j++)
-        {
-            m_cross_map[i][j] = 0;
-        }
-    }
+    clear_cross_map();
+
     // iterate over the board marking cells that have the value
     for (int i = 0; i < BOARD_SIZE; i++)
     {
@@ -143,6 +140,7 @@ bool SolverV1::update_by_cross(val_t value){
             }
         }
     }
+
     // iterate over the map, 
     // row by row, column by column, and fill in the value where there is a 1
     for (unsigned int row_idx = 0; row_idx < BOARD_SIZE; row_idx++)
@@ -154,7 +152,7 @@ bool SolverV1::update_by_cross(val_t value){
                 // fill the entire row with the 1
                 for (unsigned int i = 0; i < BOARD_SIZE; i++)
                 {
-                    m_cross_map[row_idx][i] = 1;
+                    m_cross_map_row[row_idx][i] = 1;
                 }
                 break;
             }
@@ -169,12 +167,22 @@ bool SolverV1::update_by_cross(val_t value){
                 // fill the entire column with the 1
                 for (unsigned int i = 0; i < BOARD_SIZE; i++)
                 {
-                    m_cross_map[i][col_idx] = 1;
+                    m_cross_map_col[i][col_idx] = 1;
                 }
                 break;
             }
         }
     }
+    
+    // update the cross map with the row and column maps
+    for (unsigned int i = 0; i < BOARD_SIZE; i++)
+    {
+        for (unsigned int j = 0; j < BOARD_SIZE; j++)
+        {
+            m_cross_map[i][j] = m_cross_map_row[i][j] == 1 || m_cross_map_col[i][j] == 1;
+        }
+    }
+
     // iterate over grid, 
     // if there is only one cell in the grid that is unsoved and not marked, fill it in
     for (unsigned int g_row = 0; g_row < GRID_SIZE; g_row++)
@@ -206,4 +214,27 @@ bool SolverV1::update_by_cross(val_t value){
         }
     }
     return ret;
+};
+
+void SolverV1::clear_cross_map(){
+    for (int i = 0; i < BOARD_SIZE; i++)
+    {
+        for (int j = 0; j < BOARD_SIZE; j++)
+        {
+            m_cross_map[i][j] = 0;
+            m_cross_map_row[i][j] = 0;
+            m_cross_map_col[i][j] = 0;
+        }
+    }
+};
+
+void SolverV1::_print_cross_map(){
+    for (int i = 0; i < BOARD_SIZE; i++)
+    {
+        for (int j = 0; j < BOARD_SIZE; j++)
+        {
+            std::cout << static_cast<int>(m_cross_map[i][j]) << " ";
+        }
+        std::cout << std::endl;
+    }
 };

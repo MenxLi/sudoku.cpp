@@ -29,9 +29,20 @@ void solve_for(int puzzle)
     board.save_to_file("./output/" + std::to_string(puzzle) + ".txt");
 }
 
-int main(){
-    for (int i = 1; i <= 10; i++)
+int main(int argc, char* argv[]){
+    // parse arguments to get input and output file names
+    if (argc < 2)
     {
-        solve_for(i);
+        for (int i = 1; i < 100; i++)
+        {
+            solve_for(i);
+        }
+    }
+    else{
+        for (int i = 1; i < argc; i++)
+        {
+            int puzzle = std::stoi(argv[i]);
+            solve_for(puzzle);
+        }
     }
 }
