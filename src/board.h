@@ -27,6 +27,14 @@ public:
     val_t get(const Coord& coord) const;
     val_t& get_(int row, int col);
     val_t& get_(const Coord& coord);
+
+    // NOTE:
+    // the following methods return a unique_ptr to an array of pointers to the values
+    // the pointers are not ordered contiguously in memory, 
+    // when querying the values, you should use the unique_ptr.get() method to obtain the val_t**
+    // and indexing with: unique_ptr.get()[i] to obtain the val_t* at index i
+    // instead of dereferencing the unique_ptr directly, i.e. 
+    // use: unique_ptr.get()[i] instead of (*unique_ptr)[i], 
     std::unique_ptr<val_t*> get_row(int row);
     std::unique_ptr<val_t*> get_col(int col);
     std::unique_ptr<val_t*> get_grid(int grid_row, int grid_col);
