@@ -7,13 +7,26 @@ SolverV1::SolverV1(Board& board) : Solver(board) {
     clear_candidates();
 };
 
-bool SolverV1::step(){
+bool SolverV1::step_by_candidate(){
     update_candidates();
     bool ret = update_values();
-    if (ret){
-        clear_candidates();
+    clear_candidates();
+    return ret;
+};
+
+bool SolverV1::step_by_crossover(){
+    bool ret = false;
+    for (val_t i = 1; i <= BOARD_SIZE; i++)
+    {
+        if (update_by_cross(i)){
+            ret = true;
+        }
     }
     return ret;
+};
+
+bool SolverV1::step(){
+    return step_by_crossover() || step_by_candidate();
 };
 
 void SolverV1::update_candidate_for(int row, int col){
@@ -108,4 +121,89 @@ bool SolverV1::update_values(){
         }
     }
     return updated;
+};
+
+bool SolverV1::update_by_cross(val_t value){
+    bool ret = false;
+    // first, clear the cross map
+    for (int i = 0; i < BOARD_SIZE; i++)
+    {
+        for (int j = 0; j < BOARD_SIZE; j++)
+        {
+            m_cross_map[i][j] = 0;
+        }
+    }
+    // iterate over the board marking cells that have the value
+    for (int i = 0; i < BOARD_SIZE; i++)
+    {
+        for (int j = 0; j < BOARD_SIZE; j++)
+        {
+            if (this->cell(i, j).value() == value){
+                m_cross_map[i][j] = 1;
+            }
+        }
+    }
+    // iterate over the map, 
+    // row by row, column by column, and fill in the value where there is a 1
+    for (unsigned int row_idx = 0; row_idx < BOARD_SIZE; row_idx++)
+    {
+        for (unsigned int col_idx = 0; col_idx < BOARD_SIZE; col_idx++)
+        {
+            if (m_cross_map[row_idx][col_idx] == 1){
+                // found a cell with the value
+                // fill the entire row with the 1
+                for (unsigned int i = 0; i < BOARD_SIZE; i++)
+                {
+                    m_cross_map[row_idx][i] = 1;
+                }
+                break;
+            }
+        }
+    }
+    for (unsigned int col_idx = 0; col_idx < BOARD_SIZE; col_idx++)
+    {
+        for (unsigned int row_idx = 0; row_idx < BOARD_SIZE; row_idx++)
+        {
+            if (m_cross_map[row_idx][col_idx] == 1){
+                // found a cell with the value
+                // fill the entire column with the 1
+                for (unsigned int i = 0; i < BOARD_SIZE; i++)
+                {
+                    m_cross_map[i][col_idx] = 1;
+                }
+                break;
+            }
+        }
+    }
+    // iterate over grid, 
+    // if there is only one cell in the grid that is unsoved and not marked, fill it in
+    for (unsigned int g_row = 0; g_row < GRID_SIZE; g_row++)
+    {
+        for (unsigned int g_col = 0; g_col < GRID_SIZE; g_col++)
+        {
+            unsigned int count = 0;
+            unsigned int row_base = g_row * GRID_SIZE;
+            unsigned int col_base = g_col * GRID_SIZE;
+
+            unsigned int aim_grid_row_idx = 0;
+            unsigned int aim_grid_col_idx = 0;
+            // iterate over the grid
+            for (unsigned int i = 0; i < GRID_SIZE; i++)
+            {
+                for (unsigned int j = 0; j < GRID_SIZE; j++)
+                {
+                    if (m_cross_map[row_base + i][col_base + j] == 0 && this->cell(row_base + i, col_base + j).value() == 0){
+                        aim_grid_row_idx = i;
+                        aim_grid_col_idx = j;
+                        count++;
+                    }
+                }
+            }
+            if (count == 1){
+                this->cell(row_base + aim_grid_row_idx, col_base + aim_grid_col_idx).value() = value;
+                ret = true;
+            }
+        }
+    }
+    return ret;
 };
