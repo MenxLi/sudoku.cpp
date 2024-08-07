@@ -145,6 +145,10 @@ bool SolverV1::update_by_cross(val_t value){
     // row by row, column by column, and fill in the value where there is a 1
     for (unsigned int row_idx = 0; row_idx < BOARD_SIZE; row_idx++)
     {
+        #ifdef STRICT
+        unsigned int _count = 0;
+        #endif
+
         for (unsigned int col_idx = 0; col_idx < BOARD_SIZE; col_idx++)
         {
             if (m_cross_map[row_idx][col_idx] == 1){
@@ -154,12 +158,26 @@ bool SolverV1::update_by_cross(val_t value){
                 {
                     m_cross_map_row[row_idx][i] = 1;
                 }
+
+                #ifdef STRICT
+                _count++;
+                #else
                 break;
+                #endif
             }
+
+            #ifdef STRICT
+            ASSERT(_count <= 1, "More than one cell with same value in the row");
+            #endif
         }
     }
+
     for (unsigned int col_idx = 0; col_idx < BOARD_SIZE; col_idx++)
     {
+        #ifdef STRICT
+        unsigned int _count = 0;
+        #endif
+
         for (unsigned int row_idx = 0; row_idx < BOARD_SIZE; row_idx++)
         {
             if (m_cross_map[row_idx][col_idx] == 1){
@@ -169,8 +187,16 @@ bool SolverV1::update_by_cross(val_t value){
                 {
                     m_cross_map_col[i][col_idx] = 1;
                 }
+
+                #ifdef STRICT
+                _count++;
+                #else
                 break;
+                #endif
             }
+            #ifdef STRICT
+            ASSERT(_count <= 1, "More than one cell with same value in the column");
+            #endif
         }
     }
     

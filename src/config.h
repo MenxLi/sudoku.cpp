@@ -9,7 +9,11 @@
 
 #define BOARD_SIZE (GRID_SIZE * GRID_SIZE)
 
+#ifdef STRICT
 #define ASSERT(cond, faild_reason) \
 if (!(cond)) { throw std::runtime_error("Assertion failed: " #cond " " faild_reason); }
+#else
+#define ASSERT(cond, faild_reason)
+#endif
 
 typedef uint8_t val_t;
