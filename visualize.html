@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sudoku Visualizer</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="sudoku-board"></div>
+    <script src="script.js"></script>
+</body>
+</html>
+
+<style>
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    font-family: Arial, sans-serif;
+}
+
+#sudoku-board {
+    display: grid;
+    grid-template-columns: repeat(9, 40px);
+    grid-template-rows: repeat(9, 40px);
+    gap: 1px;
+}
+
+#sudoku-board input {
+    width: 40px;
+    height: 40px;
+    text-align: center;
+    font-size: 20px;
+    border: 1px solid #000;
+}
+
+#sudoku-board input:nth-child(3n+1) {
+    border-left: 2px solid #088;
+}
+
+#sudoku-board input:nth-child(3n) {
+    border-right: 2px solid #088;
+}
+
+#sudoku-board input:nth-child(n+28):nth-child(-n+36), 
+#sudoku-board input:nth-child(n+55):nth-child(-n+63) {
+    border-top: 2px solid #088;
+}
+
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const board = document.getElementById('sudoku-board');
+
+    // Create 81 input elements for the Sudoku grid
+    for (let i = 0; i < 81; i++) {
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.maxLength = 1;
+        board.appendChild(input);
+    }
+
+    // Example Sudoku puzzle
+    // const puzzle = [
+        // 5, 3, 0, 0, 7, 0, 0, 0, 0,
+        // 6, 0, 0, 1, 9, 5, 0, 0, 0,
+        // 0, 9, 8, 0, 0, 0, 0, 6, 0,
+        // 8, 0, 0, 0, 6, 0, 0, 0, 3,
+        // 4, 0, 0, 8, 0, 3, 0, 0, 1,
+        // 7, 0, 0, 0, 2, 0, 0, 0, 6,
+        // 0, 6, 0, 0, 0, 0, 2, 8, 0,
+        // 0, 0, 0, 4, 1, 9, 0, 0, 5,
+        // 0, 0, 0, 0, 8, 0, 0, 7, 9
+    // ];
+
+    // Populate the board with the puzzle
+    const inputs = board.querySelectorAll('input');
+
+    window.addEventListener('dragover', (event) => event.preventDefault());
+    window.addEventListener('drop', (event) => {
+        event.preventDefault();
+        const file = event.dataTransfer.files[0];
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const puzzleLines = event.target.result.split('\n').map(line => line.trim());
+            const puzzle = puzzleLines.join(' ').split(' ').map(Number);
+            inputs.forEach((input, index) => {
+                input.value = puzzle[index] === 0 ? '' : puzzle[index];
+            });
+            console.log(puzzle);
+        };
+        reader.readAsText(file);
+    });
+});
+</script>

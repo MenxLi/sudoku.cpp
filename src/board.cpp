@@ -16,6 +16,21 @@ void Board::clear(val_t val = 0)
     }
 };
 
+bool Board::is_solved() const
+{
+    for (int i = 0; i < BOARD_SIZE; i++)
+    {
+        for (int j = 0; j < BOARD_SIZE; j++)
+        {
+            if (m_board[i][j] == 0)
+            {
+                return false;
+            }
+        }
+    }
+    return true;
+};
+
 Board::Board() { clear(); };
 Board::~Board() {};
 

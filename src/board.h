@@ -22,6 +22,7 @@ public:
     ~Board();
 
     void clear(val_t val);
+    bool is_solved() const;
 
     val_t get(int row, int col) const;
     val_t get(const Coord& coord) const;
