@@ -4,8 +4,10 @@ STD_FLAGS := -std=c++17 -Wall -Wextra -pedantic -O2 -DSTRICT
 LIB_DIR := bin/lib
 BIN_DIR := bin
 
+all: test target
+
 _dst:
-	mkdir -p $(BIN_DIR) && mkdir -p $(LIB_DIR) && mkdir -p output
+	mkdir -p $(BIN_DIR) && mkdir -p $(LIB_DIR)
 
 obj: _dst
 	$(CXX) $(STD_FLAGS) -o $(LIB_DIR)/util.o -c src/util.cpp
@@ -29,5 +31,3 @@ target: obj
 	$(CXX) $(STD_FLAGS) -o $(BIN_DIR)/sudoku \
 		$(LIB_DIR)/board.o $(LIB_DIR)/util.o $(LIB_DIR)/cell.o $(LIB_DIR)/solver.o $(LIB_DIR)/solver_v1.o \
 		src/main.cpp
-
-all: test

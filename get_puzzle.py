@@ -1,6 +1,9 @@
 """
 To get the board from: https://sugoku.onrender.com/
 Refer to: https://github.com/bertoort/sugoku for API documentation
+
+PLEASE NOTE:  
+Puzzles from this API are not guaranteed to have a unique solution. 
 """
 
 import requests, concurrent.futures, pathlib
