@@ -1,8 +1,10 @@
 #pragma once
 
+#include "board.h"
 #include "config.h"
 #include "solver.h"
 #include <_types/_uint8_t.h>
+#include <memory>
 
 #define CANDIDATE_SIZE BOARD_SIZE
 
@@ -13,6 +15,7 @@ public:
     bool step();
     bool step_by_candidate();
     bool step_by_crossover();
+    bool step_by_guess();
 
 private:
     // cadidate refers to the possible values for a cell, 
@@ -29,4 +32,8 @@ private:
     unsigned char m_cross_map_col[BOARD_SIZE][BOARD_SIZE];
     bool update_by_cross(val_t value);
     void clear_cross_map();
+
+    // this is for trail and error approach
+    std::tuple<std::unique_ptr<SolverV1>, std::unique_ptr<Board>> fork();
+    bool update_by_guess();
 };

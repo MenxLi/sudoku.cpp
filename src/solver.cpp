@@ -2,7 +2,29 @@
 #include "solver.h"
 #include "board.h"
 
+Solver::Solver()
+{
+    m_iteration_counter.current = 0;
+    m_iteration_counter.limit = 0;
+
+    m_board_ptr = nullptr;
+    for (int row = 0; row < BOARD_SIZE; row++)
+    {
+        for (int col = 0; col < BOARD_SIZE; col++)
+        {
+            m_cells[row][col] = nullptr;
+        }
+    }
+};
+
 Solver::Solver(Board& board)
+{
+    m_iteration_counter.current = 0;
+    m_iteration_counter.limit = 0;
+    set_board(board);
+};
+
+void Solver::set_board(Board& board)
 {
     m_board_ptr = &board;
     for (int row = 0; row < BOARD_SIZE; row++)
@@ -14,34 +36,31 @@ Solver::Solver(Board& board)
     }
 };
 
-bool Solver::solve(bool verbose){
-    for (unsigned int i = 0; i < MAX_ITERATION; i++)
-    {
-        bool step_result = step();
+bool Solver::solve(unsigned int max_iterations, bool verbose){
 
+    m_iteration_counter.limit = max_iterations;
+
+    while (m_iteration_counter.current < max_iterations && !board().is_solved()){
+    
         if(verbose)
         {
-            std::cout << "Iteration " << i << std::endl;
+            std::cout << "Iteration " << m_iteration_counter.current << std::endl;
             std::cout << board() << std::endl;
         }
 
-        if (!step_result)
-        {
-            // check if the board is solved
-            for (int row = 0; row < BOARD_SIZE; row++)
-            {
-                for (int col = 0; col < BOARD_SIZE; col++)
-                {
-                    if (cell(row, col).value() == 0)
-                    {
-                        return false;
-                    }
-                }
-            }
-        }
+        bool step_result = step();
 
+        if (!step_result) break;
+
+        m_iteration_counter.current++;
     }
+
     return board().is_solved();
+};
+
+IterationCounter& Solver::iteration_counter()
+{
+    return m_iteration_counter;
 };
 
 Cell& Solver::cell(int row, int col)

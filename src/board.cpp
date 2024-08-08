@@ -189,6 +189,17 @@ void Board::load_data(std::istream& is)
     }
 }
 
+void Board::load_data(Board& board)
+{
+    for (int i = 0; i < BOARD_SIZE; i++)
+    {
+        for (int j = 0; j < BOARD_SIZE; j++)
+        {
+            m_board[i][j] = board.get(i, j);
+        }
+    }
+}
+
 std::string Board::to_string_raw() const
 {
     std::string result;

@@ -1,7 +1,11 @@
+#include "board.h"
 #include "config.h"
 #include "solver_v1.h"
+#include <memory>
+#include <stdexcept>
 
 #define CANDIDATE_SIZE BOARD_SIZE
+#define MAX_FORK_TRAIL 24
 
 // #define DEBUG_PRINT(x) std::cout << x << std::endl;
 #define DEBUG_PRINT(x);
@@ -40,12 +44,18 @@ bool SolverV1::step_by_crossover(){
     return ret;
 };
 
+bool SolverV1::step_by_guess(){
+    return update_by_guess();
+};
+
 bool SolverV1::step(){
     DEBUG_PRINT("SolverV1::step()");
     if (step_by_candidate()) return true;
     DEBUG_PRINT("SolverV1::step() - step_by_candidate() failed");
     if (step_by_crossover()) return true;
     DEBUG_PRINT("SolverV1::step() - step_by_crossover() failed");
+    if (step_by_guess()) return true;
+    DEBUG_PRINT("SolverV1::step() - step_by_guess() failed");
     return false;
 };
 
@@ -291,4 +301,109 @@ void SolverV1::clear_cross_map(){
             m_cross_map_col[i][j] = 0;
         }
     }
+};
+
+std::tuple<std::unique_ptr<SolverV1>, std::unique_ptr<Board>> SolverV1::fork(){
+    std::unique_ptr<Board> new_board(new Board());
+    new_board->load_data(this->board());
+    std::unique_ptr<SolverV1> ret(new SolverV1(*new_board));
+    return std::make_tuple(std::move(ret), std::move(new_board));
+};
+
+bool SolverV1::update_by_guess(){
+    this->update_candidates();
+
+    auto numNeighborUnsolved = [](Cell& cell){
+        unsigned int min_count;
+        unsigned int row_count = 0;
+        unsigned int col_count = 0;
+        unsigned int grid_count = 0;
+
+        for (int i = 0; i < BOARD_SIZE; i++)
+        {
+            if (*cell.row()[i] == 0) row_count++;
+            if (*cell.col()[i] == 0) col_count++;
+            if (*cell.grid()[i] == 0) grid_count++;
+        }
+        min_count = row_count;
+        if (col_count < min_count) min_count = col_count;
+        if (grid_count < min_count) min_count = grid_count;
+        return min_count;
+    };
+
+    // find the best cell to guess, 
+    // by finding:
+    // 1. the cell with the least number of candidates
+    // 2. the cell with the least number of unsolved neighbors
+    Cell* best_choice = nullptr;
+    unsigned int min_candidate_count = 1e4;
+    unsigned int min_neighbor_count = 1e4;
+    for (int i = 0; i < BOARD_SIZE; i++)
+    {
+        for (int j = 0; j < BOARD_SIZE; j++)
+        {
+            Cell& cell = this->cell(i, j);
+            if (cell.value() != 0){
+                continue;
+            };
+
+            unsigned int candidate_count = 0;
+            for (int k = 0; k < CANDIDATE_SIZE; k++)
+            {
+                if (m_candidates[i][j][k] != 0){
+                    candidate_count++;
+                }
+            }
+            if (candidate_count < min_candidate_count){
+                min_candidate_count = candidate_count;
+                min_neighbor_count = numNeighborUnsolved(cell);
+                best_choice = &cell;
+            }
+            else if (candidate_count == min_candidate_count){
+                unsigned int neighbor_count = numNeighborUnsolved(cell);
+                if (neighbor_count < min_neighbor_count){
+                    min_neighbor_count = neighbor_count;
+                    best_choice = &cell;
+                }
+            }
+            else{
+                // do nothing if the candidate count is larger
+            }
+        }
+    }
+
+    // random choose a candidate in the best choice location
+    for(int k = 0; k < CANDIDATE_SIZE; k++){
+        if (m_candidates[best_choice->coord().row][best_choice->coord().col][k] != 0){
+            // make a guess
+            auto [forked_solver, forked_board] = this->fork();
+            val_t guess = m_candidates[best_choice->coord().row][best_choice->coord().col][k];
+            forked_solver->cell(best_choice->coord().row, best_choice->coord().col).value() = guess;
+            // std::cout << "Making a guess at " << best_choice->coord().row << ", " << best_choice->coord().col << " with value " << static_cast<int>(guess) << std::endl;
+
+            // try to solve the board based on the guess
+            // std::cout << "Solving the board at memory address: " << &forked_solver->board() << 
+            // " with solver at memory address: " << forked_solver << std::endl;
+            unsigned int fork_trail_limit = this->iteration_counter().limit - this->iteration_counter().current;
+            if (fork_trail_limit > MAX_FORK_TRAIL){
+                fork_trail_limit = MAX_FORK_TRAIL;
+            }
+            // std::cout << "Fork trail limit: " << fork_trail_limit << std::endl;
+
+            bool solved = forked_solver->solve(fork_trail_limit);
+            // std::cout << "Forked solver " << (solved ? "solved" : "failed") << " with guess " << static_cast<int>(guess) << std::endl;
+            // std::cout << "Forked board: " << std::endl;
+            // std::cout << forked_solver->board() << std::endl;
+            this->iteration_counter().current += forked_solver->iteration_counter().current;
+            if (solved){
+                this->board().load_data(forked_solver->board());
+                return true;
+            }
+            else{
+                // the guess is wrong, try another one
+                continue;
+            }
+        }
+    }
+    return false;
 };

@@ -49,6 +49,7 @@ public:
     bool is_valid();
 
     void load_data(std::istream& is);
+    void load_data(Board& board);
     void load_from_file(const std::string& filename);
     void save_to_file(const std::string& filename) const;
     std::string to_string() const;
