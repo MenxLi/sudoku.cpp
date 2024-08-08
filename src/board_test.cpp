@@ -43,7 +43,7 @@ int main()
     board = Board();
     board.load_data(iss);
     std::cout << "Board is valid: " << board.is_valid() << std::endl;
-    std::cout << "Board is solved: " << board.is_solved() << std::endl;
+    std::cout << "Board is solved: " << board.is_filled() << std::endl;
 
     board.set(3, 4, 1);
     std::cout << board.get(3, 4) << std::endl;

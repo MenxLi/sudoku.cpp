@@ -22,7 +22,6 @@ public:
     ~Board();
 
     void clear(val_t val);
-    bool is_solved() const;
 
     val_t get(int row, int col) const;
     val_t get(const Coord& coord) const;
@@ -47,9 +46,15 @@ public:
     // check if the board is valid, 
     // the board should be all filled with valid values
     bool is_valid();
+    bool is_solved();           // equal to is_valid()
+    bool is_filled() const;     // check if the board is filled, i.e. no empty cells
 
+    // val_t(*data())[BOARD_SIZE];
+    val_t* data();                      // return a pointer to the raw data
+    void load_data(std::vector<std::vector<val_t>> data);
     void load_data(std::istream& is);
     void load_data(Board& board);
+    void load_data(std::string& str_data);
     void load_from_file(const std::string& filename);
     void save_to_file(const std::string& filename) const;
     std::string to_string() const;

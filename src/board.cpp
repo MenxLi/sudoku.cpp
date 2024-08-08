@@ -1,6 +1,7 @@
 #include "board.h"
 #include "config.h"
 #include "util.h"
+#include <sstream>
 #include <fstream>
 #include <memory>
 #include <vector>
@@ -14,21 +15,6 @@ void Board::clear(val_t val = 0)
             m_board[i][j] = val;
         }
     }
-};
-
-bool Board::is_solved() const
-{
-    for (int i = 0; i < BOARD_SIZE; i++)
-    {
-        for (int j = 0; j < BOARD_SIZE; j++)
-        {
-            if (m_board[i][j] == 0)
-            {
-                return false;
-            }
-        }
-    }
-    return true;
 };
 
 Board::Board() { clear(); };
@@ -105,6 +91,20 @@ void Board::set(const Coord& coord, val_t value)
     set(coord.row, coord.col, value);
 };
 
+bool Board::is_filled() const
+{
+    for (int i = 0; i < BOARD_SIZE; i++)
+    {
+        for (int j = 0; j < BOARD_SIZE; j++)
+        {
+            if (m_board[i][j] == 0)
+            {
+                return false;
+            }
+        }
+    }
+    return true;
+};
 
 bool Board::is_valid()
 {
@@ -112,11 +112,9 @@ bool Board::is_valid()
         std::vector<bool> found(BOARD_SIZE, false);
         for (int i = 0; i < BOARD_SIZE; i++){
             if (*arr[i] == 0){ // not filled
-                std::cout << "not filled" << std::endl;
                 return false;
             }
             if (found[*arr[i] - 1]){ // duplicate
-                std::cout << "duplicate" << std::endl;
                 return false;
             }
             found[*arr[i] - 1] = true;
@@ -137,6 +135,8 @@ bool Board::is_valid()
     }
     return true;
 };
+
+bool Board::is_solved(){ return is_valid(); };
 
 void Board::load_from_file(const std::string& filename)
 {
@@ -163,6 +163,24 @@ void Board::save_to_file(const std::string& filename) const
 std::string Board::to_string() const
 {
     return to_string_raw();
+}
+
+val_t* Board::data(){
+    return &m_board[0][0];
+}
+void Board::load_data(std::vector<std::vector<val_t>> data){
+    ASSERT(data.size() == BOARD_SIZE, "invalid data row size");
+    for (int i = 0; i < BOARD_SIZE; i++){
+        ASSERT(data.size() == BOARD_SIZE, "invalid data column size");
+        for (int j = 0; j < BOARD_SIZE; j++){
+            m_board[i][j] = data[i][j];
+        }
+    }
+}
+
+void Board::load_data(std::string& str_data){
+    std::istringstream iss(str_data);
+    load_data(iss);
 }
 
 void Board::load_data(std::istream& is)
