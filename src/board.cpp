@@ -168,7 +168,7 @@ std::string Board::to_string() const
 val_t* Board::data(){
     return &m_board[0][0];
 }
-void Board::load_data(std::vector<std::vector<val_t>> data){
+void Board::load_data(const std::vector<std::vector<val_t>> data){
     ASSERT(data.size() == BOARD_SIZE, "invalid data row size");
     for (int i = 0; i < BOARD_SIZE; i++){
         ASSERT(data.size() == BOARD_SIZE, "invalid data column size");
@@ -178,7 +178,7 @@ void Board::load_data(std::vector<std::vector<val_t>> data){
     }
 }
 
-void Board::load_data(std::string& str_data){
+void Board::load_data(const std::string& str_data){
     std::istringstream iss(str_data);
     load_data(iss);
 }
@@ -207,7 +207,7 @@ void Board::load_data(std::istream& is)
     }
 }
 
-void Board::load_data(Board& board)
+void Board::load_data(const Board& board)
 {
     for (int i = 0; i < BOARD_SIZE; i++)
     {

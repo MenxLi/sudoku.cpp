@@ -7,8 +7,6 @@ and the results may not be accurate...
 #include "solver_v1.h"
 #include <fstream>
 #include <ostream>
-#include <algorithm>
-#include <random>
 
 std::chrono::duration<double> solve_for(std::string file_content)
 {
@@ -29,11 +27,10 @@ std::chrono::duration<double> solve_for(std::string file_content)
 
 int main()
 {
-    int n_repeats = 100;
+    int n_repeats = 10000;
     const int n_puzzles = 5;
-    std::vector<std::string> file_contents(n_puzzles);
-    std::vector<std::chrono::duration<double>> times(n_puzzles);
 
+    std::cout << "Benchmarking " << n_puzzles << " puzzles with " << n_repeats << " repeats..." << std::endl;
     for (int i = 0; i < n_puzzles; i++)
     {
         std::string filename = "puzzles/" + std::to_string(i+1) + ".txt";
@@ -44,24 +41,19 @@ int main()
             throw std::runtime_error("Failed to open file: " + filename);
         }
         file_content.assign((std::istreambuf_iterator<char>(file)), (std::istreambuf_iterator<char>()));
-        file_contents.push_back(file_content);
-        times.push_back(std::chrono::duration<double>::zero());
-    }
-
-    for (int j = 0; j < n_repeats; j++)
-    {
-        std::shuffle(file_contents.begin(), file_contents.end(), std::mt19937(std::random_device()()));
-        for (int i = 0; i < n_puzzles; i++){
-            const std::string file_content = file_contents[i];
-            auto time = solve_for(file_content);
-            times[i] += time;
+        std::chrono::duration<double> total_time = std::chrono::duration<double>::zero();
+        std::cout << "Puzzle " << i+1 << ": " ;
+        for (int j = 0; j < n_repeats; j++)
+        {
+            total_time += solve_for(file_content);
         }
-    }
-
-    std::cout << "Benchmark results (average time for " << n_repeats << " repeats):" << std::endl;
-    for (int i = 0; i < n_puzzles; i++)
-    {
-        std::cout << "Puzzle " << i+1 << " took " << 
-        std::chrono::duration_cast<std::chrono::microseconds>(times[i]).count() / n_repeats << " [µs]" << std::endl;
+        unsigned long time = std::chrono::duration_cast<std::chrono::microseconds>(total_time).count() / n_repeats;
+        // format to 4 characters by adding leading blanks
+        std::string time_str = std::to_string(time);
+        if (time_str.size() < 4)
+        {
+            time_str.insert(time_str.begin(), 4 - time_str.size(), ' ');
+        }
+        std::cout << time_str << " [us]" << std::endl;
     }
 }
