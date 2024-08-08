@@ -23,6 +23,7 @@ void Solver::set_board(Board& board)
 
 bool Solver::solve(unsigned int max_iterations, bool verbose){
 
+    m_iteration_counter.current = 0;
     m_iteration_counter.limit = max_iterations;
 
     while (m_iteration_counter.current < max_iterations && !board().is_solved()){

@@ -10,11 +10,11 @@ bool solve_for(std::string input_file, std::string output_file)
     bool solved = false;
 
     try{
-        std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+        auto start = std::chrono::high_resolution_clock::now();
         solved = solver.solve(1024);
-        std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+        auto end = std::chrono::high_resolution_clock::now();
         std::cout << "Time elapsed: " 
-            << std::chrono::duration_cast<std::chrono::microseconds>( end - begin).count()
+            << std::chrono::duration_cast<std::chrono::microseconds>( end - start).count()
             << " [µs] ";
         std::cout << "Puzzle: " << input_file << " ";
     } catch (std::exception& e){
