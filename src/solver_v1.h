@@ -26,9 +26,9 @@ private:
     bool update_value_for(int row, int col);
     bool update_values();
 
-    unsigned char m_cross_map[BOARD_SIZE][BOARD_SIZE];
-    unsigned char m_cross_map_row[BOARD_SIZE][BOARD_SIZE];
-    unsigned char m_cross_map_col[BOARD_SIZE][BOARD_SIZE];
+    unsigned int m_cross_map[BOARD_SIZE][BOARD_SIZE];
+    unsigned int m_cross_row[BOARD_SIZE];
+    unsigned int m_cross_col[BOARD_SIZE];
     bool update_by_cross(val_t value);
     void clear_cross_map();
 

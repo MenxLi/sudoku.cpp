@@ -80,27 +80,6 @@ void SolverV1::update_candidate_for(int row, int col){
             m_candidates[row][col][other_val - 1] = 0;
         }
     }
-    // for (int idx = 0; idx < BOARD_SIZE; idx++)
-    // {
-    //     val_t other_val = *cell.row()[idx];
-    //     if (other_val != 0){
-    //         m_candidates[row][col][other_val - 1] = 0;
-    //     }
-    // }
-    // for (int idx = 0; idx < BOARD_SIZE; idx++)
-    // {
-    //     val_t other_val = *cell.col()[idx];
-    //     if (other_val != 0){
-    //         m_candidates[row][col][other_val - 1] = 0;
-    //     }
-    // }
-    // for (int idx = 0; idx < BOARD_SIZE; idx++)
-    // {
-    //     val_t other_val = *cell.grid()[idx];
-    //     if (other_val != 0){
-    //         m_candidates[row][col][other_val - 1] = 0;
-    //     }
-    // }
 };
 
 void SolverV1::update_candidates(){
@@ -184,69 +163,29 @@ bool SolverV1::update_by_cross(val_t value){
 
     // iterate over the map, 
     // row by row, column by column, and fill in the value where there is a 1
-    for (unsigned int row_idx = 0; row_idx < BOARD_SIZE; row_idx++)
-    {
-        #ifdef STRICT
-        unsigned int _count = 0;
-        #endif
-
-        for (unsigned int col_idx = 0; col_idx < BOARD_SIZE; col_idx++)
-        {
+    for (unsigned int row_idx = 0; row_idx < BOARD_SIZE; row_idx ++ ){
+        for (unsigned int col_idx = 0; col_idx < BOARD_SIZE; col_idx++){
             if (m_cross_map[row_idx][col_idx] == 1){
-                // found a cell with the value
-                // fill the entire row with the 1
-                for (unsigned int i = 0; i < BOARD_SIZE; i++)
-                {
-                    m_cross_map_row[row_idx][i] = 1;
-                }
-
-                #ifdef STRICT
-                _count++;
-                #else
-                break;
-                #endif
+                m_cross_row[row_idx] += 1;
+                m_cross_col[col_idx] += 1;
             }
-
-            #ifdef STRICT
-            ASSERT(_count <= 1, "More than one cell with same value in the row");
-            #endif
         }
     }
 
-    for (unsigned int col_idx = 0; col_idx < BOARD_SIZE; col_idx++)
+    #ifdef STRICT
+    for (unsigned int i = 0; i < BOARD_SIZE; i++)
     {
-        #ifdef STRICT
-        unsigned int _count = 0;
-        #endif
-
-        for (unsigned int row_idx = 0; row_idx < BOARD_SIZE; row_idx++)
-        {
-            if (m_cross_map[row_idx][col_idx] == 1){
-                // found a cell with the value
-                // fill the entire column with the 1
-                for (unsigned int i = 0; i < BOARD_SIZE; i++)
-                {
-                    m_cross_map_col[i][col_idx] = 1;
-                }
-
-                #ifdef STRICT
-                _count++;
-                #else
-                break;
-                #endif
-            }
-            #ifdef STRICT
-            ASSERT(_count <= 1, "More than one cell with same value in the column");
-            #endif
-        }
+        ASSERT(m_cross_row[i] <= 1, "Cross row violation");
+        ASSERT(m_cross_col[i] <= 1, "Cross col violation");
     }
-    
+    #endif
+
     // update the cross map with the row and column maps
     for (unsigned int i = 0; i < BOARD_SIZE; i++)
     {
         for (unsigned int j = 0; j < BOARD_SIZE; j++)
         {
-            m_cross_map[i][j] = m_cross_map_row[i][j] == 1 || m_cross_map_col[i][j] == 1;
+            m_cross_map[i][j] = m_cross_row[i] == 1 || m_cross_col[j] == 1;
         }
     }
 
@@ -300,9 +239,12 @@ void SolverV1::clear_cross_map(){
         for (int j = 0; j < BOARD_SIZE; j++)
         {
             m_cross_map[i][j] = 0;
-            m_cross_map_row[i][j] = 0;
-            m_cross_map_col[i][j] = 0;
         }
+    }
+    for (int i = 0; i < BOARD_SIZE; i++)
+    {
+        m_cross_row[i] = 0;
+        m_cross_col[i] = 0;
     }
 };
 
