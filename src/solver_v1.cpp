@@ -121,8 +121,9 @@ bool SolverV1::update_value_for(int row, int col){
         }
     }
 
-    // std::cout << "Cell: " << cell.coord().col << ", " << cell.coord().row << " has " << candidate_count << " candidates" << std::endl;
-    ASSERT(candidate_count != 0, "No candidate left for cell, bad board?");
+    if (candidate_count == 0){
+        throw std::runtime_error("No candidate left for cell, bad board?");
+    }
 
     if (candidate_count == 1){
         cell.value() = candidate_val;
@@ -172,13 +173,12 @@ bool SolverV1::update_by_cross(val_t value){
         }
     }
 
-    #ifdef STRICT
     for (unsigned int i = 0; i < BOARD_SIZE; i++)
     {
-        ASSERT(m_cross_row[i] <= 1, "Cross row violation");
-        ASSERT(m_cross_col[i] <= 1, "Cross col violation");
+        if (m_cross_row[i] > 1 || m_cross_col[i] > 1){
+            throw std::runtime_error("Axis count violation");
+        }
     }
-    #endif
 
     // update the cross map with the row and column maps
     for (unsigned int i = 0; i < BOARD_SIZE; i++)
@@ -236,15 +236,14 @@ bool SolverV1::update_by_cross(val_t value){
 void SolverV1::clear_cross_map(){
     for (int i = 0; i < BOARD_SIZE; i++)
     {
+        // tricky, use because row and col are the same size
+        m_cross_row[i] = 0;
+        m_cross_col[i] = 0;
+
         for (int j = 0; j < BOARD_SIZE; j++)
         {
             m_cross_map[i][j] = 0;
         }
-    }
-    for (int i = 0; i < BOARD_SIZE; i++)
-    {
-        m_cross_row[i] = 0;
-        m_cross_col[i] = 0;
     }
 };
 
