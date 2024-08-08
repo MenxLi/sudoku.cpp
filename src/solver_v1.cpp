@@ -6,7 +6,7 @@
 #include <stdlib.h>
 
 #define CANDIDATE_SIZE BOARD_SIZE
-#define MAX_FORK_TRAIL 24
+#define MAX_FORK_TRAIL 1e4
 
 bool ENV_USE_GUESS;
 
