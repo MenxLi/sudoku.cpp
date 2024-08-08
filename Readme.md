@@ -28,3 +28,8 @@ For python bindings:
 make python
 python3 python/demo.py
 ```
+
+Environment variables:
+- `SOLVER_USE_GUESS` enable guessing when solving the puzzle. Default is `1`.
+- `SOLVER_HEURISTIC_GUESS` enable heuristic choosing of starting cell when guessing. Default is `1`.
+- `SOLVER_DETERMINISTIC_GUESS` enable deterministic solving. Default is `0`.

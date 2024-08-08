@@ -10,18 +10,21 @@
 #include <algorithm>
 
 #define CANDIDATE_SIZE BOARD_SIZE
-#define MAX_FORK_TRAIL 1e4
+#define MAX_FORK_TRAIL 1e6
 
-bool NO_GUESS;
-bool DETERMINISTIC;
+bool USE_GUESS;
+bool DETERMINISTIC_GUESS;
+bool HEURISTIC_GUESS;
 
 // #define DEBUG_PRINT(x) std::cout << x << std::endl;
 #define DEBUG_PRINT(x);
 
 SolverV1::SolverV1(Board& board) : Solver(board) {
     // parse environment variables
-    NO_GUESS = util::parse_env_i<bool>("SOLVER_NO_GUESS", false);
-    DETERMINISTIC = util::parse_env_i("SOLVER_DETERMINISTIC", false);
+    USE_GUESS = util::parse_env_i<bool>("SOLVER_NO_GUESS", true);
+    DETERMINISTIC_GUESS = util::parse_env_i("SOLVER_DETERMINISTIC_GUESS", false);
+    HEURISTIC_GUESS = util::parse_env_i("SOLVER_HEURISTIC_GUESS", true);
+    // std::cout << "Config: USE_GUESS=" << USE_GUESS << ", DETERMINISTIC_GUESS=" << DETERMINISTIC_GUESS << ", HEURISTIC_GUESS=" << HEURISTIC_GUESS << std::endl;
 };
 
 bool SolverV1::step_by_candidate(){
@@ -54,7 +57,7 @@ bool SolverV1::step(){
     if (step_by_crossover()) return true;
     DEBUG_PRINT("SolverV1::step() - step_by_crossover() failed");
 
-    if (!NO_GUESS){
+    if (USE_GUESS){
         if (step_by_guess()) return true;
         DEBUG_PRINT("SolverV1::step() - step_by_guess() failed");
     }
@@ -274,39 +277,82 @@ bool SolverV1::update_by_guess(){
     // by finding:
     // 1. the cell with the least number of candidates
     // 2. the cell with the least number of unsolved neighbors
-    Cell* best_choice = nullptr;
-    unsigned int min_candidate_count = 1e4;
-    unsigned int min_neighbor_count = 1e4;
-    for (int i = 0; i < BOARD_SIZE; i++)
-    {
-        for (int j = 0; j < BOARD_SIZE; j++)
+    auto get_heuristic_choice = [&]()->Cell*{
+        Cell* best_choice = nullptr;
+        unsigned int min_candidate_count = 1e4;
+        unsigned int min_neighbor_count = 1e4;
+        for (int i = 0; i < BOARD_SIZE; i++)
         {
-            Cell& cell = this->cell(i, j);
-            if (cell.value() != 0){
-                continue;
-            };
-
-            unsigned int candidate_count = 0;
-            for (int k = 0; k < CANDIDATE_SIZE; k++)
+            for (int j = 0; j < BOARD_SIZE; j++)
             {
-                if (m_candidates[i][j][k] != 0){
-                    candidate_count++;
+                Cell& cell = this->cell(i, j);
+                if (cell.value() != 0){
+                    continue;
+                };
+
+                unsigned int candidate_count = 0;
+                for (int k = 0; k < CANDIDATE_SIZE; k++)
+                {
+                    if (m_candidates[i][j][k] != 0){
+                        candidate_count++;
+                    }
                 }
-            }
-            if (candidate_count < min_candidate_count){
-                min_candidate_count = candidate_count;
-                min_neighbor_count = numNeighborUnsolved(cell);
-                best_choice = &cell;
-            }
-            else if (candidate_count == min_candidate_count){
-                unsigned int neighbor_count = numNeighborUnsolved(cell);
-                if (neighbor_count < min_neighbor_count){
-                    min_neighbor_count = neighbor_count;
+                if (candidate_count < min_candidate_count){
+                    min_candidate_count = candidate_count;
+                    min_neighbor_count = numNeighborUnsolved(cell);
                     best_choice = &cell;
                 }
+                else if (candidate_count == min_candidate_count){
+                    unsigned int neighbor_count = numNeighborUnsolved(cell);
+                    if (neighbor_count < min_neighbor_count){
+                        min_neighbor_count = neighbor_count;
+                        best_choice = &cell;
+                    }
+                }
+                else{
+                    // do nothing if the candidate count is larger
+                }
             }
-            else{
-                // do nothing if the candidate count is larger
+        }
+        return best_choice;
+    };
+
+    // choose a cell to guess
+    Cell* best_choice = nullptr;
+    if (HEURISTIC_GUESS){
+        best_choice = get_heuristic_choice();
+    }
+    else{
+        if (!DETERMINISTIC_GUESS){
+            // choose a random cell to guess
+            std::vector<Cell*> unsolved_cells;
+            for (int i = 0; i < BOARD_SIZE; i++)
+            {
+                for (int j = 0; j < BOARD_SIZE; j++)
+                {
+                    if (this->cell(i, j).value() == 0){
+                        unsolved_cells.push_back(&this->cell(i, j));
+                    }
+                }
+            }
+            // random guess
+            int random_idx = rand() % unsolved_cells.size();
+            best_choice = unsolved_cells[random_idx];
+        }
+        else{
+            // choose the first unsolved cell
+            for (int i = 0; i < BOARD_SIZE; i++)
+            {
+                for (int j = 0; j < BOARD_SIZE; j++)
+                {
+                    if (this->cell(i, j).value() == 0){
+                        best_choice = &this->cell(i, j);
+                        break;
+                    }
+                }
+                if (best_choice != nullptr){
+                    break;
+                }
             }
         }
     }
@@ -323,7 +369,7 @@ bool SolverV1::update_by_guess(){
         }
     }
 
-    if (!DETERMINISTIC){
+    if (!DETERMINISTIC_GUESS){
         // shuffle the candidate indices
         std::random_device rd;
         std::mt19937 g(rd());
@@ -357,6 +403,8 @@ bool SolverV1::update_by_guess(){
     }
 
     // ideally, we should never reach here...
+    // unless the board is invalid, trail limit is reached, or the guess is wrong, 
+    // when the guess is wrong, the forked solver will throw an exception and we will catch it
     throw std::runtime_error("No solution found by guessing");
     return false;
 };

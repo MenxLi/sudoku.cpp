@@ -28,7 +28,7 @@ std::chrono::duration<double> solve_for(std::string file_content)
 int main()
 {
     int n_repeats = 100;
-    const int n_puzzles = 5;
+    const int n_puzzles = 7;
 
     std::cout << "Benchmarking " << n_puzzles << " puzzles with " << n_repeats << " repeats..." << std::endl;
     for (int i = 0; i < n_puzzles; i++)
@@ -48,11 +48,11 @@ int main()
             total_time += solve_for(file_content);
         }
         unsigned long time = std::chrono::duration_cast<std::chrono::microseconds>(total_time).count() / n_repeats;
-        // format to 4 characters by adding leading blanks
+        // format to 5 characters by adding leading blanks
         std::string time_str = std::to_string(time);
-        if (time_str.size() < 4)
+        if (time_str.size() < 5)
         {
-            time_str.insert(time_str.begin(), 4 - time_str.size(), ' ');
+            time_str.insert(time_str.begin(), 5 - time_str.size(), ' ');
         }
         std::cout << time_str << " [us]" << std::endl;
     }
