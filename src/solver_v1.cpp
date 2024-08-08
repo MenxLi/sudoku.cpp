@@ -9,18 +9,6 @@
 
 // #define DEBUG_PRINT(x) std::cout << x << std::endl;
 #define DEBUG_PRINT(x);
-static std::string _fmt_cross_map(val_t m_cross_map[BOARD_SIZE][BOARD_SIZE]){
-    std::string ret = "";
-    for (int i = 0; i < BOARD_SIZE; i++)
-    {
-        for (int j = 0; j < BOARD_SIZE; j++)
-        {
-            ret += std::to_string(static_cast<int>(m_cross_map[i][j])) + " ";
-        }
-        ret += "\n";
-    }
-    return ret;
-};
 
 SolverV1::SolverV1(Board& board) : Solver(board) {
     clear_candidates();
@@ -237,15 +225,6 @@ bool SolverV1::update_by_cross(val_t value){
         }
     }
 
-    // std::cout << "Cross map for value " << static_cast<int>(value) << std::endl;
-    // std::cout << "----------------" << std::endl;
-    DEBUG_PRINT("Cross map for value " << static_cast<int>(value));
-    DEBUG_PRINT("----------------");
-    DEBUG_PRINT(_fmt_cross_map(m_cross_map));
-    DEBUG_PRINT("Current board");
-    DEBUG_PRINT("----------------");
-    DEBUG_PRINT(this->board());
-
     // iterate over grid, 
     // if there is only one cell in the grid that is unsoved and not marked, fill it in
     for (unsigned int g_row = 0; g_row < GRID_SIZE; g_row++)
@@ -284,7 +263,6 @@ bool SolverV1::update_by_cross(val_t value){
             if (count == 1){
                 this->cell(row_base + aim_grid_row_idx, col_base + aim_grid_col_idx).value() = value;
                 ret = true;
-                DEBUG_PRINT("Found a cell to fill in: " << row_base + aim_grid_row_idx << ", " << col_base + aim_grid_col_idx << " with value " << static_cast<int>(value));
             }
         }
     }
@@ -379,30 +357,26 @@ bool SolverV1::update_by_guess(){
             auto [forked_solver, forked_board] = this->fork();
             val_t guess = m_candidates[best_choice->coord().row][best_choice->coord().col][k];
             forked_solver->cell(best_choice->coord().row, best_choice->coord().col).value() = guess;
-            // std::cout << "Making a guess at " << best_choice->coord().row << ", " << best_choice->coord().col << " with value " << static_cast<int>(guess) << std::endl;
 
-            // try to solve the board based on the guess
-            // std::cout << "Solving the board at memory address: " << &forked_solver->board() << 
-            // " with solver at memory address: " << forked_solver << std::endl;
             unsigned int fork_trail_limit = this->iteration_counter().limit - this->iteration_counter().current;
             if (fork_trail_limit > MAX_FORK_TRAIL){
                 fork_trail_limit = MAX_FORK_TRAIL;
             }
-            // std::cout << "Fork trail limit: " << fork_trail_limit << std::endl;
 
-            bool solved = forked_solver->solve(fork_trail_limit);
-            // std::cout << "Forked solver " << (solved ? "solved" : "failed") << " with guess " << static_cast<int>(guess) << std::endl;
-            // std::cout << "Forked board: " << std::endl;
-            // std::cout << forked_solver->board() << std::endl;
-            this->iteration_counter().current += forked_solver->iteration_counter().current;
-            if (solved){
-                this->board().load_data(forked_solver->board());
-                return true;
+            bool solved;
+            try{
+                solved = forked_solver->solve(fork_trail_limit);
+                this->iteration_counter().current += forked_solver->iteration_counter().current;
             }
-            else{
-                // the guess is wrong, try another one
+            catch(std::runtime_error& e){
+                this->iteration_counter().current += forked_solver->iteration_counter().current;
                 continue;
             }
+
+            if (!solved){ continue; }
+
+            this->board().load_data(forked_solver->board());
+            return true;
         }
     }
     return false;
