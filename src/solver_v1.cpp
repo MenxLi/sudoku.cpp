@@ -3,15 +3,27 @@
 #include "solver_v1.h"
 #include <memory>
 #include <stdexcept>
+#include <stdlib.h>
 
 #define CANDIDATE_SIZE BOARD_SIZE
 #define MAX_FORK_TRAIL 24
+
+bool ENV_USE_GUESS;
 
 // #define DEBUG_PRINT(x) std::cout << x << std::endl;
 #define DEBUG_PRINT(x);
 
 SolverV1::SolverV1(Board& board) : Solver(board) {
     clear_candidates();
+
+    // parse environment variable
+    char* ENV_USE_GUESS_STR = getenv("USE_GUESS");
+    if (ENV_USE_GUESS_STR == nullptr){
+        ENV_USE_GUESS = false;
+    }
+    else{
+        ENV_USE_GUESS = std::stoi(ENV_USE_GUESS_STR);
+    }
 };
 
 bool SolverV1::step_by_candidate(){
@@ -33,7 +45,10 @@ bool SolverV1::step_by_crossover(){
 };
 
 bool SolverV1::step_by_guess(){
-    return update_by_guess();
+    update_candidates();
+    bool ret = update_by_guess();
+    clear_candidates();
+    return ret;
 };
 
 bool SolverV1::step(){
@@ -42,8 +57,11 @@ bool SolverV1::step(){
     DEBUG_PRINT("SolverV1::step() - step_by_candidate() failed");
     if (step_by_crossover()) return true;
     DEBUG_PRINT("SolverV1::step() - step_by_crossover() failed");
-    if (step_by_guess()) return true;
-    DEBUG_PRINT("SolverV1::step() - step_by_guess() failed");
+
+    if (ENV_USE_GUESS){
+        if (step_by_guess()) return true;
+        DEBUG_PRINT("SolverV1::step() - step_by_guess() failed");
+    }
     return false;
 };
 
@@ -289,8 +307,6 @@ std::tuple<std::unique_ptr<SolverV1>, std::unique_ptr<Board>> SolverV1::fork(){
 };
 
 bool SolverV1::update_by_guess(){
-    this->update_candidates();
-
     auto numNeighborUnsolved = [](Cell& cell){
         unsigned int min_count;
         unsigned int row_count = 0;
