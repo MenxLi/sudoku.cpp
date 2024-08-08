@@ -17,7 +17,7 @@ SolverV1::SolverV1(Board& board) : Solver(board) {
     clear_candidates();
 
     // parse environment variable
-    char* ENV_USE_GUESS_STR = getenv("USE_GUESS");
+    char* ENV_USE_GUESS_STR = getenv("GUESS");
     if (ENV_USE_GUESS_STR == nullptr){
         ENV_USE_GUESS = false;
     }

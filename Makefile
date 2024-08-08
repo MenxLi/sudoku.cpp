@@ -40,7 +40,7 @@ target: obj
 	$(CXX) $(COMMON_FLAGS) -o $(BIN_DIR)/sudoku \
 		$(LIB_DIR)/board.o $(LIB_DIR)/util.o $(LIB_DIR)/cell.o $(LIB_DIR)/solver.o $(LIB_DIR)/solver_v1.o \
 		src/main.cpp
-	$(CXX) $(STD_FLAGS) $(CONFIG_FLAGS) -Og -o $(BIN_DIR)/benchmark \
+	$(CXX) $(COMMON_FLAGS) -o $(BIN_DIR)/benchmark \
 		$(LIB_DIR)/board.o $(LIB_DIR)/util.o $(LIB_DIR)/cell.o $(LIB_DIR)/solver.o $(LIB_DIR)/solver_v1.o \
 		src/benchmark.cpp
 
