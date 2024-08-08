@@ -46,11 +46,13 @@ int main()
     board.load_from_file("./puzzles/1.txt");
     std::cout << board << std::endl;
 
-    Cell cell1(board, {0, 0});
+    CellView cell_view(board);
+
+    Cell cell1(cell_view, {0, 0});
     print_cell(cell1);
     std::cout << "--------" << std::endl;
 
-    Cell cell2(board, {3, 4});
+    Cell cell2(cell_view, {3, 4});
     print_cell(cell2);
 
     return 0;

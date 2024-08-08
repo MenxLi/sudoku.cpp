@@ -73,27 +73,34 @@ void SolverV1::update_candidate_for(int row, int col){
     }
 
     // remove candidates from the same row, column, and grid
-    for (int idx = 0; idx < BOARD_SIZE; idx++)
+    for (int idx = 0; idx < cell.neighbor_count; idx++)
     {
-        val_t other_val = *cell.row()[idx];
+        val_t other_val = *cell.neighbor()[idx];
         if (other_val != 0){
             m_candidates[row][col][other_val - 1] = 0;
         }
     }
-    for (int idx = 0; idx < BOARD_SIZE; idx++)
-    {
-        val_t other_val = *cell.col()[idx];
-        if (other_val != 0){
-            m_candidates[row][col][other_val - 1] = 0;
-        }
-    }
-    for (int idx = 0; idx < BOARD_SIZE; idx++)
-    {
-        val_t other_val = *cell.grid()[idx];
-        if (other_val != 0){
-            m_candidates[row][col][other_val - 1] = 0;
-        }
-    }
+    // for (int idx = 0; idx < BOARD_SIZE; idx++)
+    // {
+    //     val_t other_val = *cell.row()[idx];
+    //     if (other_val != 0){
+    //         m_candidates[row][col][other_val - 1] = 0;
+    //     }
+    // }
+    // for (int idx = 0; idx < BOARD_SIZE; idx++)
+    // {
+    //     val_t other_val = *cell.col()[idx];
+    //     if (other_val != 0){
+    //         m_candidates[row][col][other_val - 1] = 0;
+    //     }
+    // }
+    // for (int idx = 0; idx < BOARD_SIZE; idx++)
+    // {
+    //     val_t other_val = *cell.grid()[idx];
+    //     if (other_val != 0){
+    //         m_candidates[row][col][other_val - 1] = 0;
+    //     }
+    // }
 };
 
 void SolverV1::update_candidates(){

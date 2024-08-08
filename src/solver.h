@@ -23,6 +23,5 @@ public:
     IterationCounter& iteration_counter();
 protected:
     IterationCounter m_iteration_counter;
-    std::unique_ptr<Cell> m_cells[BOARD_SIZE][BOARD_SIZE];
-    Board* m_board_ptr;
+    std::unique_ptr<CellView> m_view_ptr;
 };
