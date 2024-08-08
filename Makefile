@@ -7,6 +7,8 @@ COMMON_FLAGS := $(STD_FLAGS) $(OPTIMIZATION_FLAGS) $(CONFIG_FLAGS)
 LIB_DIR := bin/lib
 BIN_DIR := bin
 
+objs := $(LIB_DIR)/util.o $(LIB_DIR)/board.o $(LIB_DIR)/cell.o $(LIB_DIR)/solver.o $(LIB_DIR)/solver_v1.o
+
 ifeq ($(OS),Windows_NT)
 	UNAME_S := Windows
 else
@@ -35,24 +37,23 @@ test: obj
 	$(CXX) $(COMMON_FLAGS) -o $(BIN_DIR)/cell_test \
 		$(LIB_DIR)/board.o $(LIB_DIR)/util.o $(LIB_DIR)/cell.o \
 		src/cell_test.cpp
+	$(CXX) $(COMMON_FLAGS) -o $(BIN_DIR)/solver_v1_test \
+		$(LIB_DIR)/board.o $(LIB_DIR)/util.o $(LIB_DIR)/cell.o $(LIB_DIR)/solver.o $(LIB_DIR)/solver_v1.o \
+		src/solver_v1_test.cpp
 
 target: obj
 	$(CXX) $(COMMON_FLAGS) -o $(BIN_DIR)/sudoku \
-		$(LIB_DIR)/board.o $(LIB_DIR)/util.o $(LIB_DIR)/cell.o $(LIB_DIR)/solver.o $(LIB_DIR)/solver_v1.o \
-		src/main.cpp
+		$(objs) src/main.cpp
 	$(CXX) $(COMMON_FLAGS) -o $(BIN_DIR)/benchmark \
-		$(LIB_DIR)/board.o $(LIB_DIR)/util.o $(LIB_DIR)/cell.o $(LIB_DIR)/solver.o $(LIB_DIR)/solver_v1.o \
-		src/benchmark.cpp
+		$(objs) src/benchmark.cpp
 
 python: obj
 ifeq ($(UNAME_S),Darwin)
 	$(CXX) $(COMMON_FLAGS) -undefined dynamic_lookup \
 		-shared -fPIC $(shell python3 -m pybind11 --includes) -o $(LIB_DIR)/sudoku$(shell python3-config --extension-suffix) \
-		$(LIB_DIR)/board.o $(LIB_DIR)/util.o $(LIB_DIR)/cell.o $(LIB_DIR)/solver.o $(LIB_DIR)/solver_v1.o \
-		src/binding.cpp
+		$(objs) src/binding.cpp
 else
 	$(CXX) $(COMMON_FLAGS) \
 		-shared -fPIC $(shell python3 -m pybind11 --includes) -o $(LIB_DIR)/sudoku$(shell python3-config --extension-suffix) \
-		$(LIB_DIR)/board.o $(LIB_DIR)/util.o $(LIB_DIR)/cell.o $(LIB_DIR)/solver.o $(LIB_DIR)/solver_v1.o \
-		src/binding.cpp
+		$(objs) src/binding.cpp
 endif
