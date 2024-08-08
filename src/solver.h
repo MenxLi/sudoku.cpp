@@ -16,7 +16,7 @@ public:
     void set_board(Board& board);
     virtual ~Solver() = default;
     virtual bool step() = 0;
-    bool solve(unsigned int max_iterations = 1024, bool verbose = false);
+    bool solve(unsigned int max_iterations = 4096, bool verbose = false);
     Cell& cell(int row, int col);
     Cell& cell(const Coord& coord);
     Board& board();

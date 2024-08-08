@@ -22,7 +22,7 @@ private:
     val_t m_candidates[BOARD_SIZE][BOARD_SIZE][CANDIDATE_SIZE];
     void update_candidate_for(int row, int col);
     void update_candidates();
-    void clear_candidates();
+    void reset_candidates();
     bool update_value_for(int row, int col);
     bool update_values();
 

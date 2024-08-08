@@ -27,7 +27,7 @@ std::chrono::duration<double> solve_for(std::string file_content)
 
 int main()
 {
-    int n_repeats = 10000;
+    int n_repeats = 100;
     const int n_puzzles = 5;
 
     std::cout << "Benchmarking " << n_puzzles << " puzzles with " << n_repeats << " repeats..." << std::endl;

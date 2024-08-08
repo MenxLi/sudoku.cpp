@@ -11,7 +11,7 @@ bool solve_for(std::string input_file, std::string output_file)
 
     try{
         auto start = std::chrono::high_resolution_clock::now();
-        solved = solver.solve(1024);
+        solved = solver.solve();
         auto end = std::chrono::high_resolution_clock::now();
         std::cout << "Time elapsed: " 
             << std::chrono::duration_cast<std::chrono::microseconds>( end - start).count()
