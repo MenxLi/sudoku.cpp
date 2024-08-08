@@ -7,6 +7,7 @@ providing methods to read / dump the board state.
 #include <iostream>
 #include <string>
 #include <memory>
+#include <vector>
 #include "config.h"
 
 struct Coord

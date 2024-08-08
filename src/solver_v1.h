@@ -3,7 +3,6 @@
 #include "board.h"
 #include "config.h"
 #include "solver.h"
-#include <_types/_uint8_t.h>
 #include <memory>
 
 #define CANDIDATE_SIZE BOARD_SIZE
