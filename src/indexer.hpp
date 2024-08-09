@@ -14,11 +14,15 @@ public:
     // input coord to obtain grid coord, [i][j] -> [row, col] in [0, NG)
     unsigned int grid_lookup[N][N][2];               // input position to obtain it's grid row and column
 
-    // input coord to obtain pointer offsets of this area -> offset in [0, N*N)
-    unsigned int row_index[N][N];                       // pointer position for each row
-    unsigned int col_index[N][N];                       // pointer position for each column
-    unsigned int grid_index[N][N][N];                   // pointer position for each grid
-    unsigned int neighbor_index[N][N][N_NEIGHBORS];     // pointer position for each neighbor
+    // Input coord to obtain pointer offsets of a relevent area -> offset in [0, N*N).
+    // The last dimension is the pointer offsets for the relevent area. 
+    // For example, given a cell at [<any row>][col], 
+    // we can obtain the pointer offsets for all elements in it's column 
+    // by querying: col_index[col][...]
+    unsigned int row_index[N][N];                       // pointer position for each row, input 1D row index [i]
+    unsigned int col_index[N][N];                       // pointer position for each column, input 1D column index [j]
+    unsigned int grid_index[N][N][N];                   // pointer position for each grid, input 2D cell coord [i][j]
+    unsigned int neighbor_index[N][N][N_NEIGHBORS];     // pointer position for each neighbor, input 2D cell coord [i][j]
 
     void init();
 
