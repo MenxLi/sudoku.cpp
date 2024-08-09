@@ -42,14 +42,3 @@ target: obj
 		$(objs) src/main.cpp
 	$(CXX) $(COMMON_FLAGS) -o $(BIN_DIR)/benchmark \
 		$(objs) src/benchmark.cpp
-
-python: obj
-ifeq ($(UNAME_S),Darwin)
-	$(CXX) $(COMMON_FLAGS) -undefined dynamic_lookup \
-		-shared -fPIC $(shell python3 -m pybind11 --includes) -o $(LIB_DIR)/sudoku$(shell python3-config --extension-suffix) \
-		$(objs) src/binding.cpp
-else
-	$(CXX) $(COMMON_FLAGS) \
-		-shared -fPIC $(shell python3 -m pybind11 --includes) -o $(LIB_DIR)/sudoku$(shell python3-config --extension-suffix) \
-		$(objs) src/binding.cpp
-endif

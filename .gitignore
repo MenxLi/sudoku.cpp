@@ -1,6 +1,12 @@
 .cache
 .DS_Store
+*.egg-info
+__pycache__
+*.so
+*.pyc
+*.pyo
 
+build
 bin
 output
 puzzles_tmp

@@ -25,8 +25,8 @@ Puzzle 3:  196 [us]
 
 For python bindings:
 ```sh
-make python
-python3 python/demo.py
+pip install pybind11 && pip install ./bindings
+python demo.py
 ```
 
 Environment variables:

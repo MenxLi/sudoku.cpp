@@ -1,4 +1,4 @@
-from bin.lib import sudoku
+from sudoku_cpp import sudoku
 
 puzzle_str = """
 8 9 0 2 0 0 0 0 3 
