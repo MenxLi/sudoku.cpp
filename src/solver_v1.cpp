@@ -35,7 +35,7 @@ bool SolverV1::step_by_candidate(){
 
 bool SolverV1::step_by_crossover(){
     bool ret = false;
-    for (val_t i = 1; i <= BOARD_SIZE; i++)
+    for (val_t i = 1; i <= CANDIDATE_SIZE; i++)
     {
         if (update_by_cross(i)){
             ret = true;
@@ -90,6 +90,15 @@ void SolverV1::update_candidates(){
             update_candidate_for(i, j);
         }
     }
+};
+
+void SolverV1::refine_candidates(){
+    // handles implicit value determination
+    // i.e. if a sub-row/col in a grid has multiple candidates for a value,
+    // but can uniquely determine the value based on the row/col 
+    // (e.g. 57, 75, 375 appears in one row/col of a grid, determins 7 and 5 must be in the same row/col)
+    // then we can remove the other candidates from the same total-row/col
+    // to be implemented...
 };
 
 void SolverV1::reset_candidates(){

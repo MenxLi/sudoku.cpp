@@ -2,22 +2,11 @@
 #include "solver.h"
 #include "board.h"
 
-Solver::Solver()
-{
-    m_iteration_counter.current = 0;
-    m_iteration_counter.limit = 0;
-    m_view_ptr = nullptr;
-};
-
 Solver::Solver(Board& board)
 {
+    indexer.init();
     m_iteration_counter.current = 0;
     m_iteration_counter.limit = 0;
-    set_board(board);
-};
-
-void Solver::set_board(Board& board)
-{
     m_view_ptr.reset(new CellView(board));
 };
 
