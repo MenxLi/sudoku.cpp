@@ -1,12 +1,13 @@
 
 #include "solver.h"
 #include "board.h"
+#include "config.h"
 
 Solver::Solver(Board& board)
 {
     indexer.init();
     m_iteration_counter.current = 0;
-    m_iteration_counter.limit = 0;
+    m_iteration_counter.limit = MAX_ITER;
     set_board(board);
 };
 
@@ -15,7 +16,7 @@ void Solver::set_board(Board &board)
     m_board_ptr = &board;
 };
 
-bool Solver::solve(unsigned int max_iterations, bool verbose){
+bool Solver::solve(unsigned long max_iterations, bool verbose){
 
     m_iteration_counter.current = 0;
     m_iteration_counter.limit = max_iterations;

@@ -7,6 +7,10 @@
 #define GRID_SIZE 3
 #endif
 
+#ifndef MAX_ITER
+#define MAX_ITER 1e7
+#endif
+
 #define BOARD_SIZE (GRID_SIZE * GRID_SIZE)
 
 #ifdef STRICT

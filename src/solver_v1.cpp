@@ -10,7 +10,7 @@
 #include <algorithm>
 
 #define CANDIDATE_SIZE BOARD_SIZE
-#define MAX_FORK_TRAIL 1e6
+#define MAX_FORK_TRAIL MAX_ITER
 
 bool USE_GUESS;
 bool DETERMINISTIC_GUESS;
