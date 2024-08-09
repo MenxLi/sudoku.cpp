@@ -7,7 +7,12 @@ Solver::Solver(Board& board)
     indexer.init();
     m_iteration_counter.current = 0;
     m_iteration_counter.limit = 0;
-    m_view_ptr.reset(new CellView(board));
+    set_board(board);
+};
+
+void Solver::set_board(Board &board)
+{
+    m_board_ptr = &board;
 };
 
 bool Solver::solve(unsigned int max_iterations, bool verbose){
@@ -38,17 +43,8 @@ IterationCounter& Solver::iteration_counter()
     return m_iteration_counter;
 };
 
-Cell& Solver::cell(int row, int col)
-{
-    return m_view_ptr->get(row, col);
-};
-
-Cell& Solver::cell(const Coord& coord)
-{
-    return m_view_ptr->get(coord);
-};
 
 Board& Solver::board()
 {
-    return m_view_ptr->board();
+    return *m_board_ptr;
 };

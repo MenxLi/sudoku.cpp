@@ -20,6 +20,18 @@ void Board::clear(val_t val = 0)
 Board::Board() { clear(); };
 Board::~Board() {};
 
+val_t Board::get(unsigned int idx)
+{
+    ASSERT(idx < BOARD_SIZE * BOARD_SIZE, "index out of bounds: " + std::to_string(idx));
+    return *(data() + idx);
+};
+
+val_t& Board::get_(unsigned int idx)
+{
+    ASSERT(idx < BOARD_SIZE * BOARD_SIZE, "index out of bounds: " + std::to_string(idx));
+    return *(data() + idx);
+};
+
 val_t Board::get(int row, int col) const
 {
     ASSERT(row >= 0 && row < BOARD_SIZE, "row out of bounds: " + std::to_string(row));

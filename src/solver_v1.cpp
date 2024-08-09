@@ -65,20 +65,19 @@ bool SolverV1::step(){
 };
 
 void SolverV1::update_candidate_for(int row, int col){
-    Cell& cell = this->cell(row, col);
-    if (cell.value() != 0){
+    if (this->board().get_(row, col) != 0){
         // already has a value
         return;
     }
 
-    // remove candidates from the same row, column, and grid
-    for (int idx = 0; idx < cell.neighbor_count; idx++)
-    {
-        val_t other_val = *cell.neighbor()[idx];
+    for (int i = 0; i < indexer.N_NEIGHBORS; i++){
+        auto offset = indexer.neighbor_index[row][col][i];
+        val_t other_val = this->board().get(offset);
         if (other_val != 0){
             m_candidates[row][col][other_val - 1] = 0;
         }
     }
+
 };
 
 void SolverV1::update_candidates(){
@@ -115,10 +114,9 @@ void SolverV1::reset_candidates(){
 };
 
 bool SolverV1::update_value_for(int row, int col){
-    Cell& cell = this->cell(row, col);
-    if (cell.value() != 0){
-        return false;
-    }
+
+    val_t& val = this->board().get_(row, col);
+    if (val != 0){ return false; }
 
     int candidate_count = 0;
     val_t candidate_val = 0;
@@ -135,7 +133,7 @@ bool SolverV1::update_value_for(int row, int col){
     }
 
     if (candidate_count == 1){
-        cell.value() = candidate_val;
+        val = candidate_val;
         return true;
     }
     return false;
@@ -165,7 +163,7 @@ bool SolverV1::update_by_cross(val_t value){
     {
         for (int j = 0; j < BOARD_SIZE; j++)
         {
-            if (this->cell(i, j).value() == value){
+            if (this->board().get_(i, j) == value){
                 m_cross_map[i][j] = 1;
             }
         }
@@ -217,7 +215,7 @@ bool SolverV1::update_by_cross(val_t value){
             {
                 for (unsigned int j = 0; j < GRID_SIZE; j++)
                 {
-                    if (this->cell(row_base + i, col_base + j).value() == value){
+                    if (this->board().get_(row_base + i, col_base + j) == value){
                         // the value is already in the grid, skip this grid!
                         skip_grid_flag = true;
                         count = 0; // reset count, make sure we don't fill in the grid
@@ -225,7 +223,7 @@ bool SolverV1::update_by_cross(val_t value){
                     if (
                         !skip_grid_flag &&
                         m_cross_map[row_base + i][col_base + j] == 0 && 
-                        this->cell(row_base + i, col_base + j).value() == 0
+                        this->board().get_(row_base + i, col_base + j) == 0
                         ){
                         aim_grid_row_idx = i;
                         aim_grid_col_idx = j;
@@ -234,7 +232,7 @@ bool SolverV1::update_by_cross(val_t value){
                 }
             }
             if (count == 1){
-                this->cell(row_base + aim_grid_row_idx, col_base + aim_grid_col_idx).value() = value;
+                this->board().get_(row_base + aim_grid_row_idx, col_base + aim_grid_col_idx) = value;
                 ret = true;
             }
         }
@@ -264,17 +262,21 @@ std::tuple<std::unique_ptr<SolverV1>, std::unique_ptr<Board>> SolverV1::fork(){
 };
 
 bool SolverV1::update_by_guess(){
-    auto numNeighborUnsolved = [](Cell& cell){
+    auto numNeighborUnsolved = [&](unsigned int row, unsigned int col)->unsigned int{
         unsigned int min_count;
         unsigned int row_count = 0;
         unsigned int col_count = 0;
         unsigned int grid_count = 0;
 
+        auto row_item_offsets = indexer.row_index[row];
+        auto col_item_offsets = indexer.col_index[col];
+        auto grid_item_offsets = indexer.grid_index[row][col];
+
         for (int i = 0; i < BOARD_SIZE; i++)
         {
-            if (*cell.row()[i] == 0) row_count++;
-            if (*cell.col()[i] == 0) col_count++;
-            if (*cell.grid()[i] == 0) grid_count++;
+            if (this->board().get(row_item_offsets[i]) == 0) row_count++;
+            if (this->board().get(col_item_offsets[i]) == 0) col_count++;
+            if (this->board().get(grid_item_offsets[i]) == 0) grid_count++;
         }
         min_count = row_count;
         if (col_count < min_count) min_count = col_count;
@@ -286,18 +288,16 @@ bool SolverV1::update_by_guess(){
     // by finding:
     // 1. the cell with the least number of candidates
     // 2. the cell with the least number of unsolved neighbors
-    auto get_heuristic_choice = [&]()->Cell*{
-        Cell* best_choice = nullptr;
+    auto get_heuristic_choice = [&]()->Coord {
+        Coord best_choice;
         unsigned int min_candidate_count = 1e4;
         unsigned int min_neighbor_count = 1e4;
         for (int i = 0; i < BOARD_SIZE; i++)
         {
             for (int j = 0; j < BOARD_SIZE; j++)
             {
-                Cell& cell = this->cell(i, j);
-                if (cell.value() != 0){
-                    continue;
-                };
+                val_t& val = board().get_(i, j);
+                if (val != 0){ continue; };     // skip the solved cells
 
                 unsigned int candidate_count = 0;
                 for (int k = 0; k < CANDIDATE_SIZE; k++)
@@ -308,14 +308,14 @@ bool SolverV1::update_by_guess(){
                 }
                 if (candidate_count < min_candidate_count){
                     min_candidate_count = candidate_count;
-                    min_neighbor_count = numNeighborUnsolved(cell);
-                    best_choice = &cell;
+                    min_neighbor_count = numNeighborUnsolved(i, j);
+                    best_choice = {i, j};
                 }
                 else if (candidate_count == min_candidate_count){
-                    unsigned int neighbor_count = numNeighborUnsolved(cell);
+                    unsigned int neighbor_count = numNeighborUnsolved(i, j);
                     if (neighbor_count < min_neighbor_count){
                         min_neighbor_count = neighbor_count;
-                        best_choice = &cell;
+                        best_choice = {i, j};
                     }
                 }
                 else{
@@ -327,20 +327,20 @@ bool SolverV1::update_by_guess(){
     };
 
     // choose a cell to guess
-    Cell* best_choice = nullptr;
+    Coord best_choice;
     if (HEURISTIC_GUESS){
         best_choice = get_heuristic_choice();
     }
     else{
         if (!DETERMINISTIC_GUESS){
             // choose a random cell to guess
-            std::vector<Cell*> unsolved_cells;
+            std::vector<Coord> unsolved_cells;
             for (int i = 0; i < BOARD_SIZE; i++)
             {
                 for (int j = 0; j < BOARD_SIZE; j++)
                 {
-                    if (this->cell(i, j).value() == 0){
-                        unsolved_cells.push_back(&this->cell(i, j));
+                    if (this->board().get_(i, j) == 0){
+                        unsolved_cells.push_back({i, j});
                     }
                 }
             }
@@ -350,18 +350,18 @@ bool SolverV1::update_by_guess(){
         }
         else{
             // choose the first unsolved cell
+            bool _found = false;
             for (int i = 0; i < BOARD_SIZE; i++)
             {
                 for (int j = 0; j < BOARD_SIZE; j++)
                 {
-                    if (this->cell(i, j).value() == 0){
-                        best_choice = &this->cell(i, j);
+                    if (this->board().get_(i, j) == 0){
+                        best_choice = {i, j};
+                        _found = true;
                         break;
                     }
                 }
-                if (best_choice != nullptr){
-                    break;
-                }
+                if (_found) break;
             }
         }
     }
@@ -373,7 +373,7 @@ bool SolverV1::update_by_guess(){
     candidate_indices.reserve(CANDIDATE_SIZE);
     for (unsigned int i = 0; i < CANDIDATE_SIZE; i++)
     {
-        if (m_candidates[best_choice->coord().row][best_choice->coord().col][i] != 0){
+        if (m_candidates[best_choice.row][best_choice.col][i] != 0){
             candidate_indices.push_back(i);
         }
     }
@@ -387,10 +387,10 @@ bool SolverV1::update_by_guess(){
 
     // make guesses with backtracking
     for (unsigned int k : candidate_indices){
-        val_t guess = m_candidates[best_choice->coord().row][best_choice->coord().col][k];
+        val_t guess = m_candidates[best_choice.row][best_choice.col][k];
 
         auto [forked_solver, forked_board] = this->fork();
-        forked_solver->cell(best_choice->coord().row, best_choice->coord().col).value() = guess;
+        forked_solver->board().get_(best_choice.row, best_choice.col) = guess;
 
         unsigned int fork_trail_limit = this->iteration_counter().limit - this->iteration_counter().current;
         if (fork_trail_limit > MAX_FORK_TRAIL){ fork_trail_limit = MAX_FORK_TRAIL; }

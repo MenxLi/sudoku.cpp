@@ -1,5 +1,4 @@
 #pragma once
-#include "cell.h"
 #include "board.h"
 #include "indexer.hpp"
 
@@ -20,11 +19,9 @@ public:
     virtual ~Solver() = default;
     virtual bool step() = 0;
     bool solve(unsigned int max_iterations = 1e6, bool verbose = false);
-    Cell& cell(int row, int col);
-    Cell& cell(const Coord& coord);
     Board& board();
     IterationCounter& iteration_counter();
 protected:
     IterationCounter m_iteration_counter;
-    std::unique_ptr<CellView> m_view_ptr;
+    Board* m_board_ptr;
 };

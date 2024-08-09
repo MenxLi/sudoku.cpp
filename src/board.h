@@ -24,8 +24,10 @@ public:
 
     void clear(val_t val);
 
+    val_t get(unsigned int idx);
     val_t get(int row, int col) const;
     val_t get(const Coord& coord) const;
+    val_t& get_(unsigned int idx);
     val_t& get_(int row, int col);
     val_t& get_(const Coord& coord);
 
