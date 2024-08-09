@@ -392,16 +392,16 @@ bool SolverV1::update_by_guess(){
         auto [forked_solver, forked_board] = this->fork();
         forked_solver->board().get_(best_choice.row, best_choice.col) = guess;
 
-        unsigned int fork_trail_limit = this->iteration_counter().limit - this->iteration_counter().current;
-        if (fork_trail_limit > MAX_FORK_TRAIL){ fork_trail_limit = MAX_FORK_TRAIL; }
+        // inherit the iteration counter
+        forked_solver->iteration_counter().current = this->iteration_counter().current;
 
         bool solved;
         try{
-            solved = forked_solver->solve(fork_trail_limit);
-            this->iteration_counter().current += forked_solver->iteration_counter().current;
+            solved = forked_solver->solve();
+            this->iteration_counter().current = forked_solver->iteration_counter().current;
         }
         catch(std::runtime_error& e){
-            this->iteration_counter().current += forked_solver->iteration_counter().current;
+            this->iteration_counter().current = forked_solver->iteration_counter().current;
             continue;
         }
 

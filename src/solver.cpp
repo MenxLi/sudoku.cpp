@@ -16,12 +16,10 @@ void Solver::set_board(Board &board)
     m_board_ptr = &board;
 };
 
-bool Solver::solve(unsigned long max_iterations, bool verbose){
+bool Solver::solve(bool verbose){
 
-    m_iteration_counter.current = 0;
-    m_iteration_counter.limit = max_iterations;
-
-    while (m_iteration_counter.current < max_iterations && !board().is_solved()){
+    // std::cout << "starting with iteration: " << m_iteration_counter.current << std::endl;
+    while (m_iteration_counter.current < m_iteration_counter.limit && !board().is_solved()){
     
         if(verbose)
         {

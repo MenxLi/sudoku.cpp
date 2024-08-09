@@ -20,7 +20,7 @@ public:
     void set_board(Board& board);
     virtual ~Solver() = default;
     virtual bool step() = 0;
-    bool solve(unsigned long max_iterations = MAX_ITER, bool verbose = false);
+    bool solve(bool verbose = false);
     Board& board();
     IterationCounter& iteration_counter();
 protected:
