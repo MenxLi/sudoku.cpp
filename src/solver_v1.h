@@ -30,11 +30,7 @@ private:
     bool update_value_for(int row, int col);
     bool update_values();
 
-    unsigned int m_cross_map[BOARD_SIZE][BOARD_SIZE];
-    unsigned int m_cross_row[BOARD_SIZE];       // maybe move to the function...
-    unsigned int m_cross_col[BOARD_SIZE];
     bool update_by_cross(val_t value);
-    void clear_cross_map();
 
     // this is for trail and error approach
     std::tuple<std::unique_ptr<SolverV1>, std::unique_ptr<Board>> fork();

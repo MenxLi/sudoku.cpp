@@ -134,27 +134,20 @@ bool SolverV1::update_values(){
 
 bool SolverV1::update_by_cross(val_t value){
     bool ret = false;
-    // first, clear the cross map
-    clear_cross_map();
 
-    // iterate over the board marking cells that have the value
-    for (int i = 0; i < BOARD_SIZE; i++)
-    {
-        for (int j = 0; j < BOARD_SIZE; j++)
-        {
-            if (this->board().get_(i, j) == value){
-                m_cross_map[i][j] = 1;
-            }
-        }
-    }
+    unsigned int m_cross_row[BOARD_SIZE] = {0};
+    unsigned int m_cross_col[BOARD_SIZE] = {0};
+    unsigned int m_cross_map[BOARD_SIZE][BOARD_SIZE] = {0};
 
     // iterate over the map, 
-    // row by row, column by column, and fill in the value where there is a 1
-    for (unsigned int row_idx = 0; row_idx < BOARD_SIZE; row_idx ++ ){
-        for (unsigned int col_idx = 0; col_idx < BOARD_SIZE; col_idx++){
-            if (m_cross_map[row_idx][col_idx] == 1){
-                m_cross_row[row_idx] += 1;
-                m_cross_col[col_idx] += 1;
+    // row by row, column by column, and fill in the cross map
+    for (unsigned int i = 0; i < BOARD_SIZE; i++)
+    {
+        for (unsigned int j = 0; j < BOARD_SIZE; j++)
+        {
+            if (this->board().get_(i, j) == value){
+                m_cross_row[i] += 1;
+                m_cross_col[j] += 1;
             }
         }
     }
@@ -201,7 +194,7 @@ bool SolverV1::update_by_cross(val_t value){
                     }
                     if (
                         !skip_grid_flag &&
-                        m_cross_map[row_base + i][col_base + j] == 0 && 
+                        m_cross_map[row_base + i][col_base + j] == 0 &&
                         this->board().get_(row_base + i, col_base + j) == 0
                         ){
                         aim_grid_row_idx = i;
@@ -217,20 +210,6 @@ bool SolverV1::update_by_cross(val_t value){
         }
     }
     return ret;
-};
-
-void SolverV1::clear_cross_map(){
-    for (int i = 0; i < BOARD_SIZE; i++)
-    {
-        // tricky, use because row and col are the same size
-        m_cross_row[i] = 0;
-        m_cross_col[i] = 0;
-
-        for (int j = 0; j < BOARD_SIZE; j++)
-        {
-            m_cross_map[i][j] = 0;
-        }
-    }
 };
 
 std::tuple<std::unique_ptr<SolverV1>, std::unique_ptr<Board>> SolverV1::fork(){
