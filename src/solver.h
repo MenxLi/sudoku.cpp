@@ -17,7 +17,6 @@ public:
     inline static Indexer<GRID_SIZE> indexer;
 
     Solver(Board& board);
-    void set_board(Board& board);
     virtual ~Solver() = default;
     virtual bool step() = 0;
     bool solve(bool verbose = false);

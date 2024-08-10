@@ -23,10 +23,10 @@ mkdir -p output
 Run benchmarks (time varies depending on difficulties):
 ```
 > ./bin/benchmark
-Benchmarking 3 puzzles with 10000 repeats...
-Puzzle 1:   31 [us]
-Puzzle 2:  115 [us]
-Puzzle 3:  196 [us]
+Benchmarking 3 puzzles with 100 repeats...
+Puzzle 1:    6 [us]
+Puzzle 2:   25 [us]
+Puzzle 3:  377 [us]
 ```
 
 ---

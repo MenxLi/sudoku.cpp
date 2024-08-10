@@ -15,7 +15,7 @@ else
 	UNAME_S := $(shell uname -s)
 endif
 
-all: test target python
+all: test target
 
 _dst:
 	mkdir -p $(BIN_DIR) && mkdir -p $(LIB_DIR)

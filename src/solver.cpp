@@ -6,14 +6,9 @@
 Solver::Solver(Board& board)
 {
     indexer.init();
+    m_board_ptr = &board;
     m_iteration_counter.current = 0;
     m_iteration_counter.limit = MAX_ITER;
-    set_board(board);
-};
-
-void Solver::set_board(Board &board)
-{
-    m_board_ptr = &board;
 };
 
 bool Solver::solve(bool verbose){

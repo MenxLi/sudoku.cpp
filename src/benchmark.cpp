@@ -13,7 +13,6 @@ std::chrono::duration<double> solve_for(std::string file_content)
     auto start = std::chrono::high_resolution_clock::now();
     std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
     SolverV1 solver(board);
-    solver.set_board(board);
     solver.solve();
     auto end = std::chrono::high_resolution_clock::now();
 
