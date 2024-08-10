@@ -128,6 +128,8 @@ class CandidateBoard
 {
 public:
     inline bool_& get_(int row, int col, val_t value);
+    inline bool_* get(int row, int col);
+    inline bool_* get(int idx);
 
     void reset();
     unsigned int count(int row, int col) const;
@@ -143,4 +145,12 @@ private:
 bool_& CandidateBoard::get_(int row, int col, val_t value){
     ASSERT_CANDIDATE_BOUNDS(row, col, value)
     return m_candidates[row][col][value - 1];
+}
+
+bool_* CandidateBoard::get(int row, int col){
+    return m_candidates[row][col];
+}
+
+bool_* CandidateBoard::get(int idx){
+    return m_candidates[idx / BOARD_SIZE][idx % BOARD_SIZE];
 }

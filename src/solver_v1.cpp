@@ -25,12 +25,103 @@ SolverV1::SolverV1(Board& board) : Solver(board) {
     DETERMINISTIC_GUESS = util::parse_env_i("SOLVER_DETERMINISTIC_GUESS", false);
     HEURISTIC_GUESS = util::parse_env_i("SOLVER_HEURISTIC_GUESS", true);
     // std::cout << "Config: USE_GUESS=" << USE_GUESS << ", DETERMINISTIC_GUESS=" << DETERMINISTIC_GUESS << ", HEURISTIC_GUESS=" << HEURISTIC_GUESS << std::endl;
+
+    init_cross_map();
+    init_candidate_map();
+};
+
+SolverV1::SolverV1(Board& board, CandidateBoard& candidates, unsigned int cross_map[CANDIDATE_SIZE][BOARD_SIZE][BOARD_SIZE]) : Solver(board) {
+    m_candidates = candidates;
+    // this somehow cause python binding to fail...
+    // std::copy(&cross_map[0][0][0], &cross_map[0][0][0] + CANDIDATE_SIZE * BOARD_SIZE * BOARD_SIZE, &m_cross_map[0][0][0]);
+    for (unsigned int i = 0; i < CANDIDATE_SIZE; i++)
+    {
+        for (unsigned int j = 0; j < BOARD_SIZE; j++)
+        {
+            for (unsigned int k = 0; k < BOARD_SIZE; k++)
+            {
+                m_cross_map[i][j][k] = cross_map[i][j][k];
+            }
+        }
+    }
+};
+
+void SolverV1::init_cross_map(){
+    // initialize the cross map
+    // row by row, column by column, and fill in the cross map
+    for (unsigned int v = 0; v < CANDIDATE_SIZE; v++)
+    {
+        val_t value = static_cast<val_t>(v + 1);
+        unsigned int m_cross_row[BOARD_SIZE] = {0};
+        unsigned int m_cross_col[BOARD_SIZE] = {0};
+        for (unsigned int i = 0; i < BOARD_SIZE; i++)
+        {
+            for (unsigned int j = 0; j < BOARD_SIZE; j++)
+            {
+                if (this->board().get_(i, j) == value){
+                    m_cross_row[i] += 1;
+                    m_cross_col[j] += 1;
+                }
+            }
+        }
+
+        for (unsigned int i = 0; i < BOARD_SIZE; i++)
+        {
+            if (m_cross_row[i] > 1 || m_cross_col[i] > 1){
+                throw std::runtime_error("Axis count violation");
+            }
+        }
+
+        for (unsigned int i = 0; i < BOARD_SIZE; i++)
+        {
+            for (unsigned int j = 0; j < BOARD_SIZE; j++)
+            {
+                m_cross_map[v][i][j] = m_cross_row[i] == 1 || m_cross_col[j] == 1;
+            }
+        }
+    }
+};
+
+void SolverV1::init_candidate_map(){
+
+    auto update_candidate_for = [&](int row, int col){
+        if (this->board().get_(row, col) != 0){
+            // already has a value
+            return;
+        }
+
+        for (int i = 0; i < indexer.N_NEIGHBORS; i++){
+            auto offset = indexer.neighbor_index[row][col][i];
+            val_t other_val = this->board().get(offset);
+            if (other_val != 0){
+                m_candidates.get_(row, col, other_val) = 0;
+            }
+        }
+    };
+
+
+    m_candidates.reset();
+    for (int i = 0; i < BOARD_SIZE; i++)
+    {
+        for (int j = 0; j < BOARD_SIZE; j++)
+        {
+            update_candidate_for(i, j);
+        }
+    }
 };
 
 bool SolverV1::step_by_candidate(){
-    update_candidates();
-    bool ret = update_values();
-    return ret;
+    bool updated = false;
+    for (int i = 0; i < BOARD_SIZE; i++)
+    {
+        for (int j = 0; j < BOARD_SIZE; j++)
+        {
+            if (update_value_for(i, j)){
+                updated = true;
+            }
+        }
+    }
+    return updated;
 };
 
 bool SolverV1::step_by_crossover(){
@@ -41,12 +132,6 @@ bool SolverV1::step_by_crossover(){
             ret = true;
         }
     }
-    return ret;
-};
-
-bool SolverV1::step_by_guess(){
-    update_candidates();
-    bool ret = update_by_guess();
     return ret;
 };
 
@@ -64,32 +149,25 @@ bool SolverV1::step(){
     return false;
 };
 
-void SolverV1::update_candidate_for(int row, int col){
-    if (this->board().get_(row, col) != 0){
-        // already has a value
-        return;
-    }
+void SolverV1::fill_propagate(unsigned int row, unsigned int col, val_t value){
+    board().get_(row, col) = value;
 
+    // clear the candidates for the neighbor cells
     for (int i = 0; i < indexer.N_NEIGHBORS; i++){
         auto offset = indexer.neighbor_index[row][col][i];
-        val_t other_val = this->board().get(offset);
-        if (other_val != 0){
-            m_candidates.get_(row, col, other_val) = 0;
-        }
+        m_candidates.get(offset)[value - 1] = 0;
     }
 
-};
-
-void SolverV1::update_candidates(){
-    reset_candidates();
+    // fill the cross map of the value
+    unsigned int c_index = value - 1;
+    ASSERT(m_cross_map[c_index][row][col] == 0, "Cross map violation");
     for (int i = 0; i < BOARD_SIZE; i++)
     {
-        for (int j = 0; j < BOARD_SIZE; j++)
-        {
-            update_candidate_for(i, j);
-        }
+        m_cross_map[value - 1][row][i] = 1;
+        m_cross_map[value - 1][i][col] = 1;
     }
 };
+
 
 void SolverV1::refine_candidates(){
     // handles implicit value determination
@@ -100,73 +178,22 @@ void SolverV1::refine_candidates(){
     // to be implemented...
 };
 
-void SolverV1::reset_candidates(){
-    m_candidates.reset();
-};
-
 bool SolverV1::update_value_for(int row, int col){
 
-    val_t& val = this->board().get_(row, col);
-    if (val != 0){ return false; }
+    if (this->board().get_(row, col) != 0){ return false; }
 
     val_t candidate_val = 0;
     bool found = m_candidates.remain_x(row, col, 1, &candidate_val);
     if (found){
-        val = candidate_val;
+        fill_propagate(row, col, candidate_val);
         return true;
     }
     return false;
 };
 
-bool SolverV1::update_values(){
-    bool updated = false;
-    for (int i = 0; i < BOARD_SIZE; i++)
-    {
-        for (int j = 0; j < BOARD_SIZE; j++)
-        {
-            if (update_value_for(i, j)){
-                updated = true;
-            }
-        }
-    }
-    return updated;
-};
-
 bool SolverV1::update_by_cross(val_t value){
     bool ret = false;
-
-    unsigned int m_cross_row[BOARD_SIZE] = {0};
-    unsigned int m_cross_col[BOARD_SIZE] = {0};
-    unsigned int m_cross_map[BOARD_SIZE][BOARD_SIZE] = {0};
-
-    // iterate over the map, 
-    // row by row, column by column, and fill in the cross map
-    for (unsigned int i = 0; i < BOARD_SIZE; i++)
-    {
-        for (unsigned int j = 0; j < BOARD_SIZE; j++)
-        {
-            if (this->board().get_(i, j) == value){
-                m_cross_row[i] += 1;
-                m_cross_col[j] += 1;
-            }
-        }
-    }
-
-    for (unsigned int i = 0; i < BOARD_SIZE; i++)
-    {
-        if (m_cross_row[i] > 1 || m_cross_col[i] > 1){
-            throw std::runtime_error("Axis count violation");
-        }
-    }
-
-    // update the cross map with the row and column maps
-    for (unsigned int i = 0; i < BOARD_SIZE; i++)
-    {
-        for (unsigned int j = 0; j < BOARD_SIZE; j++)
-        {
-            m_cross_map[i][j] = m_cross_row[i] == 1 || m_cross_col[j] == 1;
-        }
-    }
+    unsigned int value_index = value - 1;
 
     // iterate over grid, 
     // if there is only one cell in the grid that is unsoved and not marked, fill it in
@@ -194,7 +221,7 @@ bool SolverV1::update_by_cross(val_t value){
                     }
                     if (
                         !skip_grid_flag &&
-                        m_cross_map[row_base + i][col_base + j] == 0 &&
+                        m_cross_map[value_index][row_base + i][col_base + j] == 0 &&
                         this->board().get_(row_base + i, col_base + j) == 0
                         ){
                         aim_grid_row_idx = i;
@@ -204,7 +231,7 @@ bool SolverV1::update_by_cross(val_t value){
                 }
             }
             if (count == 1){
-                this->board().get_(row_base + aim_grid_row_idx, col_base + aim_grid_col_idx) = value;
+                fill_propagate(row_base + aim_grid_row_idx, col_base + aim_grid_col_idx, value);
                 ret = true;
             }
         }
@@ -215,11 +242,11 @@ bool SolverV1::update_by_cross(val_t value){
 std::tuple<std::unique_ptr<SolverV1>, std::unique_ptr<Board>> SolverV1::fork(){
     std::unique_ptr<Board> new_board(new Board());
     new_board->load_data(this->board());
-    std::unique_ptr<SolverV1> ret(new SolverV1(*new_board));
+    std::unique_ptr<SolverV1> ret(new SolverV1(*new_board, m_candidates, m_cross_map));
     return std::make_tuple(std::move(ret), std::move(new_board));
 };
 
-bool SolverV1::update_by_guess(){
+bool SolverV1::step_by_guess(){
     auto numNeighborUnsolved = [&](unsigned int row, unsigned int col)->unsigned int{
         unsigned int min_count;
         unsigned int row_count = 0;
@@ -254,8 +281,7 @@ bool SolverV1::update_by_guess(){
         {
             for (int j = 0; j < BOARD_SIZE; j++)
             {
-                val_t& val = board().get_(i, j);
-                if (val != 0){ continue; };     // skip the solved cells
+                if (this->board().get_(i, j) != 0){ continue; };     // skip the solved cells
 
                 unsigned int candidate_count = m_candidates.count(i, j);
                 if (candidate_count < min_candidate_count){
@@ -342,13 +368,13 @@ bool SolverV1::update_by_guess(){
     for (val_t guess : candidate_values){
 
         auto [forked_solver, forked_board] = this->fork();
-        forked_solver->board().get_(best_choice.row, best_choice.col) = guess;
 
         // inherit the iteration counter
         forked_solver->iteration_counter().current = this->iteration_counter().current;
 
         bool solved;
         try{
+            forked_solver->fill_propagate(best_choice.row, best_choice.col, guess);
             solved = forked_solver->solve();
             this->iteration_counter().current = forked_solver->iteration_counter().current;
         }
@@ -366,6 +392,5 @@ bool SolverV1::update_by_guess(){
     // ideally, we should never reach here...
     // unless the board is invalid, trail limit is reached, or the guess is wrong, 
     // when the guess is wrong, the forked solver will throw an exception and we will catch it
-    throw std::runtime_error("No solution found by guessing");
     return false;
 };

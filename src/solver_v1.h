@@ -9,30 +9,31 @@ class SolverV1 : public Solver
 {
 public:
     SolverV1(Board& board);
+
+    // this is used for inheritance without re-initializing the board
+    SolverV1(Board& board, CandidateBoard& candidates, unsigned int cross_map[CANDIDATE_SIZE][BOARD_SIZE][BOARD_SIZE]);
+
     bool step();
     bool step_by_candidate();
     bool step_by_crossover();
     bool step_by_guess();
 
-private:
-    // // cadidate refers to the possible values for a cell, 
-    // // based on the values of other cells in the same row, column, and grid
-    // val_t m_candidates[BOARD_SIZE][BOARD_SIZE][CANDIDATE_SIZE];
-    CandidateBoard m_candidates;
+    // set the value of a cell, and propagate the value to change the candidates
+    void fill_propagate(unsigned int row, unsigned int col, val_t value);
 
-    // calculated candidates for each cell based on current board
-    void update_candidate_for(int row, int col);
-    // number of candidates for each cell, will call reset_candidates()
-    void update_candidates();
+private:
+    CandidateBoard m_candidates;
+    unsigned int m_cross_map[CANDIDATE_SIZE][BOARD_SIZE][BOARD_SIZE];
+
+    void init_candidate_map();
+    void init_cross_map();
+
     // handles implicit value determination
     void refine_candidates();
-    void reset_candidates();
-    bool update_value_for(int row, int col);
-    bool update_values();
 
+    bool update_value_for(int row, int col);
     bool update_by_cross(val_t value);
 
     // this is for trail and error approach
     std::tuple<std::unique_ptr<SolverV1>, std::unique_ptr<Board>> fork();
-    bool update_by_guess();
 };
