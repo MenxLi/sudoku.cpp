@@ -74,7 +74,7 @@ void SolverV1::update_candidate_for(int row, int col){
         auto offset = indexer.neighbor_index[row][col][i];
         val_t other_val = this->board().get(offset);
         if (other_val != 0){
-            m_candidates[row][col][other_val - 1] = 0;
+            m_candidates.get_(row, col, other_val) = 0;
         }
     }
 
@@ -101,16 +101,7 @@ void SolverV1::refine_candidates(){
 };
 
 void SolverV1::reset_candidates(){
-    for (int i = 0; i < BOARD_SIZE; i++)
-    {
-        for (int j = 0; j < BOARD_SIZE; j++)
-        {
-            for (int k = 0; k < CANDIDATE_SIZE; k++)
-            {
-                m_candidates[i][j][k] = k + 1;
-            }
-        }
-    }
+    m_candidates.reset();
 };
 
 bool SolverV1::update_value_for(int row, int col){
@@ -118,21 +109,9 @@ bool SolverV1::update_value_for(int row, int col){
     val_t& val = this->board().get_(row, col);
     if (val != 0){ return false; }
 
-    int candidate_count = 0;
     val_t candidate_val = 0;
-    for (int i = 0; i < CANDIDATE_SIZE; i++)
-    {
-        if (m_candidates[row][col][i] != 0){
-            candidate_count++;
-            candidate_val = m_candidates[row][col][i];
-        }
-    }
-
-    if (candidate_count == 0){
-        throw std::runtime_error("No candidate left for cell, bad board?");
-    }
-
-    if (candidate_count == 1){
+    bool found = m_candidates.remain_x(row, col, 1, &candidate_val);
+    if (found){
         val = candidate_val;
         return true;
     }
@@ -299,13 +278,7 @@ bool SolverV1::update_by_guess(){
                 val_t& val = board().get_(i, j);
                 if (val != 0){ continue; };     // skip the solved cells
 
-                unsigned int candidate_count = 0;
-                for (int k = 0; k < CANDIDATE_SIZE; k++)
-                {
-                    if (m_candidates[i][j][k] != 0){
-                        candidate_count++;
-                    }
-                }
+                unsigned int candidate_count = m_candidates.count(i, j);
                 if (candidate_count < min_candidate_count){
                     min_candidate_count = candidate_count;
                     min_neighbor_count = numNeighborUnsolved(i, j);
@@ -369,12 +342,13 @@ bool SolverV1::update_by_guess(){
     // choose a candidate in the best choice location
 
     // collect the indices of the candidates where the value is not 0
-    std::vector<unsigned int> candidate_indices;
-    candidate_indices.reserve(CANDIDATE_SIZE);
+    std::vector<val_t> candidate_values;
+    // candidate_values.reserve(CANDIDATE_SIZE);
     for (unsigned int i = 0; i < CANDIDATE_SIZE; i++)
     {
-        if (m_candidates[best_choice.row][best_choice.col][i] != 0){
-            candidate_indices.push_back(i);
+        val_t val = static_cast<val_t>(i + 1);
+        if (m_candidates.get_(best_choice.row, best_choice.col, val)){
+            candidate_values.push_back(val);
         }
     }
 
@@ -382,12 +356,11 @@ bool SolverV1::update_by_guess(){
         // shuffle the candidate indices
         std::random_device rd;
         std::mt19937 g(rd());
-        std::shuffle(candidate_indices.begin(), candidate_indices.end(), g);
+        std::shuffle(candidate_values.begin(), candidate_values.end(), g);
     }
 
     // make guesses with backtracking
-    for (unsigned int k : candidate_indices){
-        val_t guess = m_candidates[best_choice.row][best_choice.col][k];
+    for (val_t guess : candidate_values){
 
         auto [forked_solver, forked_board] = this->fork();
         forked_solver->board().get_(best_choice.row, best_choice.col) = guess;

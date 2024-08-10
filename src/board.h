@@ -5,10 +5,22 @@ providing methods to read / dump the board state.
 
 #pragma once
 #include <iostream>
+#include <ostream>
 #include <string>
 #include <memory>
 #include <vector>
 #include "config.h"
+
+#define CANDIDATE_SIZE BOARD_SIZE
+
+#define ASSERT_COORD_BOUNDS(coord_row, coord_col) \
+    ASSERT(coord_row >= 0 && coord_row < BOARD_SIZE, "row out of bounds: " + std::to_string(coord_row)); \
+    ASSERT(coord_col >= 0 && coord_col < BOARD_SIZE, "column out of bounds: " + std::to_string(coord_col));
+#define ASSERT_CANDIDATE_BOUNDS(row, col, value) \
+    ASSERT(row >= 0 && row < BOARD_SIZE, "row out of bounds: " + std::to_string(row)); \
+    ASSERT(col >= 0 && col < BOARD_SIZE, "column out of bounds: " + std::to_string(col)); \
+    ASSERT(value >= 0 && value <= CANDIDATE_SIZE, "value out of bounds: " + std::to_string(value)); // value is 1-based, but we allow 0 to indicate empty
+
 
 struct Coord
 {
@@ -24,12 +36,12 @@ public:
 
     void clear(val_t val);
 
-    val_t get(unsigned int idx);
-    val_t get(int row, int col) const;
-    val_t get(const Coord& coord) const;
-    val_t& get_(unsigned int idx);
-    val_t& get_(int row, int col);
-    val_t& get_(const Coord& coord);
+    inline val_t get(unsigned int idx);
+    inline val_t get(int row, int col) const;
+    inline val_t get(const Coord& coord) const;
+    inline val_t& get_(unsigned int idx);
+    inline val_t& get_(int row, int col);
+    inline val_t& get_(const Coord& coord);
 
     // NOTE:
     // the following methods return a unique_ptr to an array of pointers to the values
@@ -70,3 +82,65 @@ private:
     val_t m_board[BOARD_SIZE][BOARD_SIZE];
     std::string to_string_raw() const;
 };
+
+val_t Board::get(unsigned int idx)
+{
+    ASSERT(idx < BOARD_SIZE * BOARD_SIZE, "index out of bounds: " + std::to_string(idx));
+    return *(data() + idx);
+};
+
+val_t& Board::get_(unsigned int idx)
+{
+    ASSERT(idx < BOARD_SIZE * BOARD_SIZE, "index out of bounds: " + std::to_string(idx));
+    return *(data() + idx);
+};
+
+val_t Board::get(int row, int col) const
+{
+    ASSERT_COORD_BOUNDS(row, col);
+    return m_board[row][col];
+};
+
+val_t Board::get(const Coord& coord) const
+{ 
+    return get(coord.row, coord.col); 
+};
+
+val_t& Board::get_(int row, int col)
+{
+    ASSERT_COORD_BOUNDS(row, col);
+    return m_board[row][col];
+};
+
+val_t& Board::get_(const Coord& coord)
+{
+    return get_(coord.row, coord.col);
+};
+
+
+/*
+cadidate refers to the possible values for a cell, 
+based on the values of other cells in the same row, column, and grid, 
+it serves as a draft for the actual value of the cell when solving the puzzle
+*/
+typedef uint8_t bool_;
+class CandidateBoard
+{
+public:
+    inline bool_& get_(int row, int col, val_t value);
+
+    void reset();
+    unsigned int count(int row, int col) const;
+
+    // return if the cell has only count candidates left
+    // and store the candidates in the buffer
+    bool_ remain_x(int row, int col, unsigned int count, val_t* buffer) const;
+
+private:
+    bool_ m_candidates[BOARD_SIZE][BOARD_SIZE][CANDIDATE_SIZE];
+};
+
+bool_& CandidateBoard::get_(int row, int col, val_t value){
+    ASSERT_CANDIDATE_BOUNDS(row, col, value)
+    return m_candidates[row][col][value - 1];
+}

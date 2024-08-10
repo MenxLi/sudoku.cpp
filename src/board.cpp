@@ -20,42 +20,6 @@ void Board::clear(val_t val = 0)
 Board::Board() { clear(); };
 Board::~Board() {};
 
-val_t Board::get(unsigned int idx)
-{
-    ASSERT(idx < BOARD_SIZE * BOARD_SIZE, "index out of bounds: " + std::to_string(idx));
-    return *(data() + idx);
-};
-
-val_t& Board::get_(unsigned int idx)
-{
-    ASSERT(idx < BOARD_SIZE * BOARD_SIZE, "index out of bounds: " + std::to_string(idx));
-    return *(data() + idx);
-};
-
-val_t Board::get(int row, int col) const
-{
-    ASSERT(row >= 0 && row < BOARD_SIZE, "row out of bounds: " + std::to_string(row));
-    ASSERT(col >= 0 && col < BOARD_SIZE, "column out of bounds: " + std::to_string(col));
-    return m_board[row][col];
-};
-
-val_t Board::get(const Coord& coord) const
-{ 
-    return get(coord.row, coord.col); 
-};
-
-val_t& Board::get_(int row, int col)
-{
-    ASSERT(row >= 0 && row < BOARD_SIZE, "row out of bounds: " + std::to_string(row));
-    ASSERT(col >= 0 && col < BOARD_SIZE, "column out of bounds: " + std::to_string(col));
-    return m_board[row][col];
-};
-
-val_t& Board::get_(const Coord& coord)
-{
-    return get_(coord.row, coord.col);
-};
-
 std::unique_ptr<val_t*> Board::get_row(int row)
 {
     ASSERT(row >= 0 && row < BOARD_SIZE, "row out of bounds: " + std::to_string(row));
@@ -79,8 +43,7 @@ std::unique_ptr<val_t*> Board::get_col(int col)
 };
 
 std::unique_ptr<val_t*> Board::get_grid(int row, int col){
-    ASSERT(row >= 0 && row < GRID_SIZE, "grid row out of bounds: " + std::to_string(row));
-    ASSERT(col >= 0 && col < GRID_SIZE, "grid col out of bounds: " + std::to_string(col));
+    ASSERT_COORD_BOUNDS(row, col);
     std::unique_ptr<val_t*> result(new val_t*[BOARD_SIZE]);
     for (int i = 0; i < GRID_SIZE; i++){
         for (int j = 0; j < GRID_SIZE; j++){
@@ -92,9 +55,7 @@ std::unique_ptr<val_t*> Board::get_grid(int row, int col){
 
 void Board::set(int row, int col, val_t value)
 {
-    ASSERT(row >= 0 && row < BOARD_SIZE, "row out of bounds: " + std::to_string(row));
-    ASSERT(col >= 0 && col < BOARD_SIZE, "column out of bounds: " + std::to_string(col));
-    ASSERT(col >= 0 && col < BOARD_SIZE, "value out of bounds: " + std::to_string(value));
+    ASSERT_CANDIDATE_BOUNDS(row, col, value)
     m_board[row][col] = value;
 };
 
@@ -248,11 +209,52 @@ std::string Board::to_string_raw() const
     return result;
 }
 
+void CandidateBoard::reset(){
+    for (int i = 0; i < BOARD_SIZE; i++){
+        for (int j = 0; j < BOARD_SIZE; j++){
+            for (int k = 0; k < CANDIDATE_SIZE; k++){
+                m_candidates[i][j][k] = 1;
+            }
+        }
+    }
+}
+
+#define ASSERT_CANDIDATE_COUNT_THROW(count) \
+    if (count == 0){ throw std::runtime_error("no candidate found for this cell, invalid board or candidate not initialized"); }
+
+unsigned int CandidateBoard::count(int row, int col) const{
+    ASSERT_COORD_BOUNDS(row, col)
+    unsigned int count = 0;
+    for (int i = 0; i < CANDIDATE_SIZE; i++){
+        if (m_candidates[row][col][i]){
+            count++;
+        }
+    }
+    ASSERT_CANDIDATE_COUNT_THROW(count)
+    return count;
+}
+
+bool_ CandidateBoard::remain_x(int row, int col, unsigned int count, val_t* buffer) const{
+    ASSERT_COORD_BOUNDS(row, col);
+    int counter = 0;
+    for (int i = 0; i < CANDIDATE_SIZE; i++){
+        if (m_candidates[row][col][i]){
+            if (counter >= count){
+                // in-case of buffer overflow
+                return false;
+            }
+            *(buffer + counter) = i + 1;
+            counter++;
+        }
+    }
+    ASSERT_CANDIDATE_COUNT_THROW(counter)
+    return counter == count;
+}
+
 val_t Board::operator[](Coord coord)
 {
     return get(coord);
 }
-
 std::ostream& operator<<(std::ostream& os, const Board& board)
 {
     os << board.to_string_raw();
