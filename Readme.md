@@ -1,7 +1,13 @@
 
 A Sudoku game solver. 
 
-Build with:
+Build with `pybind11`:
+```sh
+pip install pybind11 && pip install ./bindings
+python demo.py
+```
+
+For C++ only, build with:
 ```sh
 make target
 ```
@@ -14,7 +20,7 @@ mkdir -p output
 ./bin/sudoku -i puzzles/1.txt -o output/1.txt
 ```
 
-Run benchmarks with:
+Run benchmarks (time varies depending on difficulties):
 ```
 > ./bin/benchmark
 Benchmarking 3 puzzles with 10000 repeats...
@@ -23,11 +29,7 @@ Puzzle 2:  115 [us]
 Puzzle 3:  196 [us]
 ```
 
-For python bindings:
-```sh
-pip install pybind11 && pip install ./bindings
-python demo.py
-```
+---
 
 Environment variables:
 - `SOLVER_USE_GUESS` enable guessing when solving the puzzle. Default is `1`.

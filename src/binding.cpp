@@ -1,6 +1,7 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>       // for automatic conversion of std::vector
 #include <vector>
+#include <chrono>
 
 #include "config.h"
 #include "solver_v1.h"
@@ -13,8 +14,11 @@ py::dict solve(
 ){
     Board b;
     b.load_data(input);
+
+    auto start_time = std::chrono::high_resolution_clock::now();
     SolverV1 solver(b);
     bool solved = solver.solve();
+    auto end_time = std::chrono::high_resolution_clock::now();
 
     std::vector<std::vector<val_t>> data;
     val_t* raw_data = b.data();
@@ -31,6 +35,7 @@ py::dict solve(
     result["iterations"] = solver.iteration_counter().current;
     result["iteration_limit"] = solver.iteration_counter().limit;
     result["data"] = data;
+    result["time_us"] = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
     return result;
 }
 

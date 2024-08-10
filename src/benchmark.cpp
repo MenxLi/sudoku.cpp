@@ -1,8 +1,3 @@
-/*
-Maybe here is no need to do such benchmarking, 
-because the code may be optimized by the compiler, 
-and the results may not be accurate...
-*/
 #include <chrono>
 #include "solver_v1.h"
 #include <fstream>
