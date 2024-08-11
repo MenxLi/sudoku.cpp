@@ -16,7 +16,7 @@ public:
     // https://stackoverflow.com/a/53705993/6775765
     inline static Indexer<GRID_SIZE> indexer;
 
-    Solver(Board& board);
+    Solver(const Board& board);
     virtual ~Solver() = default;
     virtual bool step() = 0;
     bool solve(bool verbose = false);
@@ -24,5 +24,5 @@ public:
     IterationCounter& iteration_counter();
 protected:
     IterationCounter m_iteration_counter;
-    Board* m_board_ptr;
+    Board m_board;
 };

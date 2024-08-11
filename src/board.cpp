@@ -17,8 +17,9 @@ void Board::clear(val_t val = 0)
     }
 };
 
-Board::Board() { clear(); };
+Board::Board() {};
 Board::~Board() {};
+Board::Board(const Board& other) { load_data(other); };
 
 std::unique_ptr<val_t*> Board::get_row(int row)
 {

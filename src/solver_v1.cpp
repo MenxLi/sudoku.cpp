@@ -19,7 +19,7 @@ bool HEURISTIC_GUESS;
 // #define DEBUG_PRINT(x) std::cout << x << std::endl;
 #define DEBUG_PRINT(x);
 
-SolverV1::SolverV1(Board& board) : Solver(board) {
+SolverV1::SolverV1(const Board& board) : Solver(board) {
     // parse environment variables
     USE_GUESS = util::parse_env_i<bool>("SOLVER_NO_GUESS", true);
     DETERMINISTIC_GUESS = util::parse_env_i("SOLVER_DETERMINISTIC_GUESS", false);
@@ -30,8 +30,8 @@ SolverV1::SolverV1(Board& board) : Solver(board) {
     init_candidate_map();
 };
 
-SolverV1::SolverV1(Board& board, CandidateBoard& candidates, unsigned int cross_map[CANDIDATE_SIZE][BOARD_SIZE][BOARD_SIZE]) : Solver(board) {
-    m_candidates = candidates;
+SolverV1::SolverV1(SolverV1& other) : Solver(other.board()) {
+    m_candidates = other.m_candidates;
     // this somehow cause python binding to fail...
     // std::copy(&cross_map[0][0][0], &cross_map[0][0][0] + CANDIDATE_SIZE * BOARD_SIZE * BOARD_SIZE, &m_cross_map[0][0][0]);
     for (unsigned int i = 0; i < CANDIDATE_SIZE; i++)
@@ -40,7 +40,7 @@ SolverV1::SolverV1(Board& board, CandidateBoard& candidates, unsigned int cross_
         {
             for (unsigned int k = 0; k < BOARD_SIZE; k++)
             {
-                m_cross_map[i][j][k] = cross_map[i][j][k];
+                m_cross_map[i][j][k] = other.m_cross_map[i][j][k];
             }
         }
     }
@@ -239,11 +239,8 @@ bool SolverV1::update_by_cross(val_t value){
     return ret;
 };
 
-std::tuple<std::unique_ptr<SolverV1>, std::unique_ptr<Board>> SolverV1::fork(){
-    std::unique_ptr<Board> new_board(new Board());
-    new_board->load_data(this->board());
-    std::unique_ptr<SolverV1> ret(new SolverV1(*new_board, m_candidates, m_cross_map));
-    return std::make_tuple(std::move(ret), std::move(new_board));
+SolverV1 SolverV1::fork(){
+    return SolverV1(*this);
 };
 
 bool SolverV1::step_by_guess(){
@@ -367,25 +364,25 @@ bool SolverV1::step_by_guess(){
     // make guesses with backtracking
     for (val_t guess : candidate_values){
 
-        auto [forked_solver, forked_board] = this->fork();
+        auto forked_solver = this->fork();
 
         // inherit the iteration counter
-        forked_solver->iteration_counter().current = this->iteration_counter().current;
+        forked_solver.iteration_counter().current = this->iteration_counter().current;
 
         bool solved;
         try{
-            forked_solver->fill_propagate(best_choice.row, best_choice.col, guess);
-            solved = forked_solver->solve();
-            this->iteration_counter().current = forked_solver->iteration_counter().current;
+            forked_solver.fill_propagate(best_choice.row, best_choice.col, guess);
+            solved = forked_solver.solve();
+            this->iteration_counter().current = forked_solver.iteration_counter().current;
         }
         catch(std::runtime_error& e){
-            this->iteration_counter().current = forked_solver->iteration_counter().current;
+            this->iteration_counter().current = forked_solver.iteration_counter().current;
             continue;
         }
 
         if (!solved){ continue; }
 
-        this->board().load_data(forked_solver->board());
+        this->board().load_data(forked_solver.board());
         return true;
     }
 

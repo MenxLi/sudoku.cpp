@@ -3,10 +3,10 @@
 #include "board.h"
 #include "config.h"
 
-Solver::Solver(Board& board)
+Solver::Solver(const Board& board)
 {
     indexer.init();
-    m_board_ptr = &board;
+    m_board.load_data(board);
     m_iteration_counter.current = 0;
     m_iteration_counter.limit = MAX_ITER;
 };
@@ -40,5 +40,5 @@ IterationCounter& Solver::iteration_counter()
 
 Board& Solver::board()
 {
-    return *m_board_ptr;
+    return m_board;
 };

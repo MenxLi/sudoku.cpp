@@ -8,10 +8,8 @@
 class SolverV1 : public Solver
 {
 public:
-    SolverV1(Board& board);
-
-    // this is used for inheritance without re-initializing the board
-    SolverV1(Board& board, CandidateBoard& candidates, unsigned int cross_map[CANDIDATE_SIZE][BOARD_SIZE][BOARD_SIZE]);
+    SolverV1(const Board& board);
+    SolverV1(SolverV1& other);
 
     bool step();
     bool step_by_candidate();
@@ -35,5 +33,6 @@ private:
     bool update_by_cross(val_t value);
 
     // this is for trail and error approach
-    std::tuple<std::unique_ptr<SolverV1>, std::unique_ptr<Board>> fork();
+    // std::tuple<std::unique_ptr<SolverV1>, std::unique_ptr<Board>> fork();
+    SolverV1 fork();
 };

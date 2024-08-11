@@ -52,7 +52,7 @@ int main(){
         bool correct = true;
         for (int i = 0; i < BOARD_SIZE; i++){
             for (int j = 0; j < BOARD_SIZE; j++){
-                if (board.get(i, j) != expected[i][j]){
+                if (solver.board().get(i, j) != expected[i][j]){
                     correct = false;
                     break;
                 }

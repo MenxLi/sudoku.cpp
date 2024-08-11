@@ -21,7 +21,7 @@ py::dict solve(
     auto end_time = std::chrono::high_resolution_clock::now();
 
     std::vector<std::vector<val_t>> data;
-    val_t* raw_data = b.data();
+    val_t* raw_data = solver.board().data();
     for (int i=0; i<BOARD_SIZE; i++){
         std::vector<val_t> row;
         for (int j=0; j<BOARD_SIZE; j++){

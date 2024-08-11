@@ -32,6 +32,7 @@ class Board
 {
 public:
     Board();
+    Board(const Board& other);
     ~Board();
 
     void clear(val_t val);
