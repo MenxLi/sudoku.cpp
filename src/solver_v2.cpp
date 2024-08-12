@@ -31,6 +31,21 @@ SolverV2::SolverV2(const Board& board) : Solver(board) {
 
 SolverV2::SolverV2(SolverV2& other) : Solver(other.board()) {
     m_candidates = other.m_candidates;
+
+    // copy unit fill state
+    for (unsigned int i=0; i<BOARD_SIZE; i++){
+        for (unsigned int v_idx=0; v_idx<CANDIDATE_SIZE; v_idx++){
+            m_row_value_state[i][v_idx] = other.m_row_value_state[i][v_idx];
+            m_col_value_state[i][v_idx] = other.m_col_value_state[i][v_idx];
+        }
+    }
+    for (unsigned int i=0; i<GRID_SIZE; i++){
+        for (unsigned int j=0; j<GRID_SIZE; j++){
+            for (unsigned int v_idx=0; v_idx<CANDIDATE_SIZE; v_idx++){
+                m_grid_value_state[i][j][v_idx] = other.m_grid_value_state[i][j][v_idx];
+            }
+        }
+    }
     
     for (unsigned int i = 0; i < CANDIDATE_SIZE; i++)
     {
@@ -42,11 +57,28 @@ SolverV2::SolverV2(SolverV2& other) : Solver(other.board()) {
 void SolverV2::init_candidates_and_count(){
     // TODO: maybe use fill_propagate() to initialize all
 
-    auto update_candidate_for = [&](int row, int col){
-        if (this->board().get_(row, col) != 0){
-            // already has a value
-            return;
+    auto init_on_cell = [&](int row, int col){
+        val_t filled_val = this->board().get_(row, col);
+        if (filled_val != 0){
+            // init filled count
+            m_filled_count[filled_val - 1] += 1;
+
+            // init unit fill state
+            unsigned int grid_row = indexer.grid_lookup[row][col][0];
+            unsigned int grid_col = indexer.grid_lookup[row][col][1];
+
+            unsigned int v_idx = filled_val - 1;
+            ASSERT(m_grid_value_state[grid_row][grid_col][v_idx] == 0, "Filled value state violation");
+            m_grid_value_state[grid_row][grid_col][v_idx] = 1;
+
+            ASSERT(m_row_value_state[row][v_idx] == 0, "Filled value state violation");
+            m_row_value_state[row][v_idx] = 1;
+
+            ASSERT(m_col_value_state[col][v_idx] == 0, "Filled value state violation");
+            m_col_value_state[col][v_idx] = 1;
         }
+
+        if (filled_val != 0) return;    // already has a value, skip init candidates
 
         for (int i = 0; i < indexer.N_NEIGHBORS; i++){
             auto offset = indexer.neighbor_index[row][col][i];
@@ -62,14 +94,7 @@ void SolverV2::init_candidates_and_count(){
     {
         for (int j = 0; j < BOARD_SIZE; j++)
         {
-            // init candidate map
-            update_candidate_for(i, j);
-
-            // init filled count
-            val_t filled_val = this->board().get_(i, j);
-            if (filled_val != 0){
-                m_filled_count[filled_val - 1] += 1;
-            }
+            init_on_cell(i, j);
         }
     }
 };
@@ -132,6 +157,13 @@ void SolverV2::fill_propagate(unsigned int row, unsigned int col, val_t value){
     unsigned int v_idx = static_cast<unsigned int>(value) - 1;
     m_filled_count[v_idx] += 1;
     ASSERT(m_filled_count[v_idx] <= BOARD_SIZE, "Filled count violation");
+
+    // update the unit fill state
+    unsigned int grid_row = indexer.grid_lookup[row][col][0];
+    unsigned int grid_col = indexer.grid_lookup[row][col][1];
+    m_grid_value_state[grid_row][grid_col][v_idx] = 1;
+    m_row_value_state[row][v_idx] = 1;
+    m_col_value_state[col][v_idx] = 1;
 };
 
 
@@ -170,10 +202,6 @@ bool SolverV2::update_for_implicit_only_candidates(val_t value, UnitType unit_ty
         {
             unsigned int offset = offset_start[i];
             val_t board_val = this->board().get(offset);
-            if (board_val == value){
-                candidate_count = 0;    // reset the count, 
-                break;
-            } // the unit already has the value
             if (board_val != 0) continue;                                     // skip filled cells
             if (this->m_candidates.get(offset)[value - 1] != 1) continue; // skip non-candidates
             candidate_coord.row = indexer.offset_lookup[offset][0];
@@ -188,13 +216,15 @@ bool SolverV2::update_for_implicit_only_candidates(val_t value, UnitType unit_ty
         return false;
     };
 
-    bool updated = false;
+    unsigned int v_idx = value - 1;
+
     // check for implicit only candidate in the grids
     if (unit_type == UnitType::GRID){
         for (int g_i = 0; g_i < GRID_SIZE; g_i++)
         {
             for (int g_j = 0; g_j < GRID_SIZE; g_j++)
             {
+                if (m_grid_value_state[g_i][g_j][v_idx] == 1){ continue; } // already filled
                 // iterate through the grid
                 unsigned int grid_start_row = g_i * GRID_SIZE;
                 unsigned int grid_start_col = g_j * GRID_SIZE;
@@ -211,6 +241,7 @@ bool SolverV2::update_for_implicit_only_candidates(val_t value, UnitType unit_ty
     if (unit_type == UnitType::ROW){
         for (int r = 0; r < BOARD_SIZE; r++)
         {
+            if (m_row_value_state[r][v_idx] == 1){ continue; } // already filled
             if (solve_for_unit(indexer.row_index[r], BOARD_SIZE)){
                 return true;
             }
@@ -220,6 +251,7 @@ bool SolverV2::update_for_implicit_only_candidates(val_t value, UnitType unit_ty
     if (unit_type == UnitType::COL){
         for (int c = 0; c < BOARD_SIZE; c++)
         {
+            if (m_col_value_state[c][v_idx] == 1){ continue; } // already filled
             if (solve_for_unit(indexer.col_index[c], BOARD_SIZE)){
                 return true;
             }

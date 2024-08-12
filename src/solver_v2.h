@@ -28,7 +28,14 @@ public:
 
 private:
     CandidateBoard m_candidates;
+
+    // global filled count for each value
     unsigned int m_filled_count[CANDIDATE_SIZE] = {0};
+
+    // unit filled count for each value
+    unsigned int m_row_value_state[BOARD_SIZE][CANDIDATE_SIZE] = {0};
+    unsigned int m_col_value_state[BOARD_SIZE][CANDIDATE_SIZE] = {0};
+    unsigned int m_grid_value_state[GRID_SIZE][GRID_SIZE][CANDIDATE_SIZE] = {0};
 
     void init_candidates_and_count();
     bool update_if_only_candidate(int row, int col);
