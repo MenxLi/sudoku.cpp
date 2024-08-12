@@ -23,7 +23,7 @@ SolverV2::SolverV2(const Board& board) : Solver(board) {
     HEURISTIC_GUESS = util::parse_env_i("SOLVER_HEURISTIC_GUESS", true);
     // std::cout << "Config: USE_GUESS=" << USE_GUESS << ", DETERMINISTIC_GUESS=" << DETERMINISTIC_GUESS << ", HEURISTIC_GUESS=" << HEURISTIC_GUESS << std::endl;
 
-    init_candidates_and_count();
+    init_states();
 };
 
 SolverV2::SolverV2(SolverV2& other) : Solver(other.board()) {
@@ -51,47 +51,14 @@ SolverV2::SolverV2(SolverV2& other) : Solver(other.board()) {
 };
 
 
-void SolverV2::init_candidates_and_count(){
-    // TODO: maybe use fill_propagate() to initialize all
-
-    auto init_on_cell = [&](int row, int col){
-        val_t filled_val = this->board().get_(row, col);
-        if (filled_val != 0){
-            // init filled count
-            m_filled_count[filled_val - 1] += 1;
-
-            // init unit fill state
-            unsigned int grid_row = indexer.grid_lookup[row][col][0];
-            unsigned int grid_col = indexer.grid_lookup[row][col][1];
-
-            unsigned int v_idx = filled_val - 1;
-            ASSERT(m_grid_value_state[grid_row][grid_col][v_idx] == 0, "Filled value state violation");
-            m_grid_value_state[grid_row][grid_col][v_idx] = 1;
-
-            ASSERT(m_row_value_state[row][v_idx] == 0, "Filled value state violation");
-            m_row_value_state[row][v_idx] = 1;
-
-            ASSERT(m_col_value_state[col][v_idx] == 0, "Filled value state violation");
-            m_col_value_state[col][v_idx] = 1;
-        }
-
-        if (filled_val != 0) return;    // already has a value, skip init candidates
-
-        for (int i = 0; i < indexer.N_NEIGHBORS; i++){
-            auto offset = indexer.neighbor_index[row][col][i];
-            val_t other_val = this->board().get(offset);
-            if (other_val != 0){
-                m_candidates.get_(row, col, other_val) = 0;
-            }
-        }
-    };
-
-
+void SolverV2::init_states(){
     for (int i = 0; i < BOARD_SIZE; i++)
     {
         for (int j = 0; j < BOARD_SIZE; j++)
         {
-            init_on_cell(i, j);
+            val_t filled_val = this->board().get_(i, j);
+            if (filled_val == 0) continue;
+            fill_propagate(i, j, filled_val);
         }
     }
 };

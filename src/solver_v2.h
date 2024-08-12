@@ -17,6 +17,7 @@ class SolverV2 : public Solver
 public:
     SolverV2(const Board& board);
     SolverV2(SolverV2& other);
+    void init_states();
 
     bool step();
     bool step_by_explicit_single();
@@ -37,7 +38,6 @@ private:
     unsigned int m_col_value_state[BOARD_SIZE][CANDIDATE_SIZE] = {0};
     unsigned int m_grid_value_state[GRID_SIZE][GRID_SIZE][CANDIDATE_SIZE] = {0};
 
-    void init_candidates_and_count();
     bool update_by_explicit_single(int row, int col);
     bool update_by_implicit_single(val_t value, UnitType unit_type);
 
