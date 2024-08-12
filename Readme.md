@@ -31,23 +31,36 @@ Puzzle 3:   56 [us]
 
 <details>
 <summary>
-Run benchmark on larger dataset:
+Run benchmark on larger datasets:
 </summary>
 
 ```
-# this is a very hard dataset...
+> python benchmark.py /Users/monsoon/Code/repo/sudoku-dataset/hard_sudokus.txt
+Read 10000 puzzles
+Submitting tasks: 100%|████████████████████████████████████████████████████████| 10000/10000 [00:00<00:00, 22998.09it/s]
+Collecting results: 100%|██████████████████████████████████████████████████████| 10000/10000 [00:00<00:00, 13878.64it/s]
+------------------------------
+Solved: 100.00%
+Mean time: 71.9201 us
+Median time: 39.0 us
+Max time: 1225 us
+Min time: 13 us
+1st quartile time: 28.0 us
+3rd quartile time: 94.25 us
+------------------------------
+
 > python benchmark.py /Users/monsoon/Code/repo/sudoku-dataset/all_17_clue_sudokus.txt
 Read 49151 puzzles
-Submitting tasks: 100%|████████████████████████████████████████████████████| 49151/49151 [00:01<00:00, 47697.24it/s]
-Collecting results: 100%|███████████████████████████████████████████████████| 49151/49151 [00:08<00:00, 5551.66it/s]
+Submitting tasks: 100%|████████████████████████████████████████████████████████| 49151/49151 [00:00<00:00, 49341.55it/s]
+Collecting results: 100%|███████████████████████████████████████████████████████| 49151/49151 [00:05<00:00, 8346.97it/s]
 ------------------------------
-Solved: 97.97%
-Mean time: 676.5101549196329 us
-Median time: 120.0 us
-Max time: 302416 us
-Min time: 18 us
-1st quartile time: 53.0 us
-3rd quartile time: 301.0 us
+Solved: 100.00%
+Mean time: 446.5060120852068 us
+Median time: 55.0 us
+Max time: 308269 us
+Min time: 16 us
+1st quartile time: 43.0 us
+3rd quartile time: 162.0 us
 ------------------------------
 ```
 
