@@ -22,8 +22,9 @@ public:
 private:
     CandidateBoard m_candidates;
     unsigned int m_cross_map[CANDIDATE_SIZE][BOARD_SIZE][BOARD_SIZE];   // 0 means available, 1 means occupied
+    unsigned int m_filled_count[CANDIDATE_SIZE] = {0};
 
-    void init_candidate_map();
+    void init_candidates_and_count();
     void init_cross_map();
 
     // handles implicit value determination

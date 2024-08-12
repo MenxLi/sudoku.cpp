@@ -27,7 +27,7 @@ SolverV1::SolverV1(const Board& board) : Solver(board) {
     // std::cout << "Config: USE_GUESS=" << USE_GUESS << ", DETERMINISTIC_GUESS=" << DETERMINISTIC_GUESS << ", HEURISTIC_GUESS=" << HEURISTIC_GUESS << std::endl;
 
     init_cross_map();
-    init_candidate_map();
+    init_candidates_and_count();
 };
 
 SolverV1::SolverV1(SolverV1& other) : Solver(other.board()) {
@@ -43,6 +43,10 @@ SolverV1::SolverV1(SolverV1& other) : Solver(other.board()) {
                 m_cross_map[i][j][k] = other.m_cross_map[i][j][k];
             }
         }
+    }
+    for (unsigned int i = 0; i < CANDIDATE_SIZE; i++)
+    {
+        m_filled_count[i] = other.m_filled_count[i];
     }
 };
 
@@ -82,7 +86,8 @@ void SolverV1::init_cross_map(){
     }
 };
 
-void SolverV1::init_candidate_map(){
+void SolverV1::init_candidates_and_count(){
+    // TODO: maybe use fill_propagate() to initialize all
 
     auto update_candidate_for = [&](int row, int col){
         if (this->board().get_(row, col) != 0){
@@ -105,7 +110,14 @@ void SolverV1::init_candidate_map(){
     {
         for (int j = 0; j < BOARD_SIZE; j++)
         {
+            // init candidate map
             update_candidate_for(i, j);
+
+            // init filled count
+            val_t filled_val = this->board().get_(i, j);
+            if (filled_val != 0){
+                m_filled_count[filled_val - 1] += 1;
+            }
         }
     }
 };
@@ -177,6 +189,11 @@ void SolverV1::fill_propagate(unsigned int row, unsigned int col, val_t value){
         m_cross_map[value - 1][row][i] = 1;
         m_cross_map[value - 1][i][col] = 1;
     }
+
+    // update the filled count
+    unsigned int v_idx = static_cast<unsigned int>(value) - 1;
+    m_filled_count[v_idx] += 1;
+    ASSERT(m_filled_count[v_idx] <= BOARD_SIZE, "Filled count violation");
 };
 
 
@@ -414,7 +431,16 @@ bool SolverV1::step_by_guess(){
         }
     }
 
-    if (!DETERMINISTIC_GUESS){
+    if (HEURISTIC_GUESS){
+        // sort the candidate indices by the number of occurences in the board, 
+        // choose the one with the least occurences
+        // this should facilitateos the backtracking process by increasing the value diversity, 
+        // and reduce the chance of getting stuck in a local minimum (which requires more guesses)
+        std::sort(candidate_values.begin(), candidate_values.end(), [&](val_t a, val_t b){
+            return m_filled_count[a - 1] < m_filled_count[b - 1];
+        });
+    }
+    else if (!DETERMINISTIC_GUESS){
         // shuffle the candidate indices
         std::random_device rd;
         std::mt19937 g(rd());
