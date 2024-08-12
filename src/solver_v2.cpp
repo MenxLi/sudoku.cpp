@@ -119,6 +119,7 @@ bool SolverV2::step_by_implicit_only_candidate(
     bool updated = false;
     for (unsigned int i = 0; i < CANDIDATE_SIZE; i++)
     {
+        if (m_filled_count[i] == BOARD_SIZE) continue;  // the value was used up
         if (update_for_implicit_only_candidates(i + 1, unit_type)){
             updated = true;
         }
@@ -127,19 +128,19 @@ bool SolverV2::step_by_implicit_only_candidate(
 }
 
 bool SolverV2::step(){
-    DEBUG_PRINT("SolverV1::step()");
+    DEBUG_PRINT("SolverV2::step()");
 
     if (step_by_only_candidate()) return true;
-    DEBUG_PRINT("SolverV1::step() - step_by_only_candidate() failed");
+    DEBUG_PRINT("SolverV2::step() - step_by_only_candidate() failed");
 
     if (step_by_implicit_only_candidate(UnitType::GRID)) return true;
     if (step_by_implicit_only_candidate(UnitType::ROW)) return true;
     if (step_by_implicit_only_candidate(UnitType::COL)) return true;
-    DEBUG_PRINT("SolverV1::step() - step_by_implicit_only_candidate() failed");
+    DEBUG_PRINT("SolverV2::step() - step_by_implicit_only_candidate() failed");
 
     if (USE_GUESS){
         if (step_by_guess()) return true;
-        DEBUG_PRINT("SolverV1::step() - step_by_guess() failed");
+        DEBUG_PRINT("SolverV2::step() - step_by_guess() failed");
     }
     return false;
 };

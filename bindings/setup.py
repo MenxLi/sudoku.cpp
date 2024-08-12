@@ -1,7 +1,7 @@
 import pathlib
 from setuptools import setup
-from pybind11.setup_helpers import Pybind11Extension, ParallelCompile, naive_recompile
-ParallelCompile("NPY_NUM_BUILD_JOBS", needs_recompile=naive_recompile, default=4).install()
+from pybind11.setup_helpers import Pybind11Extension, ParallelCompile
+ParallelCompile("NPY_NUM_BUILD_JOBS", default=4).install()
 
 __root_dir__ = pathlib.Path(__file__).resolve().parent.parent
 src_dir = __root_dir__ / "src"
@@ -26,7 +26,7 @@ setup(
             cxx_std=17,
             include_dirs=[include_dir],
             define_macros=[("STRICT", "1"), ("GRID_SIZE", "3")],
-            extra_compile_args=["-O3", "-funroll-loops"],
+            extra_compile_args=["-O3", "-funroll-loops", "-finline-functions"],
         ),
     ],
 )
