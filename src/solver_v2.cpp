@@ -1,6 +1,6 @@
 #include "board.h"
 #include "config.h"
-#include "solver_v1.h"
+#include "solver_v2.h"
 #include "util.h"
 #include <memory>
 #include <stdexcept>
@@ -19,7 +19,7 @@ static bool HEURISTIC_GUESS;
 // #define DEBUG_PRINT(x) std::cout << x << std::endl;
 #define DEBUG_PRINT(x);
 
-SolverV1::SolverV1(const Board& board) : Solver(board) {
+SolverV2::SolverV2(const Board& board) : Solver(board) {
     // parse environment variables
     USE_GUESS = util::parse_env_i<bool>("SOLVER_USE_GUESS", true);
     DETERMINISTIC_GUESS = util::parse_env_i("SOLVER_DETERMINISTIC_GUESS", false);
@@ -30,7 +30,7 @@ SolverV1::SolverV1(const Board& board) : Solver(board) {
     init_candidates_and_count();
 };
 
-SolverV1::SolverV1(SolverV1& other) : Solver(other.board()) {
+SolverV2::SolverV2(SolverV2& other) : Solver(other.board()) {
     m_candidates = other.m_candidates;
     // this somehow cause python binding to fail...
     // std::copy(&cross_map[0][0][0], &cross_map[0][0][0] + CANDIDATE_SIZE * BOARD_SIZE * BOARD_SIZE, &m_cross_map[0][0][0]);
@@ -50,7 +50,7 @@ SolverV1::SolverV1(SolverV1& other) : Solver(other.board()) {
     }
 };
 
-void SolverV1::init_cross_map(){
+void SolverV2::init_cross_map(){
     // initialize the cross map
     // row by row, column by column, and fill in the cross map
     for (unsigned int v = 0; v < CANDIDATE_SIZE; v++)
@@ -86,7 +86,7 @@ void SolverV1::init_cross_map(){
     }
 };
 
-void SolverV1::init_candidates_and_count(){
+void SolverV2::init_candidates_and_count(){
     // TODO: maybe use fill_propagate() to initialize all
 
     auto update_candidate_for = [&](int row, int col){
@@ -122,7 +122,7 @@ void SolverV1::init_candidates_and_count(){
     }
 };
 
-bool SolverV1::step_by_candidate(){
+bool SolverV2::step_by_candidate(){
     bool updated = false;
     for (int i = 0; i < BOARD_SIZE; i++)
     {
@@ -136,7 +136,7 @@ bool SolverV1::step_by_candidate(){
     return updated;
 };
 
-bool SolverV1::step_by_crossover(){
+bool SolverV2::step_by_crossover(){
     bool ret = false;
     for (val_t i = 1; i <= CANDIDATE_SIZE; i++)
     {
@@ -154,7 +154,7 @@ bool SolverV1::step_by_crossover(){
     return ret;
 };
 
-bool SolverV1::step(){
+bool SolverV2::step(){
     DEBUG_PRINT("SolverV1::step()");
 
     if (step_by_candidate()) return true;
@@ -172,7 +172,7 @@ bool SolverV1::step(){
     return false;
 };
 
-void SolverV1::fill_propagate(unsigned int row, unsigned int col, val_t value){
+void SolverV2::fill_propagate(unsigned int row, unsigned int col, val_t value){
     board().get_(row, col) = value;
 
     // clear the candidates for the neighbor cells
@@ -197,7 +197,7 @@ void SolverV1::fill_propagate(unsigned int row, unsigned int col, val_t value){
 };
 
 
-void SolverV1::refine_candidates(){
+void SolverV2::refine_candidates(){
     // handles implicit value determination
     // i.e. if a sub-row/col in a grid has multiple candidates for a value,
     // but can uniquely determine the value based on the row/col 
@@ -206,7 +206,7 @@ void SolverV1::refine_candidates(){
     // to be implemented...
 };
 
-bool SolverV1::update_value_for(int row, int col){
+bool SolverV2::update_value_for(int row, int col){
 
     if (this->board().get_(row, col) != 0){ return false; }
 
@@ -222,7 +222,7 @@ bool SolverV1::update_value_for(int row, int col){
 
 // this is less efficient than the other implementation...
 // because it has to iterate over the grid multiple times!
-bool SolverV1::update_by_cross(int row, int col){
+bool SolverV2::update_by_cross(int row, int col){
     // first, check if the cell is already solved
     if (this->board().get_(row, col) != 0){ return false; }
 
@@ -268,7 +268,7 @@ bool SolverV1::update_by_cross(int row, int col){
 };
 
 
-bool SolverV1::update_by_cross(val_t value){
+bool SolverV2::update_by_cross(val_t value){
     bool ret = false;
     unsigned int value_index = value - 1;
 
@@ -316,11 +316,11 @@ bool SolverV1::update_by_cross(val_t value){
     return ret;
 };
 
-SolverV1 SolverV1::fork(){
-    return SolverV1(*this);
+SolverV2 SolverV2::fork(){
+    return SolverV2(*this);
 };
 
-bool SolverV1::step_by_guess(){
+bool SolverV2::step_by_guess(){
     auto numNeighborUnsolved = [&](unsigned int row, unsigned int col)->unsigned int{
         unsigned int min_count;
         unsigned int row_count = 0;

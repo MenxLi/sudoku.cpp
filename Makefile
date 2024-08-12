@@ -7,7 +7,7 @@ COMMON_FLAGS := $(STD_FLAGS) $(OPTIMIZATION_FLAGS) $(CONFIG_FLAGS)
 LIB_DIR := bin/lib
 BIN_DIR := bin
 
-objs := $(LIB_DIR)/util.o $(LIB_DIR)/board.o $(LIB_DIR)/solver.o $(LIB_DIR)/solver_v1.o
+objs := $(LIB_DIR)/util.o $(LIB_DIR)/board.o $(LIB_DIR)/solver.o $(LIB_DIR)/solver_v1.o $(LIB_DIR)/solver_v2.o
 
 ifeq ($(OS),Windows_NT)
 	UNAME_S := Windows
@@ -25,6 +25,7 @@ obj: _dst
 	$(CXX) $(COMMON_FLAGS) -o $(LIB_DIR)/board.o -c src/board.cpp
 	$(CXX) $(COMMON_FLAGS) -o $(LIB_DIR)/solver.o -c src/solver.cpp
 	$(CXX) $(COMMON_FLAGS) -o $(LIB_DIR)/solver_v1.o -c src/solver_v1.cpp
+	$(CXX) $(COMMON_FLAGS) -o $(LIB_DIR)/solver_v2.o -c src/solver_v2.cpp
 
 test: obj
 	$(CXX) $(COMMON_FLAGS) -o $(BIN_DIR)/util_test \
@@ -33,9 +34,8 @@ test: obj
 	$(CXX) $(COMMON_FLAGS) -o $(BIN_DIR)/board_test \
 		$(LIB_DIR)/board.o $(LIB_DIR)/util.o \
 		src/board_test.cpp
-	$(CXX) $(COMMON_FLAGS) -o $(BIN_DIR)/solver_v1_test \
-		$(LIB_DIR)/board.o $(LIB_DIR)/util.o $(LIB_DIR)/solver.o $(LIB_DIR)/solver_v1.o \
-		src/solver_v1_test.cpp
+	$(CXX) $(COMMON_FLAGS) -o $(BIN_DIR)/solver_test \
+		$(objs) src/solver_test.cpp
 
 target: obj
 	$(CXX) $(COMMON_FLAGS) -o $(BIN_DIR)/sudoku \
