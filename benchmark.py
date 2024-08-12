@@ -16,7 +16,7 @@ def solve_puzzle(puzzle_str: str) -> Tuple[int, bool]:
     try:
         res = sudoku.solve(format_puzzle(puzzle_str))
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"Error while solving puzzle: {puzzle_str}, error: {e}")
         return -1, False
     return res['time_us'], res['solved']
 

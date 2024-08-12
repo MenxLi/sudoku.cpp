@@ -163,6 +163,31 @@ it is the only cell in the row/col/grid that can have a certain value
 */
 bool SolverV2::update_for_implicit_only_candidates(val_t value, UnitType unit_type){
 
+    auto solve_for_unit = [&](unsigned int* offset_start, unsigned int len){
+        unsigned int candidate_count = 0;
+        Coord candidate_coord;
+        for (int i = 0; i < len; i++)
+        {
+            unsigned int offset = offset_start[i];
+            val_t board_val = this->board().get(offset);
+            if (board_val == value){
+                candidate_count = 0;    // reset the count, 
+                break;
+            } // the unit already has the value
+            if (board_val != 0) continue;                                     // skip filled cells
+            if (this->m_candidates.get(offset)[value - 1] != 1) continue; // skip non-candidates
+            candidate_coord.row = indexer.offset_lookup[offset][0];
+            candidate_coord.col = indexer.offset_lookup[offset][1];
+            candidate_count++;
+            if (candidate_count > 1) break;
+        }
+        if (candidate_count == 1){
+            fill_propagate(candidate_coord.row, candidate_coord.col, value);
+            return true;
+        }
+        return false;
+    };
+
     bool updated = false;
     // check for implicit only candidate in the grids
     if (unit_type == UnitType::GRID){
@@ -173,83 +198,34 @@ bool SolverV2::update_for_implicit_only_candidates(val_t value, UnitType unit_ty
                 // iterate through the grid
                 unsigned int grid_start_row = g_i * GRID_SIZE;
                 unsigned int grid_start_col = g_j * GRID_SIZE;
-                unsigned int candidate_count = 0;
-                Coord candidate_coord;
-                for (auto offset: indexer.grid_index[grid_start_row][grid_start_col])
-                {
-                    val_t board_val = this->board().get(offset);
-                    if (board_val == value){
-                        candidate_count = 0;    // reset the count, 
-                        break;
-                    } // the unit already has the value
-                    if (board_val != 0) continue;                                      // skip filled cells
-                    if (this->m_candidates.get(offset)[value - 1] != 1) continue; // skip non-candidates
-                    candidate_coord.row = indexer.offset_lookup[offset][0];
-                    candidate_coord.col = indexer.offset_lookup[offset][1];
-                    candidate_count++;
-                    if (candidate_count > 1) break;
-                }
-                if (candidate_count == 1){
-                    fill_propagate(candidate_coord.row, candidate_coord.col, value);
-                    updated = true;
+                if (solve_for_unit(indexer.grid_index[grid_start_row][grid_start_col], GRID_SIZE * GRID_SIZE)){
+                    // somehow must return here, instead of continue...
+                    // otherwise, benchmark.py will fail?
+                    return true;
                 }
             }
         }
     }
 
-    // check for implicit only candidate in the rows
+    // check for implicit only candidate in the rows and columns
     if (unit_type == UnitType::ROW){
         for (int r = 0; r < BOARD_SIZE; r++)
         {
-            unsigned int candidate_count = 0;
-            Coord candidate_coord;
-            for (auto offset: indexer.row_index[r])
-            {
-                val_t board_val = this->board().get(offset);
-                if (board_val == value){
-                    candidate_count = 0;    // reset the count, 
-                    break;
-                } // the unit already has the value
-                if (board_val != 0) continue;                                      // skip filled cells
-                if (this->m_candidates.get(offset)[value - 1] != 1) continue; // skip non-candidates
-                candidate_coord.row = indexer.offset_lookup[offset][0];
-                candidate_coord.col = indexer.offset_lookup[offset][1];
-                candidate_count++;
-                if (candidate_count > 1) break;
-            }
-            if (candidate_count == 1){
-                fill_propagate(candidate_coord.row, candidate_coord.col, value);
-                updated = true;
+            if (solve_for_unit(indexer.row_index[r], BOARD_SIZE)){
+                return true;
             }
         }
     }
 
-    // check for implicit only candidate in the cols
     if (unit_type == UnitType::COL){
         for (int c = 0; c < BOARD_SIZE; c++)
         {
-            unsigned int candidate_count = 0;
-            Coord candidate_coord;
-            for (auto offset: indexer.col_index[c])
-            {
-                val_t board_val = this->board().get(offset);
-                if (board_val == value){
-                    candidate_count = 0;    // reset the count, 
-                    break;
-                } // the unit already has the value
-                if (board_val != 0) continue;                                      // skip filled cells
-                if (this->m_candidates.get(offset)[value - 1] != 1) continue; // skip non-candidates
-                candidate_coord.row = indexer.offset_lookup[offset][0];
-                candidate_coord.col = indexer.offset_lookup[offset][1];
-                candidate_count++;
-                if (candidate_count > 1) break;
-            }
-            if (candidate_count == 1){
-                fill_propagate(candidate_coord.row, candidate_coord.col, value);
-                updated = true;
+            if (solve_for_unit(indexer.col_index[c], BOARD_SIZE)){
+                return true;
             }
         }
     };
+
     return false;
 };
 

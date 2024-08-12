@@ -2,6 +2,8 @@
 
 #include <cstdint>
 #include <stdexcept>
+#include <string>
+#include <cassert>
 
 #ifndef GRID_SIZE
 #define GRID_SIZE 3
@@ -15,7 +17,7 @@
 
 #ifdef STRICT
 #define ASSERT(cond, faild_reason) \
-if (!(cond)) { throw std::runtime_error("Assertion failed: " #cond " " faild_reason); }
+if (!(cond)) { throw std::runtime_error("Assertion failed: " __FILE__ ":" + std::to_string(__LINE__) + " " #cond " " faild_reason); }
 #else
 #define ASSERT(cond, faild_reason)
 #endif
