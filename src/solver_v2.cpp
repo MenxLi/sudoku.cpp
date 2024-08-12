@@ -5,9 +5,6 @@
 #include <memory>
 #include <stdexcept>
 #include <stdlib.h>
-#include <vector>
-#include <random>
-#include <algorithm>
 
 #define CANDIDATE_SIZE BOARD_SIZE
 #define MAX_FORK_TRAIL MAX_ITER
@@ -367,34 +364,34 @@ bool SolverV2::step_by_guess(){
     // choose a candidate in the best choice location
 
     // collect the indices of the candidates where the value is not 0
-    std::vector<val_t> candidate_values;
+    val_t candidate_values[CANDIDATE_SIZE];
+    unsigned int candidate_count = 0;
+
     // candidate_values.reserve(CANDIDATE_SIZE);
     for (unsigned int i = 0; i < CANDIDATE_SIZE; i++)
     {
         val_t val = static_cast<val_t>(i + 1);
         if (m_candidates.get_(best_choice.row, best_choice.col, val)){
-            candidate_values.push_back(val);
+            candidate_values[candidate_count] = val;
+            candidate_count++;
         }
     }
 
     if (HEURISTIC_GUESS){
         // sort the candidate indices by the number of occurences in the board, 
-        // choose the one with the least occurences
+        // starting with the one with the least occurences
         // this should facilitateos the backtracking process by increasing the value diversity, 
         // and reduce the chance of getting stuck in a local minimum (which requires more guesses)
-        std::sort(candidate_values.begin(), candidate_values.end(), [&](val_t a, val_t b){
-            return m_filled_count[a - 1] < m_filled_count[b - 1];
-        });
+        util::sort_array_bubble<val_t>(candidate_values, candidate_count);
     }
     else if (!DETERMINISTIC_GUESS){
         // shuffle the candidate indices
-        std::random_device rd;
-        std::mt19937 g(rd());
-        std::shuffle(candidate_values.begin(), candidate_values.end(), g);
+        util::shuffle_array<val_t>(candidate_values, candidate_count);
     }
 
     // make guesses with backtracking
-    for (val_t guess : candidate_values){
+    for (unsigned int i = 0; i < candidate_count; i++){
+        val_t guess = candidate_values[i];
 
         auto forked_solver = this->fork();
 
