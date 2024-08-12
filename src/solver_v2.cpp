@@ -99,13 +99,13 @@ void SolverV2::init_candidates_and_count(){
     }
 };
 
-bool SolverV2::step_by_only_candidate(){
+bool SolverV2::step_by_explicit_single(){
     bool updated = false;
     for (int i = 0; i < BOARD_SIZE; i++)
     {
         for (int j = 0; j < BOARD_SIZE; j++)
         {
-            if (update_if_only_candidate(i, j)){
+            if (update_by_explicit_single(i, j)){
                 updated = true;
             }
         }
@@ -113,14 +113,14 @@ bool SolverV2::step_by_only_candidate(){
     return updated;
 };
 
-bool SolverV2::step_by_implicit_only_candidate(
+bool SolverV2::step_by_implicit_single(
     UnitType unit_type
 ){
     bool updated = false;
     for (unsigned int i = 0; i < CANDIDATE_SIZE; i++)
     {
         if (m_filled_count[i] == BOARD_SIZE) continue;  // the value was used up
-        if (update_for_implicit_only_candidates(i + 1, unit_type)){
+        if (update_by_implicit_single(i + 1, unit_type)){
             updated = true;
         }
     }
@@ -130,12 +130,12 @@ bool SolverV2::step_by_implicit_only_candidate(
 bool SolverV2::step(){
     DEBUG_PRINT("SolverV2::step()");
 
-    if (step_by_only_candidate()) return true;
+    if (step_by_explicit_single()) return true;
     DEBUG_PRINT("SolverV2::step() - step_by_only_candidate() failed");
 
-    if (step_by_implicit_only_candidate(UnitType::GRID)) return true;
-    if (step_by_implicit_only_candidate(UnitType::ROW)) return true;
-    if (step_by_implicit_only_candidate(UnitType::COL)) return true;
+    if (step_by_implicit_single(UnitType::GRID)) return true;
+    if (step_by_implicit_single(UnitType::ROW)) return true;
+    if (step_by_implicit_single(UnitType::COL)) return true;
     DEBUG_PRINT("SolverV2::step() - step_by_implicit_only_candidate() failed");
 
     if (USE_GUESS){
@@ -177,7 +177,7 @@ void SolverV2::refine_candidates(){
     // to be implemented...
 };
 
-bool SolverV2::update_if_only_candidate(int row, int col){
+bool SolverV2::update_by_explicit_single(int row, int col){
 
     if (this->board().get_(row, col) != 0){ return false; }
 
@@ -194,7 +194,7 @@ bool SolverV2::update_if_only_candidate(int row, int col){
 This determines the value of a cell if 
 it is the only cell in the row/col/grid that can have a certain value
 */
-bool SolverV2::update_for_implicit_only_candidates(val_t value, UnitType unit_type){
+bool SolverV2::update_by_implicit_single(val_t value, UnitType unit_type){
 
     auto solve_for_unit = [&](unsigned int* offset_start, unsigned int len){
         unsigned int candidate_count = 0;
