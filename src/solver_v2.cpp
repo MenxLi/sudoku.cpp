@@ -26,65 +26,18 @@ SolverV2::SolverV2(const Board& board) : Solver(board) {
     HEURISTIC_GUESS = util::parse_env_i("SOLVER_HEURISTIC_GUESS", true);
     // std::cout << "Config: USE_GUESS=" << USE_GUESS << ", DETERMINISTIC_GUESS=" << DETERMINISTIC_GUESS << ", HEURISTIC_GUESS=" << HEURISTIC_GUESS << std::endl;
 
-    init_cross_map();
     init_candidates_and_count();
 };
 
 SolverV2::SolverV2(SolverV2& other) : Solver(other.board()) {
     m_candidates = other.m_candidates;
-    // this somehow cause python binding to fail...
-    // std::copy(&cross_map[0][0][0], &cross_map[0][0][0] + CANDIDATE_SIZE * BOARD_SIZE * BOARD_SIZE, &m_cross_map[0][0][0]);
-    for (unsigned int i = 0; i < CANDIDATE_SIZE; i++)
-    {
-        for (unsigned int j = 0; j < BOARD_SIZE; j++)
-        {
-            for (unsigned int k = 0; k < BOARD_SIZE; k++)
-            {
-                m_cross_map[i][j][k] = other.m_cross_map[i][j][k];
-            }
-        }
-    }
+    
     for (unsigned int i = 0; i < CANDIDATE_SIZE; i++)
     {
         m_filled_count[i] = other.m_filled_count[i];
     }
 };
 
-void SolverV2::init_cross_map(){
-    // initialize the cross map
-    // row by row, column by column, and fill in the cross map
-    for (unsigned int v = 0; v < CANDIDATE_SIZE; v++)
-    {
-        val_t value = static_cast<val_t>(v + 1);
-        unsigned int m_cross_row[BOARD_SIZE] = {0};
-        unsigned int m_cross_col[BOARD_SIZE] = {0};
-        for (unsigned int i = 0; i < BOARD_SIZE; i++)
-        {
-            for (unsigned int j = 0; j < BOARD_SIZE; j++)
-            {
-                if (this->board().get_(i, j) == value){
-                    m_cross_row[i] += 1;
-                    m_cross_col[j] += 1;
-                }
-            }
-        }
-
-        for (unsigned int i = 0; i < BOARD_SIZE; i++)
-        {
-            if (m_cross_row[i] > 1 || m_cross_col[i] > 1){
-                throw std::runtime_error("Axis count violation");
-            }
-        }
-
-        for (unsigned int i = 0; i < BOARD_SIZE; i++)
-        {
-            for (unsigned int j = 0; j < BOARD_SIZE; j++)
-            {
-                m_cross_map[v][i][j] = m_cross_row[i] == 1 || m_cross_col[j] == 1;
-            }
-        }
-    }
-};
 
 void SolverV2::init_candidates_and_count(){
     // TODO: maybe use fill_propagate() to initialize all
@@ -105,7 +58,6 @@ void SolverV2::init_candidates_and_count(){
     };
 
 
-    m_candidates.reset();
     for (int i = 0; i < BOARD_SIZE; i++)
     {
         for (int j = 0; j < BOARD_SIZE; j++)
@@ -122,13 +74,13 @@ void SolverV2::init_candidates_and_count(){
     }
 };
 
-bool SolverV2::step_by_candidate(){
+bool SolverV2::step_by_only_candidate(){
     bool updated = false;
     for (int i = 0; i < BOARD_SIZE; i++)
     {
         for (int j = 0; j < BOARD_SIZE; j++)
         {
-            if (update_value_for(i, j)){
+            if (update_if_only_candidate(i, j)){
                 updated = true;
             }
         }
@@ -136,34 +88,29 @@ bool SolverV2::step_by_candidate(){
     return updated;
 };
 
-bool SolverV2::step_by_crossover(){
-    bool ret = false;
-    for (val_t i = 1; i <= CANDIDATE_SIZE; i++)
+bool SolverV2::step_by_implicit_only_candidate(
+    UnitType unit_type
+){
+    bool updated = false;
+    for (unsigned int i = 0; i < CANDIDATE_SIZE; i++)
     {
-        if (update_by_cross(i)){
-            ret = true;
+        if (update_for_implicit_only_candidates(i + 1, unit_type)){
+            updated = true;
         }
     }
-    // for (unsigned int i=0; i<BOARD_SIZE; i++){
-    //     for (unsigned int j=0; j<BOARD_SIZE; j++){
-    //         if (update_by_cross(i, j)){
-    //             ret = true;
-    //         }
-    //     }
-    // }
-    return ret;
-};
+    return updated;
+}
 
 bool SolverV2::step(){
     DEBUG_PRINT("SolverV1::step()");
 
-    if (step_by_candidate()) return true;
-    DEBUG_PRINT("SolverV1::step() - step_by_candidate() failed");
+    if (step_by_only_candidate()) return true;
+    DEBUG_PRINT("SolverV1::step() - step_by_only_candidate() failed");
 
-    // step by cross is effectively the super-set of step by step_by_candidate
-    // but it is less efficient if there are only one candidate left in a cell
-    if (step_by_crossover()) return true;
-    DEBUG_PRINT("SolverV1::step() - step_by_crossover() failed");
+    if (step_by_implicit_only_candidate(UnitType::GRID)) return true;
+    if (step_by_implicit_only_candidate(UnitType::ROW)) return true;
+    if (step_by_implicit_only_candidate(UnitType::COL)) return true;
+    DEBUG_PRINT("SolverV1::step() - step_by_implicit_only_candidate() failed");
 
     if (USE_GUESS){
         if (step_by_guess()) return true;
@@ -179,15 +126,6 @@ void SolverV2::fill_propagate(unsigned int row, unsigned int col, val_t value){
     for (int i = 0; i < indexer.N_NEIGHBORS; i++){
         auto offset = indexer.neighbor_index[row][col][i];
         m_candidates.get(offset)[value - 1] = 0;
-    }
-
-    // fill the cross map of the value
-    unsigned int c_index = value - 1;
-    ASSERT(m_cross_map[c_index][row][col] == 0, "Cross map violation");
-    for (int i = 0; i < BOARD_SIZE; i++)
-    {
-        m_cross_map[value - 1][row][i] = 1;
-        m_cross_map[value - 1][i][col] = 1;
     }
 
     // update the filled count
@@ -206,7 +144,7 @@ void SolverV2::refine_candidates(){
     // to be implemented...
 };
 
-bool SolverV2::update_value_for(int row, int col){
+bool SolverV2::update_if_only_candidate(int row, int col){
 
     if (this->board().get_(row, col) != 0){ return false; }
 
@@ -219,101 +157,100 @@ bool SolverV2::update_value_for(int row, int col){
     return false;
 };
 
+/*
+This determines the value of a cell if 
+it is the only cell in the row/col/grid that can have a certain value
+*/
+bool SolverV2::update_for_implicit_only_candidates(val_t value, UnitType unit_type){
 
-// this is less efficient than the other implementation...
-// because it has to iterate over the grid multiple times!
-bool SolverV2::update_by_cross(int row, int col){
-    // first, check if the cell is already solved
-    if (this->board().get_(row, col) != 0){ return false; }
-
-    bool ret = false;
-
-    // iterate over the candidates,
-    // if there is only one candidate that is not marked in the cross map, fill it in
-    for (unsigned int v_idx = 0; v_idx < CANDIDATE_SIZE; v_idx++)
-    {
-        val_t value = static_cast<val_t>(v_idx + 1);
-
-        // if (!m_candidates.get_(row, col, value)) continue;  // this make sure the value is not present in the grid, row or column
-        // ASSERT(m_cross_map[v_idx][row][col] == 0, "Cross map violation");   // then it should not be in the same row or column!
-        // this equals to the following:
-        if (m_cross_map[v_idx][row][col] != 0) continue; // the value is already in the row or column
-
-        // check if the value is also possible in the other cells of the grid
-        bool skip_flag = false;
-        for (auto offset : indexer.grid_index[row][col])
+    bool updated = false;
+    // check for implicit only candidate in the grids
+    if (unit_type == UnitType::GRID){
+        for (int g_i = 0; g_i < GRID_SIZE; g_i++)
         {
-            if (offset == row * BOARD_SIZE + col) continue;     // skip the aim cell
-
-            unsigned int board_row = offset / BOARD_SIZE;
-            unsigned int board_col = offset % BOARD_SIZE;
-            if (this->board().get(offset) == value){
-                skip_flag = true;
-                break;
-            } // the value is already in the grid
-            if (m_cross_map[v_idx][board_row][board_col] == 0){
-                skip_flag = true;
-                break;
-            } // the value is also possible in the other cells of the grid
-        }
-
-        // fill in the value
-        if (!skip_flag){
-            fill_propagate(row, col, value);
-            ret = true;
-            break;      // the aimed cell can only have one value
-        }
-    }
-    return ret;
-};
-
-
-bool SolverV2::update_by_cross(val_t value){
-    bool ret = false;
-    unsigned int value_index = value - 1;
-
-    // iterate over grid, 
-    // if there is only one cell in the grid that is unsoved and not marked, fill it in
-    for (unsigned int g_row = 0; g_row < GRID_SIZE; g_row++)
-    {
-        for (unsigned int g_col = 0; g_col < GRID_SIZE; g_col++)
-        {
-            unsigned int count = 0;
-            unsigned int row_base = g_row * GRID_SIZE;
-            unsigned int col_base = g_col * GRID_SIZE;
-
-            unsigned int aim_grid_row_idx = 0;
-            unsigned int aim_grid_col_idx = 0;
-
-            // iterate over the grid, 
-            bool skip_grid_flag = false;
-            for (unsigned int i = 0; i < GRID_SIZE; i++)
+            for (int g_j = 0; g_j < GRID_SIZE; g_j++)
             {
-                for (unsigned int j = 0; j < GRID_SIZE; j++)
+                // iterate through the grid
+                unsigned int grid_start_row = g_i * GRID_SIZE;
+                unsigned int grid_start_col = g_j * GRID_SIZE;
+                unsigned int candidate_count = 0;
+                Coord candidate_coord;
+                for (auto offset: indexer.grid_index[grid_start_row][grid_start_col])
                 {
-                    if (this->board().get_(row_base + i, col_base + j) == value){
-                        // the value is already in the grid, skip this grid!
-                        skip_grid_flag = true;
-                        count = 0; // reset count, make sure we don't fill in the grid
-                    }
-                    if (
-                        !skip_grid_flag &&
-                        m_cross_map[value_index][row_base + i][col_base + j] == 0 &&
-                        this->board().get_(row_base + i, col_base + j) == 0
-                        ){
-                        aim_grid_row_idx = i;
-                        aim_grid_col_idx = j;
-                        count++;
-                    }
+                    val_t board_val = this->board().get(offset);
+                    if (board_val == value){
+                        candidate_count = 0;    // reset the count, 
+                        break;
+                    } // the unit already has the value
+                    if (board_val != 0) continue;                                      // skip filled cells
+                    if (this->m_candidates.get(offset)[value - 1] != 1) continue; // skip non-candidates
+                    candidate_coord.row = indexer.offset_lookup[offset][0];
+                    candidate_coord.col = indexer.offset_lookup[offset][1];
+                    candidate_count++;
+                    if (candidate_count > 1) break;
+                }
+                if (candidate_count == 1){
+                    fill_propagate(candidate_coord.row, candidate_coord.col, value);
+                    updated = true;
                 }
             }
-            if (count == 1){
-                fill_propagate(row_base + aim_grid_row_idx, col_base + aim_grid_col_idx, value);
-                ret = true;
+        }
+    }
+
+    // check for implicit only candidate in the rows
+    if (unit_type == UnitType::ROW){
+        for (int r = 0; r < BOARD_SIZE; r++)
+        {
+            unsigned int candidate_count = 0;
+            Coord candidate_coord;
+            for (auto offset: indexer.row_index[r])
+            {
+                val_t board_val = this->board().get(offset);
+                if (board_val == value){
+                    candidate_count = 0;    // reset the count, 
+                    break;
+                } // the unit already has the value
+                if (board_val != 0) continue;                                      // skip filled cells
+                if (this->m_candidates.get(offset)[value - 1] != 1) continue; // skip non-candidates
+                candidate_coord.row = indexer.offset_lookup[offset][0];
+                candidate_coord.col = indexer.offset_lookup[offset][1];
+                candidate_count++;
+                if (candidate_count > 1) break;
+            }
+            if (candidate_count == 1){
+                fill_propagate(candidate_coord.row, candidate_coord.col, value);
+                updated = true;
             }
         }
     }
-    return ret;
+
+    // check for implicit only candidate in the cols
+    if (unit_type == UnitType::COL){
+        for (int c = 0; c < BOARD_SIZE; c++)
+        {
+            unsigned int candidate_count = 0;
+            Coord candidate_coord;
+            for (auto offset: indexer.col_index[c])
+            {
+                val_t board_val = this->board().get(offset);
+                if (board_val == value){
+                    candidate_count = 0;    // reset the count, 
+                    break;
+                } // the unit already has the value
+                if (board_val != 0) continue;                                      // skip filled cells
+                if (this->m_candidates.get(offset)[value - 1] != 1) continue; // skip non-candidates
+                candidate_coord.row = indexer.offset_lookup[offset][0];
+                candidate_coord.col = indexer.offset_lookup[offset][1];
+                candidate_count++;
+                if (candidate_count > 1) break;
+            }
+            if (candidate_count == 1){
+                fill_propagate(candidate_coord.row, candidate_coord.col, value);
+                updated = true;
+            }
+        }
+    };
+    return false;
 };
 
 SolverV2 SolverV2::fork(){

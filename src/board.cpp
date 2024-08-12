@@ -210,6 +210,19 @@ std::string Board::to_string_raw() const
     return result;
 }
 
+CandidateBoard::CandidateBoard(){
+    reset();
+}
+CandidateBoard::CandidateBoard(CandidateBoard& other){
+    for (int i = 0; i < BOARD_SIZE; i++){
+        for (int j = 0; j < BOARD_SIZE; j++){
+            for (int k = 0; k < CANDIDATE_SIZE; k++){
+                m_candidates[i][j][k] = other.m_candidates[i][j][k];
+            }
+        }
+    }
+}
+
 void CandidateBoard::reset(){
     for (int i = 0; i < BOARD_SIZE; i++){
         for (int j = 0; j < BOARD_SIZE; j++){

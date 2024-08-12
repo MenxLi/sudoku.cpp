@@ -5,6 +5,13 @@
 #include "solver.h"
 #include <memory>
 
+enum class UnitType{
+    GRID,
+    ROW,
+    COL
+};
+
+
 class SolverV2 : public Solver
 {
 public:
@@ -12,8 +19,8 @@ public:
     SolverV2(SolverV2& other);
 
     bool step();
-    bool step_by_candidate();
-    bool step_by_crossover();
+    bool step_by_only_candidate();
+    bool step_by_implicit_only_candidate(UnitType unit_type);
     bool step_by_guess();
 
     // set the value of a cell, and propagate the value to change the candidates
@@ -21,18 +28,14 @@ public:
 
 private:
     CandidateBoard m_candidates;
-    unsigned int m_cross_map[CANDIDATE_SIZE][BOARD_SIZE][BOARD_SIZE];   // 0 means available, 1 means occupied
     unsigned int m_filled_count[CANDIDATE_SIZE] = {0};
 
     void init_candidates_and_count();
-    void init_cross_map();
+    bool update_if_only_candidate(int row, int col);
+    bool update_for_implicit_only_candidates(val_t value, UnitType unit_type);
 
     // handles implicit value determination
     void refine_candidates();
-
-    bool update_value_for(int row, int col);
-    bool update_by_cross(int row, int col);
-    bool update_by_cross(val_t value);
 
     // this is for trail and error approach
     // std::tuple<std::unique_ptr<SolverV1>, std::unique_ptr<Board>> fork();

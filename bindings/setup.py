@@ -6,7 +6,7 @@ ParallelCompile("NPY_NUM_BUILD_JOBS", needs_recompile=naive_recompile, default=4
 __root_dir__ = pathlib.Path(__file__).resolve().parent.parent
 src_dir = __root_dir__ / "src"
 include_dir = __root_dir__ / "include"
-exclude_patterns = ["main.cpp", "benchmark.cpp", "*_test.cpp"]
+exclude_patterns = ["main.cpp", "benchmark.cpp", "*_test.cpp", "solver_v1*"]
 cpp_files = [
     str(f) for f in src_dir.glob("*.cpp") 
     if not any(f.match(p) for p in exclude_patterns)

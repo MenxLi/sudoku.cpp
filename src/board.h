@@ -128,6 +128,8 @@ typedef uint8_t bool_;
 class CandidateBoard
 {
 public:
+    CandidateBoard();
+    CandidateBoard(CandidateBoard& other);
     inline bool_& get_(int row, int col, val_t value);
     inline bool_* get(int row, int col);
     inline bool_* get(int idx);
@@ -153,5 +155,6 @@ bool_* CandidateBoard::get(int row, int col){
 }
 
 bool_* CandidateBoard::get(int idx){
-    return m_candidates[idx / BOARD_SIZE][idx % BOARD_SIZE];
+    // return m_candidates[idx / BOARD_SIZE][idx % BOARD_SIZE];
+    return &m_candidates[0][0][0] + idx * CANDIDATE_SIZE;
 }

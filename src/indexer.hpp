@@ -13,6 +13,7 @@ public:
 
     // input coord to obtain grid coord, [i][j] -> [row, col] in [0, NG)
     unsigned int grid_lookup[N][N][2];               // input position to obtain it's grid row and column
+    unsigned int offset_lookup[N*N][2];              // input position to obtain it's offset within the board
 
     // Input coord to obtain pointer offsets of a relevent area -> offset in [0, N*N).
     // The last dimension is the pointer offsets for the relevent area. 
@@ -42,6 +43,10 @@ void Indexer<NG>::init(){
             for (unsigned int j = 0; j < N; j++)
             {
                 row_index[i][j] = i * N + j;
+
+                // by the way, initialize the offset lookup
+                offset_lookup[i * N + j][0] = i;
+                offset_lookup[i * N + j][1] = j;
             }
         }
     }();

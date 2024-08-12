@@ -4,7 +4,7 @@
 #include <chrono>
 
 #include "config.h"
-#include "solver_v1.h"
+#include "solver_v2.h"
 #include "board.h"
 
 namespace py = pybind11;
@@ -16,7 +16,7 @@ py::dict solve(
     b.load_data(input);
 
     auto start_time = std::chrono::high_resolution_clock::now();
-    SolverV1 solver(b);
+    SolverV2 solver(b);
     bool solved = solver.solve();
     auto end_time = std::chrono::high_resolution_clock::now();
 
