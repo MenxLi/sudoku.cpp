@@ -21,7 +21,7 @@ bool HEURISTIC_GUESS;
 
 SolverV1::SolverV1(const Board& board) : Solver(board) {
     // parse environment variables
-    USE_GUESS = util::parse_env_i<bool>("SOLVER_NO_GUESS", true);
+    USE_GUESS = util::parse_env_i<bool>("SOLVER_USE_GUESS", true);
     DETERMINISTIC_GUESS = util::parse_env_i("SOLVER_DETERMINISTIC_GUESS", false);
     HEURISTIC_GUESS = util::parse_env_i("SOLVER_HEURISTIC_GUESS", true);
     // std::cout << "Config: USE_GUESS=" << USE_GUESS << ", DETERMINISTIC_GUESS=" << DETERMINISTIC_GUESS << ", HEURISTIC_GUESS=" << HEURISTIC_GUESS << std::endl;
