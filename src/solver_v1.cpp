@@ -132,13 +132,24 @@ bool SolverV1::step_by_crossover(){
             ret = true;
         }
     }
+    // for (unsigned int i=0; i<BOARD_SIZE; i++){
+    //     for (unsigned int j=0; j<BOARD_SIZE; j++){
+    //         if (update_by_cross(i, j)){
+    //             ret = true;
+    //         }
+    //     }
+    // }
     return ret;
 };
 
 bool SolverV1::step(){
     DEBUG_PRINT("SolverV1::step()");
+
     if (step_by_candidate()) return true;
     DEBUG_PRINT("SolverV1::step() - step_by_candidate() failed");
+
+    // step by cross is effectively the super-set of step by step_by_candidate
+    // but it is less efficient if there are only one candidate left in a cell
     if (step_by_crossover()) return true;
     DEBUG_PRINT("SolverV1::step() - step_by_crossover() failed");
 
@@ -190,6 +201,55 @@ bool SolverV1::update_value_for(int row, int col){
     }
     return false;
 };
+
+
+// this is less efficient than the other implementation...
+// because it has to iterate over the grid multiple times!
+bool SolverV1::update_by_cross(int row, int col){
+    // first, check if the cell is already solved
+    if (this->board().get_(row, col) != 0){ return false; }
+
+    bool ret = false;
+
+    // iterate over the candidates,
+    // if there is only one candidate that is not marked in the cross map, fill it in
+    for (unsigned int v_idx = 0; v_idx < CANDIDATE_SIZE; v_idx++)
+    {
+        val_t value = static_cast<val_t>(v_idx + 1);
+
+        // if (!m_candidates.get_(row, col, value)) continue;  // this make sure the value is not present in the grid, row or column
+        // ASSERT(m_cross_map[v_idx][row][col] == 0, "Cross map violation");   // then it should not be in the same row or column!
+        // this equals to the following:
+        if (m_cross_map[v_idx][row][col] != 0) continue; // the value is already in the row or column
+
+        // check if the value is also possible in the other cells of the grid
+        bool skip_flag = false;
+        for (auto offset : indexer.grid_index[row][col])
+        {
+            if (offset == row * BOARD_SIZE + col) continue;     // skip the aim cell
+
+            unsigned int board_row = offset / BOARD_SIZE;
+            unsigned int board_col = offset % BOARD_SIZE;
+            if (this->board().get(offset) == value){
+                skip_flag = true;
+                break;
+            } // the value is already in the grid
+            if (m_cross_map[v_idx][board_row][board_col] == 0){
+                skip_flag = true;
+                break;
+            } // the value is also possible in the other cells of the grid
+        }
+
+        // fill in the value
+        if (!skip_flag){
+            fill_propagate(row, col, value);
+            ret = true;
+            break;      // the aimed cell can only have one value
+        }
+    }
+    return ret;
+};
+
 
 bool SolverV1::update_by_cross(val_t value){
     bool ret = false;

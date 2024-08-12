@@ -21,7 +21,7 @@ public:
 
 private:
     CandidateBoard m_candidates;
-    unsigned int m_cross_map[CANDIDATE_SIZE][BOARD_SIZE][BOARD_SIZE];
+    unsigned int m_cross_map[CANDIDATE_SIZE][BOARD_SIZE][BOARD_SIZE];   // 0 means available, 1 means occupied
 
     void init_candidate_map();
     void init_cross_map();
@@ -30,6 +30,7 @@ private:
     void refine_candidates();
 
     bool update_value_for(int row, int col);
+    bool update_by_cross(int row, int col);
     bool update_by_cross(val_t value);
 
     // this is for trail and error approach
