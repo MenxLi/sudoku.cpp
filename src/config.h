@@ -23,3 +23,17 @@ if (!(cond)) { throw std::runtime_error("Assertion failed: " __FILE__ ":" + std:
 #endif
 
 typedef uint8_t val_t;
+
+enum class UnitType{
+    GRID,
+    ROW,
+    COL
+};
+
+enum class OpState
+{
+    SUCCESS,
+    FAIL,
+    SKIP, 
+    VIOLATION
+};

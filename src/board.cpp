@@ -249,27 +249,27 @@ unsigned int CandidateBoard::count(int row, int col) const{
     return count;
 }
 
-bool_ CandidateBoard::remain_x(unsigned int offset, unsigned int count, val_t* buffer) const{
+OpState CandidateBoard::remain_x(unsigned int offset, unsigned int count, val_t* buffer) const{
     unsigned int row = indexer.offset_coord_lookup[offset][0];
     unsigned int col = indexer.offset_coord_lookup[offset][1];
     return remain_x(row, col, count, buffer);
 };
 
-bool_ CandidateBoard::remain_x(int row, int col, unsigned int count, val_t* buffer) const{
+OpState CandidateBoard::remain_x(int row, int col, unsigned int count, val_t* buffer) const{
     ASSERT_COORD_BOUNDS(row, col);
     int counter = 0;
     for (int i = 0; i < CANDIDATE_SIZE; i++){
         if (m_candidates[row][col][i]){
             if (counter >= count){
                 // in-case of buffer overflow
-                return false;
+                return OpState::FAIL;
             }
             *(buffer + counter) = i + 1;
             counter++;
         }
     }
-    ASSERT_CANDIDATE_COUNT_THROW(counter)
-    return counter == count;
+    if (counter == 0) return OpState::VIOLATION;
+    return counter == count? OpState::SUCCESS: OpState::FAIL;
 }
 
 val_t Board::operator[](Coord coord)

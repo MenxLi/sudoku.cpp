@@ -211,8 +211,8 @@ bool SolverV1::update_value_for(int row, int col){
     if (this->board().get_(row, col) != 0){ return false; }
 
     val_t candidate_val = 0;
-    bool found = m_candidates.remain_x(row, col, 1, &candidate_val);
-    if (found){
+    auto found = m_candidates.remain_x(row, col, 1, &candidate_val);
+    if (found == OpState::SUCCESS){
         fill_propagate(row, col, candidate_val);
         return true;
     }

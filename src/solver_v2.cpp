@@ -1,5 +1,6 @@
 #include "board.h"
 #include "config.h"
+#include "solver.h"
 #include "solver_v2.h"
 #include "util.h"
 #include <memory>
@@ -63,53 +64,68 @@ void SolverV2::init_states(){
     }
 };
 
-bool SolverV2::step_by_explicit_single(){
+OpState SolverV2::step_by_explicit_single(){
     bool updated = false;
     for (int i = 0; i < BOARD_SIZE; i++)
     {
         for (int j = 0; j < BOARD_SIZE; j++)
         {
-            if (update_by_explicit_single(i, j)){
+            OpState state = update_by_explicit_single(i, j);
+            if (state == OpState::SUCCESS){ 
                 updated = true;
+            }
+            else if ( state == OpState::VIOLATION){
+                return state;
             }
         }
     }
-    return updated;
+    return updated ? OpState::SUCCESS : OpState::FAIL;
 };
 
-bool SolverV2::step_by_implicit_single(
+OpState SolverV2::step_by_implicit_single(
     UnitType unit_type
 ){
     bool updated = false;
     for (unsigned int i = 0; i < CANDIDATE_SIZE; i++)
     {
         if (m_filled_count[i] == BOARD_SIZE) continue;  // the value was used up
-        if (update_by_implicit_single(i + 1, unit_type)){
+        OpState state = update_by_implicit_single(i + 1, unit_type);
+        if (state == OpState::SUCCESS){
             updated = true;
         }
+        else if (state == OpState::VIOLATION){
+            return state;
+        }
     }
-    return updated;
+    return updated ? OpState::SUCCESS : OpState::FAIL;
 }
 
 bool SolverV2::step(){
     DEBUG_PRINT("SolverV2::step()");
 
-    if (step_by_explicit_single()) return true;
+    OpState state1 = step_by_explicit_single();
+    if (state1 == OpState::VIOLATION) return false;
+    if (state1 == OpState::SUCCESS) return true;
     DEBUG_PRINT("SolverV2::step() - step_by_only_candidate() failed");
 
-    if (step_by_implicit_single(UnitType::GRID)) return true;
-    if (step_by_implicit_single(UnitType::ROW)) return true;
-    if (step_by_implicit_single(UnitType::COL)) return true;
+    for (int i = 0; i < 3; i++)
+    {
+        UnitType unit_type = static_cast<UnitType>(i);
+        OpState state2 = step_by_implicit_single(unit_type);
+        if (state2 == OpState::VIOLATION) return false;
+        if (state2 == OpState::SUCCESS) return true;
+    }
     DEBUG_PRINT("SolverV2::step() - step_by_implicit_only_candidate() failed");
 
     if (USE_GUESS){
-        if (step_by_guess()) return true;
+        OpState state3 = step_by_guess();
+        if (state3 == OpState::SUCCESS) return true;
         DEBUG_PRINT("SolverV2::step() - step_by_guess() failed");
     }
     return false;
 };
 
-void SolverV2::fill_propagate(unsigned int row, unsigned int col, val_t value){
+OpState SolverV2::fill_propagate(unsigned int row, unsigned int col, val_t value){
     board().get_(row, col) = value;
 
     // clear the candidates for the neighbor cells
@@ -122,7 +138,7 @@ void SolverV2::fill_propagate(unsigned int row, unsigned int col, val_t value){
     unsigned int v_idx = static_cast<unsigned int>(value) - 1;
     m_filled_count[v_idx] += 1;
     if (m_filled_count[v_idx] > BOARD_SIZE){
-        throw std::runtime_error("Filled count violation");
+        return OpState::VIOLATION;
     }
 
     // update the unit fill state
@@ -131,6 +147,7 @@ void SolverV2::fill_propagate(unsigned int row, unsigned int col, val_t value){
     m_grid_value_state[grid_row][grid_col][v_idx] = 1;
     m_row_value_state[row][v_idx] = 1;
     m_col_value_state[col][v_idx] = 1;
+    return OpState::SUCCESS;
 };
 
 
@@ -144,24 +161,26 @@ bool SolverV2::refine_candidates(UnitType unit_type){
     return false;
 };
 
-bool SolverV2::update_by_explicit_single(int row, int col){
+OpState SolverV2::update_by_explicit_single(int row, int col){
 
-    if (this->board().get_(row, col) != 0){ return false; }
+    if (this->board().get_(row, col) != 0){ return OpState::SKIP; }
 
     val_t candidate_val = 0;
-    bool found = m_candidates.remain_x(row, col, 1, &candidate_val);
-    if (found){
-        fill_propagate(row, col, candidate_val);
-        return true;
+    OpState s = m_candidates.remain_x(row, col, 1, &candidate_val);
+    if (s == OpState::VIOLATION){
+        return OpState::VIOLATION;
     }
-    return false;
+    if (s == OpState::SUCCESS){
+        return fill_propagate(row, col, candidate_val);
+    }
+    return OpState::FAIL;
 };
 
 /*
 This determines the value of a cell if 
 it is the only cell in the row/col/grid that can have a certain value
 */
-bool SolverV2::update_by_implicit_single(val_t value, UnitType unit_type){
+OpState SolverV2::update_by_implicit_single(val_t value, UnitType unit_type){
 
     auto solve_for_unit = [&](unsigned int* offset_start, unsigned int len){
         unsigned int candidate_count = 0;
@@ -178,10 +197,9 @@ bool SolverV2::update_by_implicit_single(val_t value, UnitType unit_type){
             if (candidate_count > 1) break;
         }
         if (candidate_count == 1){
-            fill_propagate(candidate_coord.row, candidate_coord.col, value);
-            return true;
+            return fill_propagate(candidate_coord.row, candidate_coord.col, value);
         }
-        return false;
+        return OpState::FAIL;
     };
 
     unsigned int v_idx = value - 1;
@@ -196,10 +214,11 @@ bool SolverV2::update_by_implicit_single(val_t value, UnitType unit_type){
                 // iterate through the grid
                 unsigned int grid_start_row = g_i * GRID_SIZE;
                 unsigned int grid_start_col = g_j * GRID_SIZE;
-                if (solve_for_unit(indexer.grid_index[grid_start_row][grid_start_col], GRID_SIZE * GRID_SIZE)){
-                    // somehow must return here, instead of continue...
-                    // otherwise, benchmark.py will fail?
-                    return true;
+                OpState state = solve_for_unit(indexer.grid_index[grid_start_row][grid_start_col], GRID_SIZE * GRID_SIZE);
+                // somehow must return here, instead of continue...
+                // otherwise, benchmark.py will fail?
+                if (state == OpState::SUCCESS || state == OpState::VIOLATION){
+                    return state;
                 }
             }
         }
@@ -210,8 +229,9 @@ bool SolverV2::update_by_implicit_single(val_t value, UnitType unit_type){
         for (int r = 0; r < BOARD_SIZE; r++)
         {
             if (m_row_value_state[r][v_idx] == 1){ continue; } // already filled
-            if (solve_for_unit(indexer.row_index[r], BOARD_SIZE)){
-                return true;
+            OpState state = solve_for_unit(indexer.row_index[r], BOARD_SIZE);
+            if (state == OpState::SUCCESS || state == OpState::VIOLATION){
+                return state;
             }
         }
     }
@@ -220,20 +240,21 @@ bool SolverV2::update_by_implicit_single(val_t value, UnitType unit_type){
         for (int c = 0; c < BOARD_SIZE; c++)
         {
             if (m_col_value_state[c][v_idx] == 1){ continue; } // already filled
-            if (solve_for_unit(indexer.col_index[c], BOARD_SIZE)){
-                return true;
+            OpState state = solve_for_unit(indexer.col_index[c], BOARD_SIZE);
+            if (state == OpState::SUCCESS || state == OpState::VIOLATION){
+                return state;
             }
         }
     };
 
-    return false;
+    return OpState::FAIL;
 };
 
 SolverV2 SolverV2::fork(){
     return SolverV2(*this);
 };
 
-bool SolverV2::step_by_guess(){
+OpState SolverV2::step_by_guess(){
     auto numNeighborUnsolved = [&](unsigned int row, unsigned int col)->unsigned int{
         unsigned int min_count;
         unsigned int row_count = 0;
@@ -382,11 +403,10 @@ bool SolverV2::step_by_guess(){
         if (!solved){ continue; }
 
         this->board().load_data(forked_solver.board());
-        return true;
+        return OpState::SUCCESS;
     }
 
     // ideally, we should never reach here...
-    // unless the board is invalid, trail limit is reached, or the guess is wrong, 
-    // when the guess is wrong, the forked solver will throw an exception and we will catch it
-    return false;
+    // unless the board is invalid, trail limit is reached, or the guess is wrong. 
+    return OpState::FAIL;
 };

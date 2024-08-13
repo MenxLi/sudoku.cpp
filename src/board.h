@@ -141,9 +141,9 @@ public:
 
     // return if the cell has only count candidates left
     // and store the candidates in the buffer
-    bool_ remain_x(int row, int col, unsigned int count, val_t* buffer) const;
+    OpState remain_x(int row, int col, unsigned int count, val_t* buffer) const;
 
-    bool_ remain_x(unsigned int idx, unsigned int count, val_t* buffer) const;
+    OpState remain_x(unsigned int idx, unsigned int count, val_t* buffer) const;
 
 private:
     bool_ m_candidates[BOARD_SIZE][BOARD_SIZE][CANDIDATE_SIZE];
