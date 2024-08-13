@@ -69,13 +69,13 @@ void SolverV2::init_states(){
     }
 };
 
-OpState SolverV2::step_by_explicit_single(){
+OpState SolverV2::step_by_naked_single(){
     bool updated = false;
     for (int i = 0; i < BOARD_SIZE; i++)
     {
         for (int j = 0; j < BOARD_SIZE; j++)
         {
-            OpState state = update_by_explicit_single(i, j);
+            OpState state = update_by_naked_single(i, j);
             if (state == OpState::SUCCESS){ 
                 updated = true;
             }
@@ -87,14 +87,14 @@ OpState SolverV2::step_by_explicit_single(){
     return updated ? OpState::SUCCESS : OpState::FAIL;
 };
 
-OpState SolverV2::step_by_implicit_single(
+OpState SolverV2::step_by_hidden_single(
     UnitType unit_type
 ){
     bool updated = false;
     for (unsigned int i = 0; i < CANDIDATE_SIZE; i++)
     {
         if (m_filled_count[i] == BOARD_SIZE) continue;  // the value was used up
-        OpState state = update_by_implicit_single(i + 1, unit_type);
+        OpState state = update_by_hidden_single(i + 1, unit_type);
         if (state == OpState::SUCCESS){
             updated = true;
         }
@@ -108,7 +108,7 @@ OpState SolverV2::step_by_implicit_single(
 bool SolverV2::step(){
     DEBUG_PRINT("SolverV2::step()");
 
-    OpState state1 = step_by_explicit_single();
+    OpState state1 = step_by_naked_single();
     if (state1 == OpState::VIOLATION) return false;
     if (state1 == OpState::SUCCESS) return true;
     DEBUG_PRINT("SolverV2::step() - step_by_only_candidate() failed");
@@ -116,7 +116,7 @@ bool SolverV2::step(){
     for (int i = 0; i < 3; i++)
     {
         UnitType unit_type = static_cast<UnitType>(i);
-        OpState state2 = step_by_implicit_single(unit_type);
+        OpState state2 = step_by_hidden_single(unit_type);
         if (state2 == OpState::VIOLATION) return false;
         if (state2 == OpState::SUCCESS) return true;
     }
@@ -166,7 +166,7 @@ bool SolverV2::refine_candidates(UnitType unit_type){
     return false;
 };
 
-OpState SolverV2::update_by_explicit_single(int row, int col){
+OpState SolverV2::update_by_naked_single(int row, int col){
 
     if (this->board().get_(row, col) != 0){ return OpState::SKIP; }
 
@@ -185,7 +185,7 @@ OpState SolverV2::update_by_explicit_single(int row, int col){
 This determines the value of a cell if 
 it is the only cell in the row/col/grid that can have a certain value
 */
-OpState SolverV2::update_by_implicit_single(val_t value, UnitType unit_type){
+OpState SolverV2::update_by_hidden_single(val_t value, UnitType unit_type){
 
     auto solve_for_unit = [&](unsigned int* offset_start, unsigned int len){
         unsigned int candidate_count = 0;
