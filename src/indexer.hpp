@@ -1,5 +1,6 @@
 #pragma once
 #include "config.h"
+#include "util.h"
 
 template <unsigned int NG>   // NG is the grid size
 class Indexer
@@ -25,6 +26,9 @@ public:
     unsigned int col_index[N][N];                       // pointer position for each column, input 1D column index [j]
     unsigned int grid_index[N][N][N];                   // pointer position for each grid, input 2D cell coord [i][j]
     unsigned int neighbor_index[N][N][N_NEIGHBORS];     // pointer position for each neighbor, input 2D cell coord [i][j]
+
+    inline static std::array<std::array<unsigned int, 2>, util::n_combinations<N, 2>>
+    subunit_combinations_2{ util::combinations<unsigned int, N, 2>(util::range<N>()) };
 
     void init();
 

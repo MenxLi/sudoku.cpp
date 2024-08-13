@@ -102,6 +102,13 @@ bool SolverV2::step(){
     if (step_by_implicit_single(UnitType::COL)) return true;
     DEBUG_PRINT("SolverV2::step() - step_by_implicit_only_candidate() failed");
 
+    if (m_iteration_counter.current > 10000){
+        if (refine_candidates(UnitType::GRID)) return true;
+        if (refine_candidates(UnitType::ROW)) return true;
+        if (refine_candidates(UnitType::COL)) return true;
+        DEBUG_PRINT("SolverV2::step() - refine_candidates() failed");
+    }
+
     if (USE_GUESS){
         if (step_by_guess()) return true;
         DEBUG_PRINT("SolverV2::step() - step_by_guess() failed");
@@ -132,13 +139,75 @@ void SolverV2::fill_propagate(unsigned int row, unsigned int col, val_t value){
 };
 
 
-void SolverV2::refine_candidates(){
+bool SolverV2::refine_candidates(UnitType unit_type){
     // handles implicit value determination
     // i.e. if a sub-row/col in a grid has multiple candidates for a value,
     // but can uniquely determine the value based on the row/col 
     // (e.g. 57, 75, 375 appears in one row/col of a grid, determins 7 and 5 must be in the same row/col)
     // then we can remove the other candidates from the same total-row/col
     // to be implemented...
+
+    auto refine_candidates_for = [&](unsigned int* offset_start, unsigned int len){
+        // todo: generalize this...
+        bool updated = false;
+        for (auto idx_pair: indexer.subunit_combinations_2){
+            if (updated) break;
+            if (board().get_(offset_start[idx_pair[0]]) != 0 || board().get_(offset_start[idx_pair[1]]) != 0) continue;
+            auto candidate1 = m_candidates.get(offset_start[idx_pair[0]]);
+            auto candidate2 = m_candidates.get(offset_start[idx_pair[1]]);
+            // std::cout << "idx_pair: " << idx_pair[0] << ", " << idx_pair[1] << std::endl;
+            // check if they are equal and only have 2 candidates
+            val_t buffer1[2] = {0, 0};
+            val_t buffer2[2] = {0, 0};
+            if (m_candidates.remain_x(idx_pair[0], 2, buffer1) && m_candidates.remain_x(idx_pair[1], 2, buffer2)){
+                if (buffer1[0] == buffer2[0] && buffer1[1] == buffer2[1]){
+                    // remove the other candidates from the unit
+                    for (unsigned int j = 0; j < len; j++){
+                        if (j == idx_pair[0] || j == idx_pair[1]) continue;
+                        for (unsigned int k = 0; k < 2; k++){
+                            updated = updated || m_candidates.get(j)[buffer1[k] - 1];
+                            m_candidates.get(j)[buffer1[k] - 1] = 0;
+                        }
+                    }
+                }
+            }
+        }
+        return updated;
+    };
+
+    if (unit_type == UnitType::GRID){
+        for (int g_i = 0; g_i < GRID_SIZE; g_i++)
+        {
+            for (int g_j = 0; g_j < GRID_SIZE; g_j++)
+            {
+                unsigned int grid_start_row = g_i * GRID_SIZE;
+                unsigned int grid_start_col = g_j * GRID_SIZE;
+                if (refine_candidates_for(indexer.grid_index[grid_start_row][grid_start_col], GRID_SIZE * GRID_SIZE)){
+                    return true;
+                }
+            }
+        }
+    }
+    if (unit_type == UnitType::ROW){
+        for (int r = 0; r < BOARD_SIZE; r++)
+        {
+            if (refine_candidates_for(indexer.row_index[r], BOARD_SIZE)){
+                return true;
+            }
+        }
+    }
+
+    if (unit_type == UnitType::COL){
+        for (int c = 0; c < BOARD_SIZE; c++)
+        {
+            if (refine_candidates_for(indexer.col_index[c], BOARD_SIZE)){
+                return true;
+            }
+        }
+    }
+
+    return false;
+
 };
 
 bool SolverV2::update_by_explicit_single(int row, int col){

@@ -248,6 +248,12 @@ unsigned int CandidateBoard::count(int row, int col) const{
     return count;
 }
 
+bool_ CandidateBoard::remain_x(unsigned int idx, unsigned int count, val_t* buffer) const{
+    unsigned int row = idx / BOARD_SIZE;
+    unsigned int col = idx % BOARD_SIZE;
+    return remain_x(row, col, count, buffer);
+};
+
 bool_ CandidateBoard::remain_x(int row, int col, unsigned int count, val_t* buffer) const{
     ASSERT_COORD_BOUNDS(row, col);
     int counter = 0;

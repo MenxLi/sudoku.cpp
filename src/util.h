@@ -1,5 +1,8 @@
+#pragma once
+
 #include "config.h"
 #include <vector>
+#include <array>
 #include <string>
 
 namespace util{
@@ -54,6 +57,109 @@ namespace util{
             arr[i] = arr[j];
             arr[j] = temp;
         }
+    }
+
+    template <unsigned int N>
+    struct Factorial
+    {
+        static constexpr unsigned int value = N * Factorial<N - 1>::value;
+    };
+
+    template <>
+    struct Factorial<0>
+    {
+        static constexpr unsigned int value = 1;
+    };
+
+    template <unsigned int N, unsigned int X>
+    struct N_Permutations
+    {
+        static constexpr unsigned int value = Factorial<N>::value / Factorial<N - X>::value;
+    };
+
+    // return the number of combinations of N choose X
+    template <unsigned int N, unsigned int X>
+    struct N_Combinations
+    {
+        static constexpr unsigned int value = N_Permutations<N, X>::value / Factorial<X>::value;
+    };
+
+    template <unsigned int N>
+    constexpr unsigned int factorial = Factorial<N>::value;
+
+    template <unsigned int N, unsigned int X>
+    constexpr unsigned int n_permutations = N_Permutations<N, X>::value;
+
+    template <unsigned int N, unsigned int X>
+    constexpr unsigned int n_combinations = N_Combinations<N, X>::value;
+
+    template <typename T, unsigned int N, unsigned int X>
+    constexpr std::array<std::array<T, X>, n_combinations<N, X>> combinations(const std::array<T, N>& arr)
+    {
+        static_assert(N >= X, "N must be greater than or equal to X");
+        static_assert(X >= 1, "X must be greater than or equal to 1");
+        const unsigned int res_n = n_combinations<N, X>;
+        std::array<std::array<T, X>, res_n> result;
+        if constexpr (N == X)     // only one result, just copy the array
+        {
+            for (unsigned int i = 0; i < N; i++)
+            {
+                result[0][i] = arr[i];
+            }
+            return result;
+        }
+
+        if constexpr (X==1){      // each element is a result
+            for (unsigned int i = 0; i < N; i++)
+            {
+                result[i][0] = arr[i];
+            }
+            return result;
+        }
+
+        if constexpr (X > 1 && N > X){
+            std::array<T, N - 1> sub_arr;
+            for (unsigned int i = 0; i < N - 1; i++)
+            {
+                sub_arr[i] = arr[i + 1];
+            }
+
+            // if the first element is in the result, then the rest of the elements are combinations of N-1, X-1
+            auto n_sub_res_a = n_combinations<N - 1, X - 1>;
+            auto sub_result_a = combinations<T, N - 1, X - 1>(sub_arr);
+            for (unsigned int i = 0; i < n_sub_res_a; i++)
+            {
+                result[i][0] = arr[0];
+                for (unsigned int j = 0; j < X - 1; j++)
+                {
+                    result[i][j + 1] = sub_result_a[i][j];
+                }
+            }
+
+            // if the first element is not in the result, then the rest of the elements are combinations of N-1, X
+            auto n_sub_res_b = n_combinations<N - 1, X>;
+            auto sub_result_b = combinations<T, N - 1, X>(sub_arr);
+            for (unsigned int i = 0; i < n_sub_res_b; i++)
+            {
+                for (unsigned int j = 0; j < X; j++)
+                {
+                    result[i + n_sub_res_a][j] = sub_result_b[i][j];
+                }
+            }
+
+            return result;
+        }
+    }
+
+    template <unsigned int N>
+    constexpr std::array<unsigned int, N> range()
+    {
+        std::array<unsigned int, N> result;
+        for (unsigned int i = 0; i < N; i++)
+        {
+            result[i] = i;
+        }
+        return result;
     }
 
 }

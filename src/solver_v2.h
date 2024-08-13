@@ -42,7 +42,7 @@ private:
     bool update_by_implicit_single(val_t value, UnitType unit_type);
 
     // handles implicit value determination
-    void refine_candidates();
+    bool refine_candidates(UnitType unit_type);
 
     // this is for trail and error approach
     SolverV2 fork();
