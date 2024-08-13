@@ -249,6 +249,18 @@ unsigned int CandidateBoard::count(int row, int col) const{
     return count;
 }
 
+bool CandidateBoard::remain_0(int row, int col) const{
+    ASSERT_COORD_BOUNDS(row, col)
+    const bool_ aim[CANDIDATE_SIZE] = {0};
+    return std::memcmp(m_candidates[row][col], aim, CANDIDATE_SIZE * sizeof(bool_)) == 0;
+}
+
+bool CandidateBoard::remain_0(unsigned int offset) const{
+    unsigned int row = indexer.offset_coord_lookup[offset][0];
+    unsigned int col = indexer.offset_coord_lookup[offset][1];
+    return remain_0(row, col);
+}
+
 OpState CandidateBoard::remain_x(unsigned int offset, unsigned int count, val_t* buffer) const{
     unsigned int row = indexer.offset_coord_lookup[offset][0];
     unsigned int col = indexer.offset_coord_lookup[offset][1];

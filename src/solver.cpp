@@ -7,6 +7,7 @@ Solver::Solver(const Board& board)
 {
     indexer.init();
     m_board.load_data(board);
+    m_iteration_counter.n_guesses = 0;
     m_iteration_counter.current = 0;
     m_iteration_counter.limit = MAX_ITER;
 };

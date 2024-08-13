@@ -34,6 +34,7 @@ py::dict solve(
     result["solved"] = solved;
     result["iterations"] = solver.iteration_counter().current;
     result["iteration_limit"] = solver.iteration_counter().limit;
+    result["n_guesses"] = solver.iteration_counter().n_guesses;
     result["data"] = data;
     result["time_us"] = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
     return result;

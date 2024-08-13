@@ -139,6 +139,9 @@ public:
     void reset();
     unsigned int count(int row, int col) const;
 
+    bool remain_0(int row, int col) const;
+    bool remain_0(unsigned int offset) const;
+
     // return if the cell has only count candidates left
     // and store the candidates in the buffer
     OpState remain_x(int row, int col, unsigned int count, val_t* buffer) const;

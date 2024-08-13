@@ -30,6 +30,11 @@ SolverV2::SolverV2(const Board& board) : Solver(board) {
 SolverV2::SolverV2(SolverV2& other) : Solver(other.board()) {
     m_candidates = other.m_candidates;
 
+    // copy iteration counter
+    m_iteration_counter.current = other.m_iteration_counter.current;
+    m_iteration_counter.limit = other.m_iteration_counter.limit;
+    m_iteration_counter.n_guesses = other.m_iteration_counter.n_guesses;
+
     // copy unit fill state
     for (unsigned int i=0; i<BOARD_SIZE; i++){
         for (unsigned int v_idx=0; v_idx<CANDIDATE_SIZE; v_idx++){
@@ -255,6 +260,8 @@ SolverV2 SolverV2::fork(){
 };
 
 OpState SolverV2::step_by_guess(){
+    this->iteration_counter().n_guesses += 1;
+
     auto numNeighborUnsolved = [&](unsigned int row, unsigned int col)->unsigned int{
         unsigned int min_count;
         unsigned int row_count = 0;
@@ -390,15 +397,10 @@ OpState SolverV2::step_by_guess(){
         forked_solver.iteration_counter().current = this->iteration_counter().current;
 
         bool solved;
-        try{
-            forked_solver.fill_propagate(best_choice.row, best_choice.col, guess);
-            solved = forked_solver.solve();
-            this->iteration_counter().current = forked_solver.iteration_counter().current;
-        }
-        catch(std::runtime_error& e){
-            this->iteration_counter().current = forked_solver.iteration_counter().current;
-            continue;
-        }
+        forked_solver.fill_propagate(best_choice.row, best_choice.col, guess);
+        solved = forked_solver.solve();
+        this->iteration_counter().current = forked_solver.iteration_counter().current;
+        this->m_iteration_counter.n_guesses = forked_solver.iteration_counter().n_guesses;
 
         if (!solved){ continue; }
 

@@ -8,6 +8,7 @@ struct IterationCounter
     // use long to avoid overflow
     unsigned long current;
     unsigned long limit;
+    unsigned long n_guesses;
 };
 
 class Solver
