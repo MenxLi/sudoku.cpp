@@ -169,8 +169,8 @@ bool SolverV2::update_by_implicit_single(val_t value, UnitType unit_type){
             val_t board_val = this->board().get(offset);
             if (board_val != 0) continue;                                     // skip filled cells
             if (this->m_candidates.get(offset)[value - 1] != 1) continue; // skip non-candidates
-            candidate_coord.row = indexer.offset_lookup[offset][0];
-            candidate_coord.col = indexer.offset_lookup[offset][1];
+            candidate_coord.row = indexer.offset_coord_lookup[offset][0];
+            candidate_coord.col = indexer.offset_coord_lookup[offset][1];
             candidate_count++;
             if (candidate_count > 1) break;
         }

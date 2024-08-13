@@ -12,8 +12,9 @@ public:
     static const unsigned int N_NEIGHBORS = 2 * (N - NG) + NG * NG - 1;
 
     // input coord to obtain grid coord, [i][j] -> [row, col] in [0, NG)
-    unsigned int grid_lookup[N][N][2];               // input position to obtain it's grid row and column
-    unsigned int offset_lookup[N*N][2];              // input position to obtain it's offset within the board
+    unsigned int grid_lookup[N][N][2];                      // input position to obtain it's grid row and column
+    unsigned int offset_coord_lookup[N*N][2];               // input offset to obtain it's coord [i][j]
+    unsigned int coord_offset_lookup[N][N];                 // input coord to obtain it's offset in [0, N*N), same to row_index
 
     // Input coord to obtain pointer offsets of a relevent area -> offset in [0, N*N).
     // The last dimension is the pointer offsets for the relevent area. 
@@ -42,11 +43,14 @@ void Indexer<NG>::init(){
         {
             for (unsigned int j = 0; j < N; j++)
             {
-                row_index[i][j] = i * N + j;
+                const unsigned int offset = i * N + j;
+
+                row_index[i][j] = offset;
 
                 // by the way, initialize the offset lookup
-                offset_lookup[i * N + j][0] = i;
-                offset_lookup[i * N + j][1] = j;
+                offset_coord_lookup[offset][0] = i;
+                offset_coord_lookup[offset][1] = j;
+                coord_offset_lookup[i][j] = offset;
             }
         }
     }();
