@@ -102,12 +102,10 @@ bool SolverV2::step(){
     if (step_by_implicit_single(UnitType::COL)) return true;
     DEBUG_PRINT("SolverV2::step() - step_by_implicit_only_candidate() failed");
 
-    if (m_iteration_counter.current > 10000){
-        if (refine_candidates(UnitType::GRID)) return true;
-        if (refine_candidates(UnitType::ROW)) return true;
-        if (refine_candidates(UnitType::COL)) return true;
-        DEBUG_PRINT("SolverV2::step() - refine_candidates() failed");
-    }
+    if (refine_candidates(UnitType::GRID)) return true;
+    if (refine_candidates(UnitType::ROW)) return true;
+    if (refine_candidates(UnitType::COL)) return true;
+    DEBUG_PRINT("SolverV2::step() - refine_candidates() failed");
 
     if (USE_GUESS){
         if (step_by_guess()) return true;
@@ -148,25 +146,26 @@ bool SolverV2::refine_candidates(UnitType unit_type){
     // to be implemented...
 
     auto refine_candidates_for = [&](unsigned int* offset_start, unsigned int len){
-        // todo: generalize this...
+        // todo: generalize and optimize this
+        // this may create some unnecessary re-visits
         bool updated = false;
         for (auto idx_pair: indexer.subunit_combinations_2){
-            if (updated) break;
             if (board().get_(offset_start[idx_pair[0]]) != 0 || board().get_(offset_start[idx_pair[1]]) != 0) continue;
-            auto candidate1 = m_candidates.get(offset_start[idx_pair[0]]);
-            auto candidate2 = m_candidates.get(offset_start[idx_pair[1]]);
             // std::cout << "idx_pair: " << idx_pair[0] << ", " << idx_pair[1] << std::endl;
             // check if they are equal and only have 2 candidates
             val_t buffer1[2] = {0, 0};
             val_t buffer2[2] = {0, 0};
-            if (m_candidates.remain_x(idx_pair[0], 2, buffer1) && m_candidates.remain_x(idx_pair[1], 2, buffer2)){
+            const unsigned int offset_0 = offset_start[idx_pair[0]];
+            const unsigned int offset_1 = offset_start[idx_pair[1]];
+            if (m_candidates.remain_x(offset_0, 2, buffer1) && m_candidates.remain_x(offset_1, 2, buffer2)){
                 if (buffer1[0] == buffer2[0] && buffer1[1] == buffer2[1]){
                     // remove the other candidates from the unit
                     for (unsigned int j = 0; j < len; j++){
                         if (j == idx_pair[0] || j == idx_pair[1]) continue;
                         for (unsigned int k = 0; k < 2; k++){
-                            updated = updated || m_candidates.get(j)[buffer1[k] - 1];
-                            m_candidates.get(j)[buffer1[k] - 1] = 0;
+                            const unsigned int offset = offset_start[j];
+                            updated = (updated || m_candidates.get(offset)[buffer1[k] - 1]);
+                            m_candidates.get(offset)[buffer1[k] - 1] = 0;
                         }
                     }
                 }

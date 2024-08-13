@@ -2,6 +2,7 @@
 
 #include "board.h"
 #include "config.h"
+#include "indexer.hpp"
 #include "solver.h"
 #include <memory>
 

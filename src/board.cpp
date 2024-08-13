@@ -224,6 +224,7 @@ CandidateBoard::CandidateBoard(CandidateBoard& other){
 }
 
 void CandidateBoard::reset(){
+    indexer.init();
     for (int i = 0; i < BOARD_SIZE; i++){
         for (int j = 0; j < BOARD_SIZE; j++){
             for (int k = 0; k < CANDIDATE_SIZE; k++){
@@ -248,9 +249,9 @@ unsigned int CandidateBoard::count(int row, int col) const{
     return count;
 }
 
-bool_ CandidateBoard::remain_x(unsigned int idx, unsigned int count, val_t* buffer) const{
-    unsigned int row = idx / BOARD_SIZE;
-    unsigned int col = idx % BOARD_SIZE;
+bool_ CandidateBoard::remain_x(unsigned int offset, unsigned int count, val_t* buffer) const{
+    unsigned int row = indexer.offset_coord_lookup[offset][0];
+    unsigned int col = indexer.offset_coord_lookup[offset][1];
     return remain_x(row, col, count, buffer);
 };
 

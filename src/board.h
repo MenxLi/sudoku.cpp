@@ -9,6 +9,7 @@ providing methods to read / dump the board state.
 #include <string>
 #include <memory>
 #include <vector>
+#include "indexer.hpp"
 #include "config.h"
 
 #define CANDIDATE_SIZE BOARD_SIZE
@@ -128,6 +129,7 @@ typedef uint8_t bool_;
 class CandidateBoard
 {
 public:
+    inline static Indexer<GRID_SIZE> indexer;
     CandidateBoard();
     CandidateBoard(CandidateBoard& other);
     inline bool_& get_(int row, int col, val_t value);
