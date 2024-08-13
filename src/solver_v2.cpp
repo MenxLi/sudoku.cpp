@@ -102,10 +102,12 @@ bool SolverV2::step(){
     if (step_by_implicit_single(UnitType::COL)) return true;
     DEBUG_PRINT("SolverV2::step() - step_by_implicit_only_candidate() failed");
 
-    if (refine_candidates(UnitType::GRID)) return true;
-    if (refine_candidates(UnitType::ROW)) return true;
-    if (refine_candidates(UnitType::COL)) return true;
-    DEBUG_PRINT("SolverV2::step() - refine_candidates() failed");
+    if (m_iteration_counter.current > 100){
+        if (refine_candidates(UnitType::GRID)) return true;
+        if (refine_candidates(UnitType::ROW)) return true;
+        if (refine_candidates(UnitType::COL)) return true;
+        DEBUG_PRINT("SolverV2::step() - refine_candidates() failed");
+    }
 
     if (USE_GUESS){
         if (step_by_guess()) return true;
@@ -324,11 +326,11 @@ bool SolverV2::step_by_guess(){
     // find the best cell to guess, 
     // by finding:
     // 1. the cell with the least number of candidates
-    // 2. the cell with the least number of unsolved neighbors
+    // 2. the cell with the largest number of unsolved neighbors (maximizing it's impact for quick feedback)
     auto get_heuristic_choice = [&]()->Coord {
         Coord best_choice;
         unsigned int min_candidate_count = 1e4;
-        unsigned int min_neighbor_count = 1e4;
+        unsigned int max_neighbor_count = 1e4;
         for (int i = 0; i < BOARD_SIZE; i++)
         {
             for (int j = 0; j < BOARD_SIZE; j++)
@@ -338,13 +340,13 @@ bool SolverV2::step_by_guess(){
                 unsigned int candidate_count = m_candidates.count(i, j);
                 if (candidate_count < min_candidate_count){
                     min_candidate_count = candidate_count;
-                    min_neighbor_count = numNeighborUnsolved(i, j);
+                    max_neighbor_count = numNeighborUnsolved(i, j);
                     best_choice = {i, j};
                 }
                 else if (candidate_count == min_candidate_count){
                     unsigned int neighbor_count = numNeighborUnsolved(i, j);
-                    if (neighbor_count < min_neighbor_count){
-                        min_neighbor_count = neighbor_count;
+                    if (neighbor_count > max_neighbor_count){
+                        max_neighbor_count = neighbor_count;
                         best_choice = {i, j};
                     }
                 }

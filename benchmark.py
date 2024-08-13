@@ -34,6 +34,7 @@ def read_input_file(input_file: str)->list[str]:
 
     with open(input_file, 'r') as f:
         puzzle_str = f.read()
+        puzzle_str = puzzle_str.replace('.', '0')
         all_puzzles = [l for l in puzzle_str.strip().split('\n') if test_puzzle(l)]
     return all_puzzles
 
