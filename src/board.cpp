@@ -241,9 +241,7 @@ unsigned int CandidateBoard::count(int row, int col) const{
     ASSERT_COORD_BOUNDS(row, col)
     unsigned int count = 0;
     for (int i = 0; i < CANDIDATE_SIZE; i++){
-        if (m_candidates[row][col][i]){
-            count++;
-        }
+        count += m_candidates[row][col][i];
     }
     ASSERT_CANDIDATE_COUNT_THROW(count)
     return count;

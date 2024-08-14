@@ -4,6 +4,7 @@
 #include "config.h"
 #include "indexer.hpp"
 #include "solver.h"
+#include <_types/_uint8_t.h>
 #include <memory>
 
 
@@ -37,7 +38,11 @@ private:
     OpState update_by_hidden_single(val_t value, UnitType unit_type);
 
     // handles implicit value determination
-    bool refine_candidates(UnitType unit_type);
+    // i.e. if a sub-row/col in a grid has multiple candidates for a value,
+    // but can uniquely determine the value based on the row/col 
+    // (e.g. 57, 75, 375 appears in one row/col of a grid, determins 7 and 5 must be in the same row/col)
+    // then we can remove the other candidates from the same total-row/col
+    OpState refine_candidates_by_naked_double(UnitType unit_type);
 
     // this is for trail and error approach
     SolverV2 fork();

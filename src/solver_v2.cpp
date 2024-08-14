@@ -14,6 +14,7 @@
 static bool USE_GUESS;
 static bool DETERMINISTIC_GUESS;
 static bool HEURISTIC_GUESS;
+static bool USE_NAKED_DOUBLE;
 
 // #define DEBUG_PRINT(x) std::cout << x << std::endl;
 #define DEBUG_PRINT(x);
@@ -23,6 +24,7 @@ SolverV2::SolverV2(const Board& board) : Solver(board) {
     USE_GUESS = util::parse_env_i<bool>("SOLVER_USE_GUESS", true);
     DETERMINISTIC_GUESS = util::parse_env_i("SOLVER_DETERMINISTIC_GUESS", false);
     HEURISTIC_GUESS = util::parse_env_i("SOLVER_HEURISTIC_GUESS", true);
+    USE_NAKED_DOUBLE = util::parse_env_i("SOLVER_USE_NAKED_DOUBLE", true);
     // std::cout << "Config: USE_GUESS=" << USE_GUESS << ", DETERMINISTIC_GUESS=" << DETERMINISTIC_GUESS << ", HEURISTIC_GUESS=" << HEURISTIC_GUESS << std::endl;
 
     init_states();
@@ -109,23 +111,49 @@ OpState SolverV2::step_by_hidden_single(
 bool SolverV2::step(){
     DEBUG_PRINT("SolverV2::step()");
 
-    OpState state1 = step_by_naked_single();
-    if (state1 == OpState::VIOLATION) return false;
-    if (state1 == OpState::SUCCESS) return true;
-    DEBUG_PRINT("SolverV2::step() - step_by_only_candidate() failed");
+    auto step_by_single = [&]()->OpState{
+        OpState state = step_by_naked_single();
+        if (state == OpState::VIOLATION) return OpState::VIOLATION;
+        if (state == OpState::SUCCESS) return OpState::SUCCESS;
+        DEBUG_PRINT("SolverV2::step() - step_by_only_candidate() failed");
 
-    for (int i = 0; i < 3; i++)
-    {
-        UnitType unit_type = static_cast<UnitType>(i);
-        OpState state2 = step_by_hidden_single(unit_type);
-        if (state2 == OpState::VIOLATION) return false;
-        if (state2 == OpState::SUCCESS) return true;
+        for (int i = 0; i < 3; i++)
+        {
+            UnitType unit_type = static_cast<UnitType>(i);
+            state = step_by_hidden_single(unit_type);
+            if (state == OpState::VIOLATION) return OpState::VIOLATION;
+            if (state == OpState::SUCCESS) return OpState::SUCCESS;
+        }
+        DEBUG_PRINT("SolverV2::step() - step_by_implicit_only_candidate() failed");
+        return OpState::FAIL;
+    };
+
+    OpState state;
+
+    state = step_by_single();
+    if (state == OpState::VIOLATION) return false;
+    if (state == OpState::SUCCESS) return true;
+
+    // refine the candidates by naked double
+    if (USE_NAKED_DOUBLE){
+        for (int i = 0; i < 2; i++)
+        {
+            UnitType unit_type = static_cast<UnitType>(i);
+            state = refine_candidates_by_naked_double(unit_type);
+            if (state == OpState::VIOLATION) return false;
+        }
+
+        // try to solve the puzzle again
+        iteration_counter().current += 1;
+        state = step_by_single();
+        // if (state_single_2 == OpState::SUCCESS) std::cout << "Progress after refining candidates by naked double" << std::endl;
+        if (state == OpState::VIOLATION) return false;
+        if (state == OpState::SUCCESS) return true;
     }
-    DEBUG_PRINT("SolverV2::step() - step_by_implicit_only_candidate() failed");
 
     if (USE_GUESS){
-        OpState state3 = step_by_guess();
-        if (state3 == OpState::SUCCESS) return true;
+        state = step_by_guess();
+        if (state == OpState::SUCCESS) return true;
         DEBUG_PRINT("SolverV2::step() - step_by_guess() failed");
     }
     return false;
@@ -157,14 +185,71 @@ OpState SolverV2::fill_propagate(unsigned int row, unsigned int col, val_t value
 };
 
 
-bool SolverV2::refine_candidates(UnitType unit_type){
-    // handles implicit value determination
-    // i.e. if a sub-row/col in a grid has multiple candidates for a value,
-    // but can uniquely determine the value based on the row/col 
-    // (e.g. 57, 75, 375 appears in one row/col of a grid, determins 7 and 5 must be in the same row/col)
-    // then we can remove the other candidates from the same total-row/col
-    // to be implemented...
-    return false;
+OpState SolverV2::refine_candidates_by_naked_double(UnitType unit_type){
+    auto solve_for_unit = [&](unsigned int* offset_start, unsigned int len)->OpState{
+        for (auto idx_pair : indexer.subunit_combinations_2){
+            // initial validity check
+            unsigned int offset1 = offset_start[idx_pair[0]];
+            if (board().get(offset1) != 0) continue;        // skip filled cells
+
+            unsigned int offset2 = offset_start[idx_pair[1]];
+            if (board().get(offset2) != 0) continue;        // skip filled cells
+
+            // check if the two cells share the same candidates
+            auto candidate_1 = m_candidates.get(offset1);
+            auto candidate_2 = m_candidates.get(offset2);
+            if (memcmp(candidate_1, candidate_2, CANDIDATE_SIZE*sizeof(decltype(candidate_1[0]))) != 0){
+                continue;
+            }
+
+            // check if the first cell has only 2 candidates, the second cell is the same
+            val_t double_values[2];
+            OpState s1 = m_candidates.remain_x(offset1, 2, double_values);
+            if (s1 == OpState::VIOLATION){ return OpState::VIOLATION; }
+            if (s1 == OpState::FAIL){ continue; }
+
+            // remove the double values from the other cells in the unit
+            for (int i = 0; i < len; i++)
+            {
+                unsigned int offset = offset_start[i];
+                if (offset == offset1 || offset == offset2) continue;
+                if (board().get(offset) != 0) continue;        // skip filled cells
+                for (val_t val : double_values){
+                    m_candidates.get(offset)[val - 1] = 0;
+                }
+            }
+        }
+        return OpState::SUCCESS;
+    };
+
+    switch (unit_type)
+    {
+    case UnitType::ROW:
+        for (int r = 0; r < BOARD_SIZE; r++)
+        {
+            OpState state = solve_for_unit(indexer.row_index[r], BOARD_SIZE);
+            if (state == OpState::VIOLATION){ return OpState::VIOLATION; }
+        }
+        break;
+    case UnitType::COL:
+        for (int c = 0; c < BOARD_SIZE; c++)
+        {
+            OpState state = solve_for_unit(indexer.col_index[c], BOARD_SIZE);
+            if (state == OpState::VIOLATION){ return OpState::VIOLATION; }
+        }
+        break;
+    case UnitType::GRID:
+        for (int g_i = 0; g_i < GRID_SIZE; g_i++)
+        {
+            for (int g_j = 0; g_j < GRID_SIZE; g_j++)
+            {
+                OpState state = solve_for_unit(indexer.grid_index[g_i][g_j], GRID_SIZE * GRID_SIZE);
+                if (state == OpState::VIOLATION){ return OpState::VIOLATION; }
+            }
+        }
+        break;
+    }
+    return OpState::SUCCESS;
 };
 
 OpState SolverV2::update_by_naked_single(int row, int col){

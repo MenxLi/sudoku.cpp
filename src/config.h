@@ -25,9 +25,9 @@ if (!(cond)) { throw std::runtime_error("Assertion failed: " __FILE__ ":" + std:
 typedef uint8_t val_t;
 
 enum class UnitType{
-    GRID,
     ROW,
-    COL
+    COL,
+    GRID,
 };
 
 enum class OpState
