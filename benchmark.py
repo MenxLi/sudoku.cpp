@@ -18,7 +18,7 @@ def solve_puzzle(puzzle_str: str) -> Tuple[int, bool]:
     except Exception as e:
         print(f"Error while solving puzzle: {puzzle_str}, error: {e}")
         return -1, False
-    return res['time_us'], res['solved']
+    return res['time_us'], res['solved'], res['n_guesses']
 
 def read_input_file(input_file: str)->list[str]:
     """
@@ -51,6 +51,7 @@ def test_txt(input_file: str):
     
     all_times = [r[0] for r in all_res if r[1]]
     all_solved = [r[1] for r in all_res]
+    all_n_guesses = [r[2] for r in all_res]
 
     time_mean = numpy.mean(all_times)
     time_median = numpy.median(all_times)
@@ -66,6 +67,8 @@ def test_txt(input_file: str):
     print(f"Min time: {time_min} us")
     print(f"1st quartile time: {time_1q} us")
     print(f"3rd quartile time: {time_3q} us")
+    print(f"Mean number of guesses: {numpy.mean(all_n_guesses)}")
+    print(f"Median number of guesses: {numpy.median(all_n_guesses)}")
     print("-"*30)
 
 if __name__ == "__main__":

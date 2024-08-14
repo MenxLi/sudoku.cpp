@@ -9,6 +9,37 @@
 namespace util{
     std::vector<std::string> split_string(const std::string& str, const std::string& delimiter);
 
+    template <typename T, unsigned int size_>
+    class SizedArray
+    {
+    public:
+        void push(T value)
+        {
+            if (m_size >= size_) { return; }
+            m_data[m_size] = value;
+            m_size++;
+        }
+        T* data() const
+        {
+            return m_data;
+        }
+        unsigned int size() const
+        {
+            return m_size;
+        }
+        bool operator==(const SizedArray<T, size_>& other) const
+        {
+            return std::memcmp(m_data, other.m_data, size_ * sizeof(T)) == 0;
+        }
+        T& operator[](unsigned int idx)
+        {
+            return m_data[idx];
+        }
+    private:
+        T m_data[size_] = { 0 };
+        unsigned int m_size = 0;
+    };
+
     template <typename T>
     T parse_env_i(const char* env_name, T default_value)
     {

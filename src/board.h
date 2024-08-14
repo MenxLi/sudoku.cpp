@@ -12,8 +12,6 @@ providing methods to read / dump the board state.
 #include "indexer.hpp"
 #include "config.h"
 
-#define CANDIDATE_SIZE BOARD_SIZE
-
 #define ASSERT_COORD_BOUNDS(coord_row, coord_col) \
     ASSERT(coord_row >= 0 && coord_row < BOARD_SIZE, "row out of bounds: " + std::to_string(coord_row)); \
     ASSERT(coord_col >= 0 && coord_col < BOARD_SIZE, "column out of bounds: " + std::to_string(coord_col));
@@ -149,6 +147,7 @@ public:
     OpState remain_x(unsigned int offset, unsigned int count, val_t* buffer) const;
 
 private:
+    // one-hot encoding of the candidates
     bool_ m_candidates[BOARD_SIZE][BOARD_SIZE][CANDIDATE_SIZE];
 };
 
@@ -161,7 +160,7 @@ bool_* CandidateBoard::get(int row, int col){
     return m_candidates[row][col];
 }
 
-bool_* CandidateBoard::get(int idx){
+bool_* CandidateBoard::get(int offset){
     // return m_candidates[idx / BOARD_SIZE][idx % BOARD_SIZE];
-    return &m_candidates[0][0][0] + idx * CANDIDATE_SIZE;
+    return &m_candidates[0][0][0] + offset * CANDIDATE_SIZE;
 }

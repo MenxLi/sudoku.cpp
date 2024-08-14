@@ -6,7 +6,8 @@ template <unsigned int NG>   // NG is the grid size
 class Indexer
 {
 public:
-    static const unsigned int N = NG * NG;
+    static const unsigned int N = NG * NG;      // board size
+    static const unsigned int NV = N;           // number of values/candidates
     static_assert(N == BOARD_SIZE, "NG * NG must be equal to BOARD_SIZE");
 
     // neighbor not including self, in a 9x9 sudoku board, a cell has 20 neighbors
@@ -29,6 +30,9 @@ public:
 
     inline static std::array<std::array<unsigned int, 2>, util::n_combinations<N, 2>>
     subunit_combinations_2{ util::combinations<unsigned int, N, 2>(util::range<N>()) };
+
+    inline static std::array<std::array<unsigned int, 2>, util::n_combinations<NV, 2>>
+    subvalue_combinations_2{ util::combinations<unsigned int, NV, 2>(util::range<NV>()) };
 
     void init();
 

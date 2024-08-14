@@ -43,6 +43,8 @@ private:
     // (e.g. 57, 75, 375 appears in one row/col of a grid, determins 7 and 5 must be in the same row/col)
     // then we can remove the other candidates from the same total-row/col
     OpState refine_candidates_by_naked_double(UnitType unit_type);
+    OpState refine_candidates_by_hidden_double(UnitType unit_type);     // hidden double is a superset of naked double
+    uint8_t m_visited_double_combinations[CELL_COUNT][CELL_COUNT] = {0};
 
     // this is for trail and error approach
     SolverV2 fork();

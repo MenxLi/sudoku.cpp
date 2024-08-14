@@ -15,6 +15,10 @@
 
 #define BOARD_SIZE (GRID_SIZE * GRID_SIZE)
 
+const unsigned int CANDIDATE_SIZE = BOARD_SIZE;
+const unsigned int UNIT_SIZE = BOARD_SIZE;
+const unsigned int CELL_COUNT = BOARD_SIZE * BOARD_SIZE;
+
 #ifdef STRICT
 #define ASSERT(cond, faild_reason) \
 if (!(cond)) { throw std::runtime_error("Assertion failed: " __FILE__ ":" + std::to_string(__LINE__) + " " #cond " " faild_reason); }
