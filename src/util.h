@@ -29,15 +29,15 @@ namespace util{
     // returns the sorted array in ascending order
     // only use this for very small arrays
     template <typename T>
-    void sort_array_bubble(T* arr, unsigned int size)
+    void sort_array_bubble(T* arr, unsigned int size, bool (*compare_fn)(T, T) = [](T a, T b) { return a < b; })
     {
         while (true) {
             bool swapped = false;
             for (unsigned int i = 1; i < size; i++) {
-                if (arr[i - 1] > arr[i]) {
-                    T temp = arr[i - 1];
-                    arr[i - 1] = arr[i];
-                    arr[i] = temp;
+                if (compare_fn(arr[i], arr[i - 1])) {
+                    T temp = arr[i];
+                    arr[i] = arr[i - 1];
+                    arr[i - 1] = temp;
                     swapped = true;
                 }
             }

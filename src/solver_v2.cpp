@@ -6,6 +6,7 @@
 #include <memory>
 #include <stdexcept>
 #include <stdlib.h>
+#include <utility>
 
 #define CANDIDATE_SIZE BOARD_SIZE
 #define MAX_FORK_TRAIL MAX_ITER
@@ -361,8 +362,13 @@ OpState SolverV2::step_by_guess(){
 
     // choose a candidate in the best choice location
 
-    // collect the indices of the candidates where the value is not 0
-    val_t candidate_values[CANDIDATE_SIZE];
+    // collect the candidates where the value is not 0
+    struct CandidateFilledPair{
+        val_t val;
+        unsigned int count;
+    };
+
+    CandidateFilledPair candidate_filled_pairs[CANDIDATE_SIZE];
     unsigned int candidate_count = 0;
 
     // candidate_values.reserve(CANDIDATE_SIZE);
@@ -370,7 +376,8 @@ OpState SolverV2::step_by_guess(){
     {
         val_t val = static_cast<val_t>(i + 1);
         if (m_candidates.get_(best_choice.row, best_choice.col, val)){
-            candidate_values[candidate_count] = val;
+            candidate_filled_pairs[candidate_count].val = val;
+            candidate_filled_pairs[candidate_count].count = m_filled_count[i];
             candidate_count++;
         }
     }
@@ -378,18 +385,20 @@ OpState SolverV2::step_by_guess(){
     if (HEURISTIC_GUESS){
         // sort the candidate indices by the number of occurences in the board, 
         // starting with the one with the least occurences
-        // this should facilitateos the backtracking process by increasing the value diversity, 
-        // and reduce the chance of getting stuck in a local minimum (which requires more guesses)
-        util::sort_array_bubble<val_t>(candidate_values, candidate_count);
+        // this should facilitateos the backtracking process by increasing the value diversity
+        // but it seems not affecting the performance much...
+        util::sort_array_bubble<CandidateFilledPair>(candidate_filled_pairs, candidate_count, 
+            [](CandidateFilledPair a, CandidateFilledPair b) { return a.count < b.count; }
+            );
     }
     else if (!DETERMINISTIC_GUESS){
         // shuffle the candidate indices
-        util::shuffle_array<val_t>(candidate_values, candidate_count);
+        util::shuffle_array<CandidateFilledPair>(candidate_filled_pairs, candidate_count);
     }
 
     // make guesses with backtracking
     for (unsigned int i = 0; i < candidate_count; i++){
-        val_t guess = candidate_values[i];
+        val_t guess = candidate_filled_pairs[i].val;
 
         auto forked_solver = this->fork();
 
