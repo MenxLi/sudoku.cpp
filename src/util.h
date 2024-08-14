@@ -4,6 +4,7 @@
 #include <vector>
 #include <array>
 #include <string>
+#include <random>
 
 namespace util{
     std::vector<std::string> split_string(const std::string& str, const std::string& delimiter);
@@ -50,9 +51,12 @@ namespace util{
     template <typename T>
     void shuffle_array(T* arr, unsigned int size)
     {
+        static std::random_device dev;
+        static std::mt19937 rng(dev());
+        std::uniform_int_distribution<std::mt19937::result_type> dist(0, size - 1);
         for (unsigned int i = 0; i < size; i++)
         {
-            unsigned int j = rand() % size;
+            unsigned int j = dist(rng);
             T temp = arr[i];
             arr[i] = arr[j];
             arr[j] = temp;

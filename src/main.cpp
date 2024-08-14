@@ -1,4 +1,4 @@
-#include "solver_v1.h"
+#include "solver_v2.h"
 #include <chrono>
 
 bool solve_for(std::string input_file, std::string output_file)
@@ -6,7 +6,7 @@ bool solve_for(std::string input_file, std::string output_file)
     Board board;
     board.load_from_file(input_file);
 
-    SolverV1 solver(board);
+    SolverV2 solver(board);
     bool solved = false;
 
     try{
@@ -19,8 +19,7 @@ bool solve_for(std::string input_file, std::string output_file)
         std::cout << "Puzzle: " << input_file << " ";
     } catch (std::exception& e){
         std::cerr << "Error while solving " << input_file << ", " << e.what() << std::endl;
-        board.save_to_file(output_file);
-        return solved;
+        solved = false;
     }
 
     if (solved)
@@ -32,7 +31,7 @@ bool solve_for(std::string input_file, std::string output_file)
         std::cout << "Not solved. ";
     }
 
-    board.save_to_file(output_file);
+    solver.board().save_to_file(output_file);
 
     std::cout << "Output saved to: " << output_file << std::endl;
     return solved;
