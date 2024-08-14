@@ -5,6 +5,7 @@
 #include <fstream>
 #include <memory>
 #include <vector>
+#include <cstring>
 
 void Board::clear(val_t val = 0)
 {
@@ -52,6 +53,12 @@ std::unique_ptr<val_t*> Board::get_grid(int row, int col){
         }
     }
     return result;
+};
+
+void Board::set(unsigned int offset, val_t value)
+{
+    ASSERT(offset < BOARD_SIZE * BOARD_SIZE, "offset out of bounds: " + std::to_string(offset));
+    *(&m_board[0][0] + offset) = value;
 };
 
 void Board::set(int row, int col, val_t value)
@@ -279,6 +286,10 @@ OpState CandidateBoard::remain_x(int row, int col, unsigned int count, val_t* bu
 val_t Board::operator[](Coord coord)
 {
     return get(coord);
+}
+bool Board::operator==(const Board& other) const
+{
+    return std::memcmp(m_board, other.m_board, sizeof(m_board)) == 0;
 }
 std::ostream& operator<<(std::ostream& os, const Board& board)
 {

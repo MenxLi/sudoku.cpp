@@ -20,7 +20,7 @@ namespace util{
             m_data[m_size] = value;
             m_size++;
         }
-        T* data() const
+        T* data()
         {
             return m_data;
         }

@@ -55,6 +55,7 @@ public:
     std::unique_ptr<val_t*> get_grid(int grid_row, int grid_col);
     std::unique_ptr<val_t*> get_grid(const Coord& coord);
 
+    void set(unsigned int offset, val_t value);
     void set(int row, int col, val_t value);
     void set(const Coord& coord, val_t value);
 
@@ -75,6 +76,7 @@ public:
     std::string to_string() const;
 
     val_t operator[](Coord coord);
+    bool operator==(const Board& other) const;
 
     friend std::ostream& operator<<(std::ostream& os, const Board& board);
 
