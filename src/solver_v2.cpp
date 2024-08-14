@@ -21,7 +21,7 @@ SolverV2::SolverV2(const Board& board) : Solver(board) {
     USE_GUESS = util::parse_env_i<bool>("SOLVER_USE_GUESS", true);
     DETERMINISTIC_GUESS = util::parse_env_i("SOLVER_DETERMINISTIC_GUESS", false);
     HEURISTIC_GUESS = util::parse_env_i("SOLVER_HEURISTIC_GUESS", true);
-    USE_DOUBLE = util::parse_env_i("SOLVER_USE_DOUBLE", true);
+    USE_DOUBLE = util::parse_env_i("SOLVER_USE_DOUBLE", false);
     // std::cout << "Config: USE_GUESS=" << USE_GUESS << ", DETERMINISTIC_GUESS=" << DETERMINISTIC_GUESS << ", HEURISTIC_GUESS=" << HEURISTIC_GUESS << std::endl;
 
     init_states();
@@ -36,24 +36,10 @@ SolverV2::SolverV2(SolverV2& other) : Solver(other.board()) {
     m_iteration_counter.n_guesses = other.m_iteration_counter.n_guesses;
 
     // copy unit fill state
-    for (unsigned int i=0; i<BOARD_SIZE; i++){
-        for (unsigned int v_idx=0; v_idx<CANDIDATE_SIZE; v_idx++){
-            m_row_value_state[i][v_idx] = other.m_row_value_state[i][v_idx];
-            m_col_value_state[i][v_idx] = other.m_col_value_state[i][v_idx];
-        }
-    }
-    for (unsigned int i=0; i<GRID_SIZE; i++){
-        for (unsigned int j=0; j<GRID_SIZE; j++){
-            for (unsigned int v_idx=0; v_idx<CANDIDATE_SIZE; v_idx++){
-                m_grid_value_state[i][j][v_idx] = other.m_grid_value_state[i][j][v_idx];
-            }
-        }
-    }
-    
-    for (unsigned int i = 0; i < CANDIDATE_SIZE; i++)
-    {
-        m_filled_count[i] = other.m_filled_count[i];
-    }
+    std::memcpy(m_row_value_state, other.m_row_value_state, BOARD_SIZE * CANDIDATE_SIZE * sizeof(decltype(m_row_value_state[0][0])));
+    std::memcpy(m_col_value_state, other.m_col_value_state, BOARD_SIZE * CANDIDATE_SIZE * sizeof(decltype(m_col_value_state[0][0])));
+    std::memcpy(m_grid_value_state, other.m_grid_value_state, GRID_SIZE * GRID_SIZE * CANDIDATE_SIZE * sizeof(decltype(m_grid_value_state[0][0][0])));
+    std::memcpy(m_filled_count, other.m_filled_count, CANDIDATE_SIZE * sizeof(decltype(m_filled_count[0])));
 
     // copy visited double combinations buffer
     std::memcpy(m_visited_double_combinations, other.m_visited_double_combinations, CELL_COUNT * CELL_COUNT * sizeof(decltype(m_visited_double_combinations[0][0])));
@@ -200,7 +186,7 @@ OpState SolverV2::fill_propagate(unsigned int row, unsigned int col, val_t value
 
 
 OpState SolverV2::refine_candidates_by_naked_double(UnitType unit_type){
-    auto solve_for_unit = [&](unsigned int* offset_start, unsigned int len)->OpState{
+    auto solve_for_unit = [&](unsigned int* offset_start)->OpState{
         for (auto idx_pair : indexer.subunit_combinations_2){
             // initial validity check
             unsigned int offset1 = offset_start[idx_pair[0]];
@@ -227,7 +213,7 @@ OpState SolverV2::refine_candidates_by_naked_double(UnitType unit_type){
             m_visited_double_combinations[offset1][offset2] = 1;
 
             // remove the double values from the other cells in the unit
-            for (int i = 0; i < len; i++)
+            for (int i = 0; i < UNIT_SIZE; i++)
             {
                 unsigned int offset = offset_start[i];
                 if (offset == offset1 || offset == offset2) continue;
@@ -245,14 +231,14 @@ OpState SolverV2::refine_candidates_by_naked_double(UnitType unit_type){
     case UnitType::ROW:
         for (int r = 0; r < BOARD_SIZE; r++)
         {
-            OpState state = solve_for_unit(indexer.row_index[r], BOARD_SIZE);
+            OpState state = solve_for_unit(indexer.row_index[r]);
             if (state == OpState::VIOLATION){ return OpState::VIOLATION; }
         }
         break;
     case UnitType::COL:
         for (int c = 0; c < BOARD_SIZE; c++)
         {
-            OpState state = solve_for_unit(indexer.col_index[c], BOARD_SIZE);
+            OpState state = solve_for_unit(indexer.col_index[c]);
             if (state == OpState::VIOLATION){ return OpState::VIOLATION; }
         }
         break;
@@ -263,7 +249,7 @@ OpState SolverV2::refine_candidates_by_naked_double(UnitType unit_type){
             {
                 const unsigned int grid_start_row = g_i * GRID_SIZE;
                 const unsigned int grid_start_col = g_j * GRID_SIZE;
-                OpState state = solve_for_unit(indexer.grid_index[grid_start_row][grid_start_col], GRID_SIZE * GRID_SIZE);
+                OpState state = solve_for_unit(indexer.grid_index[grid_start_row][grid_start_col]);
                 if (state == OpState::VIOLATION){ return OpState::VIOLATION; }
             }
         }
@@ -371,10 +357,10 @@ it is the only cell in the row/col/grid that can have a certain value
 */
 OpState SolverV2::update_by_hidden_single(val_t value, UnitType unit_type){
 
-    auto solve_for_unit = [&](unsigned int* offset_start, unsigned int len){
+    auto solve_for_unit = [&](unsigned int* offset_start){
         unsigned int candidate_count = 0;
         Coord candidate_coord;
-        for (int i = 0; i < len; i++)
+        for (int i = 0; i < UNIT_SIZE; i++)
         {
             unsigned int offset = offset_start[i];
             val_t board_val = this->board().get(offset);
@@ -403,7 +389,7 @@ OpState SolverV2::update_by_hidden_single(val_t value, UnitType unit_type){
                 // iterate through the grid
                 const unsigned int grid_start_row = g_i * GRID_SIZE;
                 const unsigned int grid_start_col = g_j * GRID_SIZE;
-                OpState state = solve_for_unit(indexer.grid_index[grid_start_row][grid_start_col], GRID_SIZE * GRID_SIZE);
+                OpState state = solve_for_unit(indexer.grid_index[grid_start_row][grid_start_col]);
                 // somehow must return here, instead of continue...
                 // otherwise, benchmark.py will fail?
                 if (state == OpState::SUCCESS || state == OpState::VIOLATION){
@@ -418,7 +404,7 @@ OpState SolverV2::update_by_hidden_single(val_t value, UnitType unit_type){
         for (int r = 0; r < BOARD_SIZE; r++)
         {
             if (m_row_value_state[r][v_idx] == 1){ continue; } // already filled
-            OpState state = solve_for_unit(indexer.row_index[r], BOARD_SIZE);
+            OpState state = solve_for_unit(indexer.row_index[r]);
             if (state == OpState::SUCCESS || state == OpState::VIOLATION){
                 return state;
             }
@@ -429,7 +415,7 @@ OpState SolverV2::update_by_hidden_single(val_t value, UnitType unit_type){
         for (int c = 0; c < BOARD_SIZE; c++)
         {
             if (m_col_value_state[c][v_idx] == 1){ continue; } // already filled
-            OpState state = solve_for_unit(indexer.col_index[c], BOARD_SIZE);
+            OpState state = solve_for_unit(indexer.col_index[c]);
             if (state == OpState::SUCCESS || state == OpState::VIOLATION){
                 return state;
             }
