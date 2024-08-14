@@ -4,7 +4,6 @@
 #include "config.h"
 #include "indexer.hpp"
 #include "solver.h"
-#include <_types/_uint8_t.h>
 #include <memory>
 
 

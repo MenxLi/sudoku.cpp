@@ -1,6 +1,7 @@
 #pragma once
 
 #include "config.h"
+#include <cstring>
 #include <vector>
 #include <array>
 #include <string>
@@ -134,7 +135,7 @@ namespace util{
         static_assert(N >= X, "N must be greater than or equal to X");
         static_assert(X >= 1, "X must be greater than or equal to 1");
         const unsigned int res_n = n_combinations<N, X>;
-        std::array<std::array<T, X>, res_n> result;
+        std::array<std::array<T, X>, res_n> result = {0};
         if constexpr (N == X)     // only one result, just copy the array
         {
             for (unsigned int i = 0; i < N; i++)
@@ -153,7 +154,7 @@ namespace util{
         }
 
         if constexpr (X > 1 && N > X){
-            std::array<T, N - 1> sub_arr;
+            std::array<T, N - 1> sub_arr = {0};
             for (unsigned int i = 0; i < N - 1; i++)
             {
                 sub_arr[i] = arr[i + 1];
@@ -189,7 +190,7 @@ namespace util{
     template <unsigned int N>
     constexpr std::array<unsigned int, N> range()
     {
-        std::array<unsigned int, N> result;
+        std::array<unsigned int, N> result = {0};
         for (unsigned int i = 0; i < N; i++)
         {
             result[i] = i;
