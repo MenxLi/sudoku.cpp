@@ -1,6 +1,5 @@
 #pragma once
 
-#include "config.h"
 #include <cstring>
 #include <vector>
 #include <array>

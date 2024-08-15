@@ -122,6 +122,19 @@ namespace gen{
         return indices;
     };
 
+    static void remove_clues_no_check(Board& board, int n_clues_to_remove){
+        auto indices = get_randomized_filled_indices(board);
+        for (unsigned int i = 0; i < indices.size(); i++){
+            unsigned int idx = indices[i];
+            board.set(idx, 0);
+            n_clues_to_remove--;
+            if (n_clues_to_remove == 0){
+                return;
+            }
+        }
+    }
+
+
     // backtracking to remove n_clues_to_remove clues
     // this is a depth-first search... may not be the best way to do this...
     static std::tuple<bool, long> remove_n_clues_recursively(
@@ -158,10 +171,7 @@ namespace gen{
         return std::make_tuple(false, max_depth);
     }
 
-    bool remove_clues_by_solve(Board& board, int n_clues_to_remove){
-        ASSERT(board.is_solved(), "The board should be completely filled");
-
-        Board solution = Board(board);
+    bool remove_clues_by_solve(Board& board, const Board& solution, int n_clues_to_remove){
         auto [success, depth_remain] = remove_n_clues_recursively(board, solution, n_clues_to_remove);
         return success;
     }
@@ -171,17 +181,28 @@ namespace gen{
         if (n_clues_remain >= CELL_COUNT){
             return std::make_tuple(false, board);
         }
-        if (BOARD_SIZE == 9 && n_clues_remain < 17){
-            return std::make_tuple(false, board);
-        }
+
+        // if (BOARD_SIZE == 9 && n_clues_remain < 17){
+        //     return std::make_tuple(false, board);
+        // }
 
         unsigned int n_clues_to_remove = CELL_COUNT - n_clues_remain;
         std::cout << "Generating board (" << BOARD_SIZE << "x" << BOARD_SIZE <<
         ") with " << n_clues_remain << " clues remaining." << std::flush;
 
         for (int i = 0; i < max_retries; i++){
+            unsigned int n_to_remove_ = n_clues_to_remove;
             fill_valid_board(board);
-            bool generated = remove_clues_by_solve(board, n_clues_to_remove);
+            auto solution = Board(board);
+
+            // speed up...
+            const int confident_remove_bound = CELL_COUNT / 2;
+            if (n_to_remove_ > confident_remove_bound){
+                remove_clues_no_check(board, confident_remove_bound);
+                n_to_remove_ -= confident_remove_bound;
+            }
+
+            bool generated = remove_clues_by_solve(board, solution, n_to_remove_);
             if (generated){
                 std::cout << std::endl;
                 return std::make_tuple(generated, board);
