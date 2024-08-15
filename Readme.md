@@ -35,7 +35,7 @@ Run benchmark on larger datasets:
 </summary>
 
 ```
-> python benchmark.py /Users/monsoon/Code/repo/sudoku-dataset/hard_sudokus.txt
+> python -m scripts.benchmark /Users/monsoon/Code/repo/sudoku-dataset/hard_sudokus.txt
 Read 10000 puzzles
 Submitting tasks: 100%|████████████████████████████████████████████████████████| 10000/10000 [00:00<00:00, 21433.89it/s]
 Collecting results: 100%|██████████████████████████████████████████████████████| 10000/10000 [00:00<00:00, 13791.81it/s]
@@ -49,7 +49,7 @@ Min time: 9 us
 3rd quartile time: 50.0 us
 ------------------------------
 
-> python benchmark.py /Users/monsoon/Code/repo/sudoku-dataset/all_17_clue_sudokus.txt
+> python -m scripts.benchmark /Users/monsoon/Code/repo/sudoku-dataset/all_17_clue_sudokus.txt
 Read 49151 puzzles
 Submitting tasks: 100%|████████████████████████████████████████████████████████| 49151/49151 [00:01<00:00, 45788.44it/s]
 Collecting results: 100%|██████████████████████████████████████████████████████| 49151/49151 [00:03<00:00, 15621.89it/s]
