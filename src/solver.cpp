@@ -3,6 +3,11 @@
 #include "board.h"
 #include "config.h"
 
+#ifdef PYBIND11_BUILD
+#include <pybind11/pybind11.h>
+namespace py = pybind11;
+#endif
+
 Solver::Solver(const Board& board)
 {
     indexer.init();
@@ -24,6 +29,12 @@ bool Solver::solve(bool verbose){
         }
 
         bool step_result = step();
+
+        #ifdef PYBIND11_BUILD
+        if (PyErr_CheckSignals() != 0){
+            throw py::error_already_set();
+        }
+        #endif
 
         if (!step_result) break;
 

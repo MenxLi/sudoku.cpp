@@ -51,7 +51,10 @@ py::dict generate(
     unsigned int max_retries
 ){
     Board b;
+    auto start_time = std::chrono::high_resolution_clock::now();
     auto [generated, board] = gen::generate_board(n_clues_remain, max_retries);
+    auto end_time = std::chrono::high_resolution_clock::now();
+
     if (!generated){
         throw std::runtime_error("Failed to generate a board with " + std::to_string(n_clues_remain) + " clues remaining");
     }
@@ -60,6 +63,7 @@ py::dict generate(
 
     py::dict result;
     result["data"] = data;
+    result["time_us"] = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
     return result;
 }
 

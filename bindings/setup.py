@@ -18,7 +18,7 @@ setup(
     author='Li, Mengxun', 
     description='A fast sudoku solver written in C++',
     packages=['sudoku_cpp'],
-    requires=["pybind11"],
+    install_requires=["wheel", "pybind11"],
     package_data={'sudoku_cpp': ['sudoku.pyi']},
     ext_modules=[
         Pybind11Extension(
@@ -26,7 +26,11 @@ setup(
             sources=cpp_files,
             cxx_std=17,
             include_dirs=[include_dir],
-            define_macros=[("STRICT", "1"), ("GRID_SIZE", "3")],
+            define_macros=[
+                ("PYBIND11_BUILD", "1"), 
+                ("GRID_SIZE", "3"), 
+                ("STRICT", "1"), 
+            ],
             extra_compile_args=["-O3", "-funroll-loops", "-finline-functions"],
         ),
     ],

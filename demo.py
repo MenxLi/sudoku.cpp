@@ -1,10 +1,12 @@
-from sudoku_cpp import sudoku, fmt_board
+from sudoku_cpp import solve, generate, fmt_board
 
-gen = sudoku.generate(21, 128)
+gen = generate(17)
 puzzle = gen['data']
+print(gen, end='\n\n')
 
-solution = sudoku.solve(puzzle)
+solution = solve(puzzle)
 solved_puzzle = solution['data']
+print(solution, end='\n\n')
 
 print("Puzzle:")
 print(fmt_board(puzzle), end='\n\n')
