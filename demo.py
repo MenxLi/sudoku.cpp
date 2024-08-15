@@ -1,6 +1,6 @@
 from sudoku_cpp import solve, generate, fmt_board
 
-gen = generate(17)
+gen = generate(18)
 puzzle = gen['data']
 print(gen, end='\n\n')
 

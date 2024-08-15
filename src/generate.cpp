@@ -1,3 +1,7 @@
+#ifdef PYBIND11_BUILD
+#include <pybind11/pybind11.h>
+namespace py = pybind11;
+#endif
 #include "generate.h"
 #include "board.h"
 #include "config.h"
@@ -10,6 +14,7 @@
 #include <tuple>
 #include <vector>
 #include <algorithm>
+#include <thread>
 
 namespace gen{
     static Indexer<GRID_SIZE> indexer;
@@ -176,7 +181,7 @@ namespace gen{
         return success;
     }
 
-    std::tuple<bool, Board> generate_board(int n_clues_remain, unsigned int max_retries){
+    std::tuple<bool, Board> generate_board(unsigned int n_clues_remain, unsigned int max_retries){
         Board board;
         if (n_clues_remain >= CELL_COUNT){
             return std::make_tuple(false, board);
@@ -190,8 +195,11 @@ namespace gen{
         std::cout << "Generating board (" << BOARD_SIZE << "x" << BOARD_SIZE <<
         ") with " << n_clues_remain << " clues remaining." << std::flush;
 
-        for (int i = 0; i < max_retries; i++){
+        auto fn_thread = [&n_clues_to_remove](bool& flag_buffer, Board& board_buffer){
+            std::unique_ptr<Board> board_ptr(new Board);
+            Board& board = *board_ptr;
             unsigned int n_to_remove_ = n_clues_to_remove;
+
             fill_valid_board(board);
             auto solution = Board(board);
 
@@ -204,12 +212,47 @@ namespace gen{
 
             bool generated = remove_clues_by_solve(board, solution, n_to_remove_);
             if (generated){
-                std::cout << std::endl;
-                return std::make_tuple(generated, board);
+                board_buffer = board;
+                flag_buffer = true;
             }
-            std::cout << '.';
-            std::cout.flush();
-        }
+            else{
+                std::cout << '.';
+                std::cout.flush();
+                flag_buffer = false;
+            }
+        };
+
+        unsigned int n_threads = std::min( std::thread::hardware_concurrency(), (unsigned int) 8);
+        unsigned int n_batches = max_retries / n_threads;
+        ASSERT(max_retries >= n_threads, "max_retries should be greater than n_threads");
+        for (int i = 0; i < n_batches; i++){
+            std::unique_ptr<std::thread[]> threads(new std::thread[n_threads]);
+            std::unique_ptr<bool[]> result_flags(new bool[n_threads]{0});
+            std::unique_ptr<Board[]> reault_boards(new Board[n_threads]);
+
+            for (int j = 0; j < n_threads; j++){
+                threads[j] = std::thread(fn_thread, std::ref(result_flags[j]), std::ref(reault_boards[j]));
+            }
+
+            for (int j = 0; j < n_threads; j++){
+                threads[j].join();
+            }
+
+            #ifdef PYBIND11_BUILD
+            if (PyErr_CheckSignals() != 0){
+                throw py::error_already_set();
+            }
+            #endif
+
+            for (int j = 0; j < n_threads; j++){
+                if (result_flags[j]){
+                    std::cout << std::endl;
+                    board.load_data(reault_boards[j]);
+                    return std::make_tuple(true, board);
+                }
+            }
+        } // discard the leftover retries...
+
         std::cout << std::endl;
         return std::make_tuple(false, board);
     }
