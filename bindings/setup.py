@@ -1,4 +1,5 @@
 import pathlib
+from sys import platform
 from setuptools import setup
 from pybind11.setup_helpers import Pybind11Extension, ParallelCompile
 ParallelCompile("NPY_NUM_BUILD_JOBS", default=4).install()
@@ -11,6 +12,10 @@ cpp_files = [
     str(f) for f in src_dir.glob("*.cpp") 
     if not any(f.match(p) for p in exclude_patterns)
 ]
+
+compile_args=["-O3", "-funroll-loops", "-finline-functions"]
+if platform == 'linux' or platform == 'linux2':
+    compile_args += ["-pthread"]
 
 setup(
     name='sudoku-cpp',
@@ -31,7 +36,7 @@ setup(
                 ("GRID_SIZE", "3"), 
                 ("STRICT", "1"), 
             ],
-            extra_compile_args=["-O3", "-funroll-loops", "-finline-functions"],
+            extra_compile_args=compile_args,
         ),
     ],
 )

@@ -202,7 +202,7 @@ namespace gen{
         std::cout << "Generating board (" << BOARD_SIZE << "x" << BOARD_SIZE <<
         ") with " << n_clues_remain << " clues remaining." << std::flush;
 
-        auto fn_thread = [&n_clues_to_remove](){
+        auto fn_thread = [n_clues_to_remove](){
             std::unique_ptr<Board> board_ptr(new Board);
             Board& board = *board_ptr;
             unsigned int n_to_remove_ = n_clues_to_remove;
@@ -233,19 +233,20 @@ namespace gen{
         ASSERT(max_retries >= n_concurrent, "max_retries should be greater than n_threads");
         for (int i = 0; i < n_batches; i++){
 
-            std::vector<std::future<std::tuple<bool, Board>>> futures(n_concurrent);
+            // std::vector<std::future<std::tuple<bool, Board>>> futures(n_concurrent);
+
+	    std::unique_ptr<std::future<std::tuple<bool, Board>>[]> futures_ptr(new std::future<std::tuple<bool, Board>>[n_concurrent]);
 
             for (int j = 0; j < n_concurrent; j++){
-                futures[j] = std::async(std::launch::async, fn_thread);
+                futures_ptr[j] = std::async(std::launch::async, fn_thread);
             }
 
             for (int j = 0; j < n_concurrent; j++){
-                auto [success, b] = futures[j].get();
+                auto [success, b] = futures_ptr[j].get();
                 if (success){
-                    // stop all other threads
-                    for (int k = j + 1; k < n_concurrent; k++){
-                        futures[k].wait();
-                    }
+		    for (int k = j+1; k < n_concurrent; k++){
+			futures_ptr[k].get();
+		    }
                     std::cout << std::endl;
                     return std::make_tuple(true, b);
                 }

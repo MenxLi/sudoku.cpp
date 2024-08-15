@@ -15,6 +15,11 @@ else
 	UNAME_S := $(shell uname -s)
 endif
 
+ifeq ($(UNAME_S),Linux)
+	COMMON_FLAGS += -pthread
+endif
+
+
 all: test target
 
 _dst:
