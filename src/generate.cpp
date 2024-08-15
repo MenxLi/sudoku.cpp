@@ -202,9 +202,8 @@ namespace gen{
         std::cout << "Generating board (" << BOARD_SIZE << "x" << BOARD_SIZE <<
         ") with " << n_clues_remain << " clues remaining." << std::flush;
 
-        auto fn_thread = [n_clues_to_remove](){
-            std::unique_ptr<Board> board_ptr(new Board);
-            Board& board = *board_ptr;
+        auto fn_thread = [n_clues_to_remove]() -> std::tuple<bool, Board>{
+            Board board = Board();
             unsigned int n_to_remove_ = n_clues_to_remove;
 
             fill_valid_board(board);
@@ -224,41 +223,51 @@ namespace gen{
             else{
                 std::cout << '.';
                 std::cout.flush();
-                return std::make_tuple(false, board);
+                return std::tuple<bool, Board>{false, board};
             }
         };
 
         unsigned int n_concurrent = std::max(std::min( std::thread::hardware_concurrency()-1, (unsigned int) 8), (unsigned int) 1);
         unsigned int n_batches = max_retries / n_concurrent;
+        std::unique_ptr<std::future<std::tuple<bool, Board>>[]> futures_ptr(new std::future<std::tuple<bool, Board>>[n_concurrent]);
         ASSERT(max_retries >= n_concurrent, "max_retries should be greater than n_threads");
-        for (int i = 0; i < n_batches; i++){
 
-            // std::vector<std::future<std::tuple<bool, Board>>> futures(n_concurrent);
+        unsigned int submitted = 0;
+        // submit the first batch
+        for (int i = 0; i < n_concurrent; i++){
+            futures_ptr[i] = std::async(std::launch::async, fn_thread);
+            submitted++;
+        }
 
-	    std::unique_ptr<std::future<std::tuple<bool, Board>>[]> futures_ptr(new std::future<std::tuple<bool, Board>>[n_concurrent]);
-
-            for (int j = 0; j < n_concurrent; j++){
-                futures_ptr[j] = std::async(std::launch::async, fn_thread);
-            }
-
-            for (int j = 0; j < n_concurrent; j++){
-                auto [success, b] = futures_ptr[j].get();
-                if (success){
-		    for (int k = j+1; k < n_concurrent; k++){
-			futures_ptr[k].get();
-		    }
-                    std::cout << std::endl;
-                    return std::make_tuple(true, b);
-                }
-            }
-
+        while(submitted < max_retries){
             #ifdef PYBIND11_BUILD
             if (PyErr_CheckSignals() != 0){
                 throw py::error_already_set();
             }
             #endif
 
-        } // discard the leftover retries...
+            for (int i = 0; i < n_concurrent; i++){
+                if (futures_ptr[i].valid() && futures_ptr[i].wait_for(std::chrono::seconds(0)) == std::future_status::ready){
+                    auto [success, b] = futures_ptr[i].get();
+                    if (success){
+                        if (i != n_concurrent - 1){
+                            // wait for the rest of the futures to finish
+                            for (int j = i+1; j < n_concurrent; j++){
+                                futures_ptr[j].get();
+                            }
+                        }
+                        std::cout << std::endl;
+                        return std::make_tuple(true, b);
+                    }
+                    // replace the finished future with a new one
+                    if (submitted < max_retries) {
+                        futures_ptr[i] = std::async(std::launch::async, fn_thread);
+                        submitted++;
+                    }
+                }
+            }
+        }
+
 
         std::cout << std::endl;
         return std::make_tuple(false, board);
