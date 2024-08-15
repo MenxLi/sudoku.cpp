@@ -20,7 +20,7 @@ Solver::Solver(const Board& board)
 bool Solver::solve(bool verbose){
 
     // std::cout << "starting with iteration: " << m_iteration_counter.current << std::endl;
-    while (m_iteration_counter.current < m_iteration_counter.limit && !board().is_solved()){
+    while (m_iteration_counter.current < m_iteration_counter.limit && !board().is_filled()){
     
         if(verbose)
         {

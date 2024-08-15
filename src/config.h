@@ -13,8 +13,7 @@
 #define MAX_ITER 1e7
 #endif
 
-#define BOARD_SIZE (GRID_SIZE * GRID_SIZE)
-
+const unsigned int BOARD_SIZE = GRID_SIZE * GRID_SIZE;
 const unsigned int CANDIDATE_SIZE = BOARD_SIZE;
 const unsigned int UNIT_SIZE = BOARD_SIZE;
 const unsigned int CELL_COUNT = BOARD_SIZE * BOARD_SIZE;
