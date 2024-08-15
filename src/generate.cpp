@@ -4,12 +4,14 @@
 #include "indexer.hpp"
 #include "util.h"
 #include "solver_v2.h"
+#include <ostream>
 #include <random>
 #include <memory>
+#include <tuple>
 #include <vector>
 #include <algorithm>
 
-namespace generate{
+namespace gen{
     static Indexer<GRID_SIZE> indexer;
 
     static util::SizedArray<val_t, CANDIDATE_SIZE> get_candidates(Board& board, int row, int col){
@@ -88,7 +90,7 @@ namespace generate{
 
         for (int i = 0; i < N_REPEATS; i++){
             if (!solve_board(board, solution)){
-                // std::cout << "Reject on trial " << i << std::endl;
+                if (i!=0) std::cout << "Reject non-unique solution on repeats: " << i << std::endl;
                 return false;
             }
         }
@@ -122,9 +124,18 @@ namespace generate{
 
     // backtracking to remove n_clues_to_remove clues
     // this is a depth-first search... may not be the best way to do this...
-    static bool remove_n_clues_recursively(Board& board, const Board& solution, int n_clues_to_remove){
+    static std::tuple<bool, long> remove_n_clues_recursively(
+        Board& board, 
+        const Board& solution, 
+        unsigned int n_clues_to_remove, 
+        long max_depth = CELL_COUNT
+    ){
         if (n_clues_to_remove == 0){
-            return true;
+            // std::cout << "Found a board with max depth left: " << max_depth << std::endl;
+            return std::make_tuple(true, max_depth);
+        }
+        if (max_depth <= 0 && n_clues_to_remove > 0){
+            return std::make_tuple(false, 0);
         }
 
         auto indices = get_randomized_filled_indices(board);
@@ -135,21 +146,51 @@ namespace generate{
             forked_board.set(idx, 0);
             if (!uniquely_solvable(forked_board, solution)) continue;
 
-            if (remove_n_clues_recursively(forked_board, solution, n_clues_to_remove - 1)){
+            auto [success, depth_remain] = remove_n_clues_recursively(
+                forked_board, solution, n_clues_to_remove - 1, max_depth - 1
+            );
+            if (success){
                 board = forked_board;
-                return true;
+                return std::make_tuple(true, depth_remain);
             }
+            max_depth = depth_remain;
         }
-        return false;
+        return std::make_tuple(false, max_depth);
     }
 
     bool remove_clues_by_solve(Board& board, int n_clues_to_remove){
         ASSERT(board.is_solved(), "The board should be completely filled");
 
         Board solution = Board(board);
-        return remove_n_clues_recursively(board, board, n_clues_to_remove);
+        auto [success, depth_remain] = remove_n_clues_recursively(board, solution, n_clues_to_remove);
+        return success;
+    }
 
+    std::tuple<bool, Board> generate_board(int n_clues_remain, unsigned int max_retries){
+        Board board;
+        if (n_clues_remain >= CELL_COUNT){
+            return std::make_tuple(false, board);
+        }
+        if (BOARD_SIZE == 9 && n_clues_remain < 17){
+            return std::make_tuple(false, board);
+        }
 
+        unsigned int n_clues_to_remove = CELL_COUNT - n_clues_remain;
+        std::cout << "Generating board (" << BOARD_SIZE << "x" << BOARD_SIZE <<
+        ") with " << n_clues_remain << " clues remaining." << std::flush;
+
+        for (int i = 0; i < max_retries; i++){
+            fill_valid_board(board);
+            bool generated = remove_clues_by_solve(board, n_clues_to_remove);
+            if (generated){
+                std::cout << std::endl;
+                return std::make_tuple(generated, board);
+            }
+            std::cout << '.';
+            std::cout.flush();
+        }
+        std::cout << std::endl;
+        return std::make_tuple(false, board);
     }
 
 }

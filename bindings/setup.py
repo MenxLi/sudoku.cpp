@@ -19,6 +19,7 @@ setup(
     description='A fast sudoku solver written in C++',
     packages=['sudoku_cpp'],
     requires=["pybind11"],
+    package_data={'sudoku_cpp': ['sudoku.pyi']},
     ext_modules=[
         Pybind11Extension(
             "sudoku_cpp.sudoku",

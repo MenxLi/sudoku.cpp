@@ -6,8 +6,22 @@
 #include "config.h"
 #include "solver_v2.h"
 #include "board.h"
+#include "generate.h"
 
 namespace py = pybind11;
+
+std::vector<std::vector<val_t>> board_to_vector(Board& b){
+    std::vector<std::vector<val_t>> data;
+    val_t* raw_data = b.data();
+    for (int i=0; i<BOARD_SIZE; i++){
+        std::vector<val_t> row;
+        for (int j=0; j<BOARD_SIZE; j++){
+            row.push_back( raw_data[i*BOARD_SIZE + j]);
+        }
+        data.push_back(row);
+    }
+    return data;
+}
 
 py::dict solve(
     std::vector<std::vector<val_t>> input
@@ -20,15 +34,7 @@ py::dict solve(
     bool solved = solver.solve();
     auto end_time = std::chrono::high_resolution_clock::now();
 
-    std::vector<std::vector<val_t>> data;
-    val_t* raw_data = solver.board().data();
-    for (int i=0; i<BOARD_SIZE; i++){
-        std::vector<val_t> row;
-        for (int j=0; j<BOARD_SIZE; j++){
-            row.push_back( raw_data[i*BOARD_SIZE + j]);
-        }
-        data.push_back(row);
-    }
+    auto data = board_to_vector(solver.board());
 
     py::dict result;
     result["solved"] = solved;
@@ -40,7 +46,34 @@ py::dict solve(
     return result;
 }
 
+py::dict generate(
+    unsigned int n_clues_remain, 
+    unsigned int max_retries
+){
+    Board b;
+    auto [generated, board] = gen::generate_board(n_clues_remain, max_retries);
+    if (!generated){
+        throw std::runtime_error("Failed to generate a board with " + std::to_string(n_clues_remain) + " clues remaining");
+    }
+
+    std::vector<std::vector<val_t>> data = board_to_vector(board);
+
+    py::dict result;
+    result["data"] = data;
+    return result;
+}
+
+py::dict build_config(){
+    py::dict config;
+    config["BOARD_SIZE"] = BOARD_SIZE;
+    config["GRID_SIZE"] = GRID_SIZE;
+    config["MAX_ITER"] = MAX_ITER;
+    return config;
+}
+
 PYBIND11_MODULE(sudoku, m) {
     m.doc() = "Sudoku solver"; // optional module docstring
     m.def("solve", &solve, "Solve a sudoku puzzle");
+    m.def("generate", &generate, "Generate a sudoku puzzle");
+    m.def("build_config", &build_config, "Build config");
 }
