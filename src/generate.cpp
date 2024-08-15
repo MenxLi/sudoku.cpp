@@ -146,7 +146,7 @@ namespace gen{
         Board& board, 
         const Board& solution, 
         unsigned int n_clues_to_remove, 
-        long max_depth = CELL_COUNT
+        long max_depth = CELL_COUNT*2
     ){
         if (n_clues_to_remove == 0){
             // std::cout << "Found a board with max depth left: " << max_depth << std::endl;
@@ -159,6 +159,13 @@ namespace gen{
         auto indices = get_randomized_filled_indices(board);
 
         for (unsigned int i = 0; i < indices.size(); i++){
+
+            if (indices.size() > 5 && i > indices.size() / 2){
+                // if we are already in the second half of the indices, 
+                // we can perhaps stop here, because it's highly likely that previous attempts have failed
+                return std::make_tuple(false, max_depth);
+            }
+
             unsigned int idx = indices[i];
             auto forked_board = Board(board);
             forked_board.set(idx, 0);
