@@ -14,7 +14,7 @@ namespace py = pybind11;
 #include <tuple>
 #include <vector>
 #include <algorithm>
-#include <thread>
+#include <future>
 
 namespace gen{
     static Indexer<GRID_SIZE> indexer;
@@ -202,7 +202,7 @@ namespace gen{
         std::cout << "Generating board (" << BOARD_SIZE << "x" << BOARD_SIZE <<
         ") with " << n_clues_remain << " clues remaining." << std::flush;
 
-        auto fn_thread = [&n_clues_to_remove](bool& flag_buffer, Board& board_buffer){
+        auto fn_thread = [&n_clues_to_remove](){
             std::unique_ptr<Board> board_ptr(new Board);
             Board& board = *board_ptr;
             unsigned int n_to_remove_ = n_clues_to_remove;
@@ -219,30 +219,36 @@ namespace gen{
 
             bool generated = remove_clues_by_solve(board, solution, n_to_remove_);
             if (generated){
-                board_buffer = board;
-                flag_buffer = true;
+                return std::make_tuple(true, board);
             }
             else{
                 std::cout << '.';
                 std::cout.flush();
-                flag_buffer = false;
+                return std::make_tuple(false, board);
             }
         };
 
-        unsigned int n_threads = std::min( std::thread::hardware_concurrency(), (unsigned int) 8);
-        unsigned int n_batches = max_retries / n_threads;
-        ASSERT(max_retries >= n_threads, "max_retries should be greater than n_threads");
+        unsigned int n_concurrent = std::max(std::min( std::thread::hardware_concurrency()-1, (unsigned int) 8), (unsigned int) 1);
+        unsigned int n_batches = max_retries / n_concurrent;
+        ASSERT(max_retries >= n_concurrent, "max_retries should be greater than n_threads");
         for (int i = 0; i < n_batches; i++){
-            std::unique_ptr<std::thread[]> threads(new std::thread[n_threads]);
-            std::unique_ptr<bool[]> result_flags(new bool[n_threads]{0});
-            std::unique_ptr<Board[]> reault_boards(new Board[n_threads]);
 
-            for (int j = 0; j < n_threads; j++){
-                threads[j] = std::thread(fn_thread, std::ref(result_flags[j]), std::ref(reault_boards[j]));
+            std::vector<std::future<std::tuple<bool, Board>>> futures(n_concurrent);
+
+            for (int j = 0; j < n_concurrent; j++){
+                futures[j] = std::async(std::launch::async, fn_thread);
             }
 
-            for (int j = 0; j < n_threads; j++){
-                threads[j].join();
+            for (int j = 0; j < n_concurrent; j++){
+                auto [success, b] = futures[j].get();
+                if (success){
+                    // stop all other threads
+                    for (int k = j + 1; k < n_concurrent; k++){
+                        futures[k].wait();
+                    }
+                    std::cout << std::endl;
+                    return std::make_tuple(true, b);
+                }
             }
 
             #ifdef PYBIND11_BUILD
@@ -251,13 +257,6 @@ namespace gen{
             }
             #endif
 
-            for (int j = 0; j < n_threads; j++){
-                if (result_flags[j]){
-                    std::cout << std::endl;
-                    board.load_data(reault_boards[j]);
-                    return std::make_tuple(true, board);
-                }
-            }
         } // discard the leftover retries...
 
         std::cout << std::endl;
