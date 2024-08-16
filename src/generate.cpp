@@ -150,35 +150,30 @@ namespace gen{
             // std::cout << "Found a board with max depth left: " << max_depth << std::endl;
             return std::make_tuple(true, max_depth);
         }
-        if (max_depth <= 0 && n_clues_to_remove > 0){
+        if (max_depth < n_clues_to_remove){ // not enough depth to remove all clues
             return std::make_tuple(false, 0);
         }
 
         auto indices = get_randomized_filled_indices(board);
 
+        long depth_remain = max_depth;
         for (unsigned int i = 0; i < indices.size(); i++){
-
-            if (indices.size() > 5 && i > indices.size() / 2){
-                // if we are already in the second half of the indices, 
-                // we can perhaps stop here, because it's highly likely that previous attempts have failed
-                return std::make_tuple(false, max_depth);
-            }
 
             unsigned int idx = indices[i];
             auto forked_board = Board(board);
             forked_board.set(idx, 0);
             if (!uniquely_solvable(forked_board, solution)) continue;
 
-            auto [success, depth_remain] = remove_n_clues_recursively(
-                forked_board, solution, n_clues_to_remove - 1, max_depth - 1
+            auto [success, _depth_remain] = remove_n_clues_recursively(
+                forked_board, solution, n_clues_to_remove - 1, depth_remain - 1
             );
+            depth_remain = _depth_remain;
             if (success){
-                board = forked_board;
+                board.load_data(forked_board);
                 return std::make_tuple(true, depth_remain);
             }
-            max_depth = depth_remain;
         }
-        return std::make_tuple(false, max_depth);
+        return std::make_tuple(false, depth_remain);
     }
 
     bool remove_clues_by_solve(Board& board, const Board& solution, int n_clues_to_remove){
@@ -229,7 +224,7 @@ namespace gen{
         ASSERT(max_retries >= n_concurrent, "max_retries should be greater than n_threads");
 
         std::cout << "Generating board (" << BOARD_SIZE << "x" << BOARD_SIZE <<
-        ") with " << n_clues_remain << " clues remaining (" << n_concurrent << " concurrent)" << std::endl;
+        ") with " << n_clues_remain << " clues remaining" << " (" << n_concurrent << " concurrent)." << std::flush;
 
 
         unsigned int submitted_counter = 0;
