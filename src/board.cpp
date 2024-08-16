@@ -30,7 +30,7 @@ std::unique_ptr<val_t*> Board::get_row(int row)
     {
         result.get()[i] = &m_board[row][i];
     }
-    return result;
+    return std::move(result);
 };
 
 std::unique_ptr<val_t*> Board::get_col(int col)
@@ -41,7 +41,7 @@ std::unique_ptr<val_t*> Board::get_col(int col)
     {
         result.get()[i] = &m_board[i][col];
     }
-    return result;
+    return std::move(result);
 };
 
 std::unique_ptr<val_t*> Board::get_grid(int row, int col){
@@ -52,7 +52,7 @@ std::unique_ptr<val_t*> Board::get_grid(int row, int col){
             result.get()[i * GRID_SIZE + j] = &m_board[row * GRID_SIZE + i][col * GRID_SIZE + j];
         }
     }
-    return result;
+    return std::move(result);
 };
 
 void Board::set(unsigned int offset, val_t value)
@@ -104,14 +104,17 @@ bool Board::is_valid()
     };
 
     for (unsigned int i = 0; i < BOARD_SIZE; i++){
-        if (!check_validity(get_row(i).get())) return false;
+        const auto row = get_row(i);
+        if (!check_validity(row.get())) return false;
     }
     for (unsigned int i = 0; i < BOARD_SIZE; i++){
-        if (!check_validity(get_col(i).get())) return false;
+        const auto col = get_col(i);
+        if (!check_validity(col.get())) return false;
     }
     for (unsigned int i = 0; i < GRID_SIZE; i++){
         for (unsigned int j = 0; j < GRID_SIZE; j++){
-            if (!check_validity(get_grid(i, j).get())) return false;
+            const auto grid = get_grid(i, j);
+            if (!check_validity(grid.get())) return false;
         }
     }
     return true;

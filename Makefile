@@ -1,6 +1,6 @@
 
 CXX := g++
-STD_FLAGS := -std=c++17
+STD_FLAGS := -std=c++17 -Wall
 OPTIMIZATION_FLAGS := -O3 -funroll-loops -finline-functions
 CONFIG_FLAGS := -DGRID_SIZE=3 -DSTRICT
 COMMON_FLAGS := $(STD_FLAGS) $(OPTIMIZATION_FLAGS) $(CONFIG_FLAGS)
