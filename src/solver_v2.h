@@ -29,9 +29,9 @@ private:
     unsigned int m_filled_count[CANDIDATE_SIZE] = {0};
 
     // unit filled count for each value
-    unsigned int m_row_value_state[BOARD_SIZE][CANDIDATE_SIZE] = {0};
-    unsigned int m_col_value_state[BOARD_SIZE][CANDIDATE_SIZE] = {0};
-    unsigned int m_grid_value_state[GRID_SIZE][GRID_SIZE][CANDIDATE_SIZE] = {0};
+    unsigned int m_row_value_state[BOARD_SIZE][CANDIDATE_SIZE] = {{0}};
+    unsigned int m_col_value_state[BOARD_SIZE][CANDIDATE_SIZE] = {{0}};
+    unsigned int m_grid_value_state[GRID_SIZE][GRID_SIZE][CANDIDATE_SIZE] = {{{0}}};
 
     OpState update_by_naked_single(int row, int col);
     OpState update_by_hidden_single(val_t value, UnitType unit_type);
@@ -43,7 +43,7 @@ private:
     // then we can remove the other candidates from the same total-row/col
     OpState refine_candidates_by_naked_double(UnitType unit_type);
     OpState refine_candidates_by_hidden_double(UnitType unit_type);     // hidden double is a superset of naked double
-    uint8_t m_visited_double_combinations[CELL_COUNT][CELL_COUNT] = {0};
+    uint8_t m_visited_double_combinations[CELL_COUNT][CELL_COUNT] = {{0}};
 
     // this is for trail and error approach
     SolverV2 fork();

@@ -333,7 +333,7 @@ OpState SolverV2::refine_candidates_by_hidden_double(UnitType unit_type){
         }
         break;
     }
-    return OpState::FAIL;
+    return state;
 }
 
 OpState SolverV2::update_by_naked_single(int row, int col){
