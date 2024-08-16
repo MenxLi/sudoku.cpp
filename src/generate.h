@@ -1,5 +1,6 @@
 #pragma once
 #include "board.h"
+#include <tuple>
 
 namespace gen
 {

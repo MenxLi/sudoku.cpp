@@ -2,7 +2,6 @@
 #include "config.h"
 #include "solver_v1.h"
 #include "util.h"
-#include <memory>
 #include <stdexcept>
 #include <stdlib.h>
 #include <vector>
@@ -95,7 +94,7 @@ void SolverV1::init_candidates_and_count(){
             return;
         }
 
-        for (int i = 0; i < indexer.N_NEIGHBORS; i++){
+        for (unsigned int i = 0; i < indexer.N_NEIGHBORS; i++){
             auto offset = indexer.neighbor_index[row][col][i];
             val_t other_val = this->board().get(offset);
             if (other_val != 0){
@@ -106,9 +105,9 @@ void SolverV1::init_candidates_and_count(){
 
 
     m_candidates.reset();
-    for (int i = 0; i < BOARD_SIZE; i++)
+    for (unsigned int i = 0; i < BOARD_SIZE; i++)
     {
-        for (int j = 0; j < BOARD_SIZE; j++)
+        for (unsigned int j = 0; j < BOARD_SIZE; j++)
         {
             // init candidate map
             update_candidate_for(i, j);
@@ -124,9 +123,9 @@ void SolverV1::init_candidates_and_count(){
 
 bool SolverV1::step_by_candidate(){
     bool updated = false;
-    for (int i = 0; i < BOARD_SIZE; i++)
+    for (unsigned int i = 0; i < BOARD_SIZE; i++)
     {
-        for (int j = 0; j < BOARD_SIZE; j++)
+        for (unsigned int j = 0; j < BOARD_SIZE; j++)
         {
             if (update_value_for(i, j)){
                 updated = true;
@@ -176,7 +175,7 @@ void SolverV1::fill_propagate(unsigned int row, unsigned int col, val_t value){
     board().get_(row, col) = value;
 
     // clear the candidates for the neighbor cells
-    for (int i = 0; i < indexer.N_NEIGHBORS; i++){
+    for (unsigned int i = 0; i < indexer.N_NEIGHBORS; i++){
         auto offset = indexer.neighbor_index[row][col][i];
         m_candidates.get(offset)[value - 1] = 0;
     }
@@ -184,7 +183,7 @@ void SolverV1::fill_propagate(unsigned int row, unsigned int col, val_t value){
     // fill the cross map of the value
     unsigned int c_index = value - 1;
     ASSERT(m_cross_map[c_index][row][col] == 0, "Cross map violation");
-    for (int i = 0; i < BOARD_SIZE; i++)
+    for (unsigned int i = 0; i < BOARD_SIZE; i++)
     {
         m_cross_map[value - 1][row][i] = 1;
         m_cross_map[value - 1][i][col] = 1;
@@ -331,7 +330,7 @@ bool SolverV1::step_by_guess(){
         auto col_item_offsets = indexer.col_index[col];
         auto grid_item_offsets = indexer.grid_index[row][col];
 
-        for (int i = 0; i < BOARD_SIZE; i++)
+        for (unsigned int i = 0; i < BOARD_SIZE; i++)
         {
             if (this->board().get(row_item_offsets[i]) == 0) row_count++;
             if (this->board().get(col_item_offsets[i]) == 0) col_count++;
@@ -351,9 +350,9 @@ bool SolverV1::step_by_guess(){
         Coord best_choice;
         unsigned int min_candidate_count = 1e4;
         unsigned int min_neighbor_count = 1e4;
-        for (int i = 0; i < BOARD_SIZE; i++)
+        for (unsigned int i = 0; i < BOARD_SIZE; i++)
         {
-            for (int j = 0; j < BOARD_SIZE; j++)
+            for (unsigned int j = 0; j < BOARD_SIZE; j++)
             {
                 if (this->board().get_(i, j) != 0){ continue; };     // skip the solved cells
 
@@ -361,13 +360,13 @@ bool SolverV1::step_by_guess(){
                 if (candidate_count < min_candidate_count){
                     min_candidate_count = candidate_count;
                     min_neighbor_count = numNeighborUnsolved(i, j);
-                    best_choice = {i, j};
+                    best_choice = {static_cast<int>(i), static_cast<int>(j)};
                 }
                 else if (candidate_count == min_candidate_count){
                     unsigned int neighbor_count = numNeighborUnsolved(i, j);
                     if (neighbor_count < min_neighbor_count){
                         min_neighbor_count = neighbor_count;
-                        best_choice = {i, j};
+                        best_choice = {static_cast<int>(i), static_cast<int>(j)};
                     }
                 }
                 else{
@@ -387,12 +386,12 @@ bool SolverV1::step_by_guess(){
         if (!DETERMINISTIC_GUESS){
             // choose a random cell to guess
             std::vector<Coord> unsolved_cells;
-            for (int i = 0; i < BOARD_SIZE; i++)
+            for (unsigned int i = 0; i < BOARD_SIZE; i++)
             {
-                for (int j = 0; j < BOARD_SIZE; j++)
+                for (unsigned int j = 0; j < BOARD_SIZE; j++)
                 {
                     if (this->board().get_(i, j) == 0){
-                        unsolved_cells.push_back({i, j});
+                        unsolved_cells.push_back({static_cast<int>(i), static_cast<int>(j)});
                     }
                 }
             }
@@ -403,12 +402,12 @@ bool SolverV1::step_by_guess(){
         else{
             // choose the first unsolved cell
             bool _found = false;
-            for (int i = 0; i < BOARD_SIZE; i++)
+            for (unsigned int i = 0; i < BOARD_SIZE; i++)
             {
-                for (int j = 0; j < BOARD_SIZE; j++)
+                for (unsigned int j = 0; j < BOARD_SIZE; j++)
                 {
                     if (this->board().get_(i, j) == 0){
-                        best_choice = {i, j};
+                        best_choice = {static_cast<int>(i), static_cast<int>(j)};
                         _found = true;
                         break;
                     }

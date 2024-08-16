@@ -77,7 +77,7 @@ namespace gen{
 
 
     static bool uniquely_solvable(const Board& board, const Board& solution){
-        const int N_REPEATS = 3;
+        const unsigned int N_REPEATS = 3;
 
         auto solve_board = [](const Board &board, const Board &solution){
             SolverV2 solver(board);     // the solver will copy the board
@@ -91,7 +91,7 @@ namespace gen{
             return answer == solution;
         };
 
-        for (int i = 0; i < N_REPEATS; i++){
+        for (unsigned int i = 0; i < N_REPEATS; i++){
             if (!solve_board(board, solution)){
                 if (i!=0) std::cout << "Reject non-unique solution on repeats: " << i << std::endl;
                 return false;
@@ -177,8 +177,8 @@ namespace gen{
     }
 
     bool remove_clues_by_solve(Board& board, const Board& solution, int n_clues_to_remove){
-        auto [success, depth_remain] = remove_n_clues_recursively(board, solution, n_clues_to_remove);
-        return success;
+        auto result = remove_n_clues_recursively(board, solution, n_clues_to_remove);
+        return std::get<0>(result);
     }
 
     std::tuple<bool, Board> generate_board(
@@ -224,7 +224,7 @@ namespace gen{
         if (!parallel_exec){
             std::cout << "Generating board (" << BOARD_SIZE << "x" << BOARD_SIZE <<
             ") with " << n_clues_remain << " clues remaining." << std::flush;
-            for (int i = 0; i < max_retries; i++){
+            for (unsigned int i = 0; i < max_retries; i++){
                 auto [success, b] = fn_thread();
                 if (success){
                     return std::make_tuple(true, b);
@@ -246,7 +246,7 @@ namespace gen{
 
         unsigned int submitted_counter = 0;
         // submit the first batch
-        for (int i = 0; i < n_concurrent; i++){
+        for (unsigned int i = 0; i < n_concurrent; i++){
             futures[i] = std::async(std::launch::async, fn_thread);
             submitted_counter++;
         }
@@ -259,7 +259,7 @@ namespace gen{
             }
             #endif
 
-            for (int i = 0; i < n_concurrent; i++){
+            for (unsigned int i = 0; i < n_concurrent; i++){
                 if (futures[i].valid() && futures[i].wait_for(std::chrono::seconds(0)) == std::future_status::ready){
                     auto [success, b] = futures[i].get();
                     if (success){
@@ -276,7 +276,7 @@ namespace gen{
         }
 
         // wait for all threads to finish, and clean up
-        for (int i = 0; i < n_concurrent; i++){
+        for (unsigned int i = 0; i < n_concurrent; i++){
             if (futures[i].valid()){
                 futures[i].wait();
             }

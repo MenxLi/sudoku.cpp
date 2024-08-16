@@ -21,11 +21,11 @@ std::chrono::duration<double> solve_for(std::string file_content)
 
 int main()
 {
-    int n_repeats = 100;
-    const int n_puzzles = 9;
+    unsigned int n_repeats = 100;
+    const unsigned int n_puzzles = 9;
 
     std::cout << "Benchmarking " << n_puzzles << " puzzles with " << n_repeats << " repeats..." << std::endl;
-    for (int i = 0; i < n_puzzles; i++)
+    for (unsigned int i = 0; i < n_puzzles; i++)
     {
         std::string filename = "puzzles/" + std::to_string(i+1) + ".txt";
         std::string file_content;
@@ -37,7 +37,7 @@ int main()
         file_content.assign((std::istreambuf_iterator<char>(file)), (std::istreambuf_iterator<char>()));
         std::chrono::duration<double> total_time = std::chrono::duration<double>::zero();
         std::cout << "Puzzle " << i+1 << ": " ;
-        for (int j = 0; j < n_repeats; j++)
+        for (unsigned int j = 0; j < n_repeats; j++)
         {
             total_time += solve_for(file_content);
         }

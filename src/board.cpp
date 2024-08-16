@@ -9,9 +9,9 @@
 
 void Board::clear(val_t val = 0)
 {
-    for (int i = 0; i < BOARD_SIZE; i++)
+    for (unsigned int i = 0; i < BOARD_SIZE; i++)
     {
-        for (int j = 0; j < BOARD_SIZE; j++)
+        for (unsigned int j = 0; j < BOARD_SIZE; j++)
         {
             m_board[i][j] = val;
         }
@@ -41,9 +41,9 @@ void Board::set(const Coord& coord, val_t value)
 
 bool Board::is_filled() const
 {
-    for (int i = 0; i < BOARD_SIZE; i++)
+    for (unsigned int i = 0; i < BOARD_SIZE; i++)
     {
-        for (int j = 0; j < BOARD_SIZE; j++)
+        for (unsigned int j = 0; j < BOARD_SIZE; j++)
         {
             if (m_board[i][j] == 0)
             {
@@ -60,7 +60,7 @@ bool Board::is_valid()
         unsigned int * offsets, unsigned int size
     )->bool{
         auto found = std::unique_ptr<bool[]>(new bool[size]{false});
-        for (int i = 0; i < BOARD_SIZE; i++){
+        for (unsigned int i = 0; i < BOARD_SIZE; i++){
             const unsigned int offset = offsets[i];
             if (this->get(offset) == 0){ // not filled
                 return false;
@@ -127,9 +127,9 @@ val_t* Board::data(){
 }
 void Board::load_data(const std::vector<std::vector<val_t>> data){
     ASSERT(data.size() == BOARD_SIZE, "invalid data row size");
-    for (int i = 0; i < BOARD_SIZE; i++){
+    for (unsigned int i = 0; i < BOARD_SIZE; i++){
         ASSERT(data.size() == BOARD_SIZE, "invalid data column size");
-        for (int j = 0; j < BOARD_SIZE; j++){
+        for (unsigned int j = 0; j < BOARD_SIZE; j++){
             m_board[i][j] = data[i][j];
         }
     }
@@ -157,7 +157,7 @@ void Board::load_data(std::istream& is)
         ASSERT(split.size() == BOARD_SIZE, "in row " + std::to_string(row));
         ASSERT(row < BOARD_SIZE, "too many rows");
 
-        for (int i = 0; i < BOARD_SIZE; i++){
+        for (unsigned int i = 0; i < BOARD_SIZE; i++){
             m_board[row][i] = static_cast<val_t>(std::stoi(split[i]));
         }
         row++;
@@ -166,9 +166,9 @@ void Board::load_data(std::istream& is)
 
 void Board::load_data(const Board& board)
 {
-    for (int i = 0; i < BOARD_SIZE; i++)
+    for (unsigned int i = 0; i < BOARD_SIZE; i++)
     {
-        for (int j = 0; j < BOARD_SIZE; j++)
+        for (unsigned int j = 0; j < BOARD_SIZE; j++)
         {
             m_board[i][j] = board.get(i, j);
         }
@@ -178,9 +178,9 @@ void Board::load_data(const Board& board)
 std::string Board::to_string_raw() const
 {
     std::string result;
-    for (int i = 0; i < BOARD_SIZE; i++)
+    for (unsigned int i = 0; i < BOARD_SIZE; i++)
     {
-        for (int j = 0; j < BOARD_SIZE; j++)
+        for (unsigned int j = 0; j < BOARD_SIZE; j++)
         {
             result += std::to_string(m_board[i][j]);
             if (j < BOARD_SIZE - 1)
@@ -202,9 +202,9 @@ CandidateBoard::CandidateBoard(CandidateBoard& other){
 
 void CandidateBoard::reset(){
     indexer.init();
-    for (int i = 0; i < BOARD_SIZE; i++){
-        for (int j = 0; j < BOARD_SIZE; j++){
-            for (int k = 0; k < CANDIDATE_SIZE; k++){
+    for (unsigned int i = 0; i < BOARD_SIZE; i++){
+        for (unsigned int j = 0; j < BOARD_SIZE; j++){
+            for (unsigned int k = 0; k < CANDIDATE_SIZE; k++){
                 m_candidates[i][j][k] = 1;
             }
         }
@@ -217,7 +217,7 @@ void CandidateBoard::reset(){
 unsigned int CandidateBoard::count(int row, int col) const{
     ASSERT_COORD_BOUNDS(row, col)
     unsigned int count = 0;
-    for (int i = 0; i < CANDIDATE_SIZE; i++){
+    for (unsigned int i = 0; i < CANDIDATE_SIZE; i++){
         count += m_candidates[row][col][i];
     }
     ASSERT_CANDIDATE_COUNT_THROW(count)
@@ -244,8 +244,8 @@ OpState CandidateBoard::remain_x(unsigned int offset, unsigned int count, val_t*
 
 OpState CandidateBoard::remain_x(int row, int col, unsigned int count, val_t* buffer) const{
     ASSERT_COORD_BOUNDS(row, col);
-    int counter = 0;
-    for (int i = 0; i < CANDIDATE_SIZE; i++){
+    unsigned int counter = 0;
+    for (unsigned int i = 0; i < CANDIDATE_SIZE; i++){
         if (m_candidates[row][col][i]){
             if (counter >= count){
                 // in-case of buffer overflow

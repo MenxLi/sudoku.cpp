@@ -13,9 +13,9 @@ namespace py = pybind11;
 std::vector<std::vector<val_t>> board_to_vector(Board& b){
     std::vector<std::vector<val_t>> data;
     val_t* raw_data = b.data();
-    for (int i=0; i<BOARD_SIZE; i++){
+    for (unsigned int i=0; i<BOARD_SIZE; i++){
         std::vector<val_t> row;
-        for (int j=0; j<BOARD_SIZE; j++){
+        for (unsigned int j=0; j<BOARD_SIZE; j++){
             row.push_back( raw_data[i*BOARD_SIZE + j]);
         }
         data.push_back(row);

@@ -3,8 +3,6 @@
 #include "solver.h"
 #include "solver_v2.h"
 #include "util.h"
-#include <memory>
-#include <stdexcept>
 
 #define MAX_FORK_TRAIL MAX_ITER
 
@@ -47,9 +45,9 @@ SolverV2::SolverV2(SolverV2& other) : Solver(other.board()) {
 
 
 void SolverV2::init_states(){
-    for (int i = 0; i < BOARD_SIZE; i++)
+    for (unsigned int i = 0; i < BOARD_SIZE; i++)
     {
-        for (int j = 0; j < BOARD_SIZE; j++)
+        for (unsigned int j = 0; j < BOARD_SIZE; j++)
         {
             val_t filled_val = this->board().get_(i, j);
             if (filled_val == 0) continue;
@@ -60,9 +58,9 @@ void SolverV2::init_states(){
 
 OpState SolverV2::step_by_naked_single(){
     bool updated = false;
-    for (int i = 0; i < BOARD_SIZE; i++)
+    for (unsigned int i = 0; i < BOARD_SIZE; i++)
     {
-        for (int j = 0; j < BOARD_SIZE; j++)
+        for (unsigned int j = 0; j < BOARD_SIZE; j++)
         {
             OpState state = update_by_naked_single(i, j);
             if (state == OpState::SUCCESS){ 
@@ -103,7 +101,7 @@ bool SolverV2::step(){
         if (state == OpState::SUCCESS) return OpState::SUCCESS;
         DEBUG_PRINT("SolverV2::step() - step_by_only_candidate() failed");
 
-        for (int i = 0; i < 3; i++)
+        for (unsigned int i = 0; i < 3; i++)
         {
             UnitType unit_type = static_cast<UnitType>(i);
             state = step_by_hidden_single(unit_type);
@@ -122,7 +120,7 @@ bool SolverV2::step(){
 
     // refine the candidates by naked double
     if (USE_DOUBLE){
-        for (int i = 0; i < 3; i++)
+        for (unsigned int i = 0; i < 3; i++)
         {
             UnitType unit_type = static_cast<UnitType>(i);
             state = refine_candidates_by_naked_double(unit_type);
@@ -136,7 +134,7 @@ bool SolverV2::step(){
             if (state == OpState::SUCCESS) return true;
         }
 
-        for (int i = 0; i < 3; i++)
+        for (unsigned int i = 0; i < 3; i++)
         {
             UnitType unit_type = static_cast<UnitType>(i);
             state = refine_candidates_by_hidden_double(unit_type);
@@ -163,7 +161,7 @@ OpState SolverV2::fill_propagate(unsigned int row, unsigned int col, val_t value
     board().get_(row, col) = value;
 
     // clear the candidates for the neighbor cells
-    for (int i = 0; i < indexer.N_NEIGHBORS; i++){
+    for (unsigned int i = 0; i < indexer.N_NEIGHBORS; i++){
         auto offset = indexer.neighbor_index[row][col][i];
         m_candidates.get(offset)[value - 1] = 0;
     }
@@ -213,7 +211,7 @@ OpState SolverV2::refine_candidates_by_naked_double(UnitType unit_type){
             m_visited_double_combinations[offset1][offset2] = 1;
 
             // remove the double values from the other cells in the unit
-            for (int i = 0; i < UNIT_SIZE; i++)
+            for (unsigned int i = 0; i < UNIT_SIZE; i++)
             {
                 unsigned int offset = offset_start[i];
                 if (offset == offset1 || offset == offset2) continue;
@@ -229,23 +227,23 @@ OpState SolverV2::refine_candidates_by_naked_double(UnitType unit_type){
     switch (unit_type)
     {
     case UnitType::ROW:
-        for (int r = 0; r < BOARD_SIZE; r++)
+        for (unsigned int r = 0; r < BOARD_SIZE; r++)
         {
             OpState state = solve_for_unit(indexer.row_index[r]);
             if (state == OpState::VIOLATION){ return OpState::VIOLATION; }
         }
         break;
     case UnitType::COL:
-        for (int c = 0; c < BOARD_SIZE; c++)
+        for (unsigned int c = 0; c < BOARD_SIZE; c++)
         {
             OpState state = solve_for_unit(indexer.col_index[c]);
             if (state == OpState::VIOLATION){ return OpState::VIOLATION; }
         }
         break;
     case UnitType::GRID:
-        for (int g_i = 0; g_i < GRID_SIZE; g_i++)
+        for (unsigned int g_i = 0; g_i < GRID_SIZE; g_i++)
         {
-            for (int g_j = 0; g_j < GRID_SIZE; g_j++)
+            for (unsigned int g_j = 0; g_j < GRID_SIZE; g_j++)
             {
                 const unsigned int grid_start_row = g_i * GRID_SIZE;
                 const unsigned int grid_start_col = g_j * GRID_SIZE;
@@ -263,11 +261,11 @@ OpState SolverV2::refine_candidates_by_hidden_double(UnitType unit_type){
 
         // array of candidates, each stores it's cell index in this unit
         util::SizedArray<unsigned int, UNIT_SIZE> unit_descriptor[CANDIDATE_SIZE];
-        for (int i = 0; i < UNIT_SIZE; i++){
+        for (unsigned int i = 0; i < UNIT_SIZE; i++){
             const unsigned int offset = offset_start[i];
             if (board().get(offset) != 0) continue;        // skip filled cells
             // add each candidate to the corresponding array
-            for (int v_idx = 0; v_idx < CANDIDATE_SIZE; v_idx++){
+            for (unsigned int v_idx = 0; v_idx < CANDIDATE_SIZE; v_idx++){
                 if (m_candidates.get(offset)[v_idx]){
                     unit_descriptor[v_idx].push(i);
                 }
@@ -296,7 +294,7 @@ OpState SolverV2::refine_candidates_by_hidden_double(UnitType unit_type){
             std::memcpy(m_candidates.get(offset_2), aimed_one_hot, CANDIDATE_SIZE * sizeof(bool_));
 
             // remove these two candidates from the other cells in the unit
-            for (int i = 0; i < UNIT_SIZE; i++)
+            for (unsigned int i = 0; i < UNIT_SIZE; i++)
             {
                 unsigned int offset = offset_start[i];
                 if (offset == offset_1 || offset == offset_2) continue;
@@ -310,30 +308,31 @@ OpState SolverV2::refine_candidates_by_hidden_double(UnitType unit_type){
     OpState state;
     switch(unit_type){
     case UnitType::ROW:
-        for (int r = 0; r < BOARD_SIZE; r++)
+        for (unsigned int r = 0; r < BOARD_SIZE; r++)
         {
             state = solve_for_unit(indexer.row_index[r], m_row_value_state[r]);
         }
-        break;
+        return state;
     case UnitType::COL:
-        for (int c = 0; c < BOARD_SIZE; c++)
+        for (unsigned int c = 0; c < BOARD_SIZE; c++)
         {
             state = solve_for_unit(indexer.col_index[c], m_col_value_state[c]);
         }
-        break;
+        return state;
     case UnitType::GRID:
-        for (int g_i = 0; g_i < GRID_SIZE; g_i++)
+        for (unsigned int g_i = 0; g_i < GRID_SIZE; g_i++)
         {
-            for (int g_j = 0; g_j < GRID_SIZE; g_j++)
+            for (unsigned int g_j = 0; g_j < GRID_SIZE; g_j++)
             {
                 const unsigned int grid_start_row = g_i * GRID_SIZE;
                 const unsigned int grid_start_col = g_j * GRID_SIZE;
                 state = solve_for_unit(indexer.grid_index[grid_start_row][grid_start_col], m_grid_value_state[g_i][g_j]);
             }
         }
-        break;
+        return state;
+    default:
+        return OpState::FAIL;   // should not reach here
     }
-    return state;
 }
 
 OpState SolverV2::update_by_naked_single(int row, int col){
@@ -360,7 +359,7 @@ OpState SolverV2::update_by_hidden_single(val_t value, UnitType unit_type){
     auto solve_for_unit = [&](unsigned int* offset_start){
         unsigned int candidate_count = 0;
         Coord candidate_coord;
-        for (int i = 0; i < UNIT_SIZE; i++)
+        for (unsigned int i = 0; i < UNIT_SIZE; i++)
         {
             unsigned int offset = offset_start[i];
             val_t board_val = this->board().get(offset);
@@ -381,9 +380,9 @@ OpState SolverV2::update_by_hidden_single(val_t value, UnitType unit_type){
 
     // check for implicit only candidate in the grids
     if (unit_type == UnitType::GRID){
-        for (int g_i = 0; g_i < GRID_SIZE; g_i++)
+        for (unsigned int g_i = 0; g_i < GRID_SIZE; g_i++)
         {
-            for (int g_j = 0; g_j < GRID_SIZE; g_j++)
+            for (unsigned int g_j = 0; g_j < GRID_SIZE; g_j++)
             {
                 if (m_grid_value_state[g_i][g_j][v_idx] == 1){ continue; } // already filled
                 // iterate through the grid
@@ -401,7 +400,7 @@ OpState SolverV2::update_by_hidden_single(val_t value, UnitType unit_type){
 
     // check for implicit only candidate in the rows and columns
     if (unit_type == UnitType::ROW){
-        for (int r = 0; r < BOARD_SIZE; r++)
+        for (unsigned int r = 0; r < BOARD_SIZE; r++)
         {
             if (m_row_value_state[r][v_idx] == 1){ continue; } // already filled
             OpState state = solve_for_unit(indexer.row_index[r]);
@@ -412,7 +411,7 @@ OpState SolverV2::update_by_hidden_single(val_t value, UnitType unit_type){
     }
 
     if (unit_type == UnitType::COL){
-        for (int c = 0; c < BOARD_SIZE; c++)
+        for (unsigned int c = 0; c < BOARD_SIZE; c++)
         {
             if (m_col_value_state[c][v_idx] == 1){ continue; } // already filled
             OpState state = solve_for_unit(indexer.col_index[c]);
@@ -442,7 +441,7 @@ OpState SolverV2::step_by_guess(){
         auto col_item_offsets = indexer.col_index[col];
         auto grid_item_offsets = indexer.grid_index[row][col];
 
-        for (int i = 0; i < BOARD_SIZE; i++)
+        for (unsigned int i = 0; i < BOARD_SIZE; i++)
         {
             if (this->board().get(row_item_offsets[i]) == 0) row_count++;
             if (this->board().get(col_item_offsets[i]) == 0) col_count++;
@@ -462,9 +461,9 @@ OpState SolverV2::step_by_guess(){
         Coord best_choice;
         unsigned int min_candidate_count = 1e4;
         unsigned int max_neighbor_count = 1e4;
-        for (int i = 0; i < BOARD_SIZE; i++)
+        for (unsigned int i = 0; i < BOARD_SIZE; i++)
         {
-            for (int j = 0; j < BOARD_SIZE; j++)
+            for (unsigned int j = 0; j < BOARD_SIZE; j++)
             {
                 if (this->board().get_(i, j) != 0){ continue; };     // skip the solved cells
 
@@ -472,13 +471,13 @@ OpState SolverV2::step_by_guess(){
                 if (candidate_count < min_candidate_count){
                     min_candidate_count = candidate_count;
                     max_neighbor_count = numNeighborUnsolved(i, j);
-                    best_choice = {i, j};
+                    best_choice = {static_cast<int>(i), static_cast<int>(j)};
                 }
                 else if (candidate_count == min_candidate_count){
                     unsigned int neighbor_count = numNeighborUnsolved(i, j);
                     if (neighbor_count > max_neighbor_count){
                         max_neighbor_count = neighbor_count;
-                        best_choice = {i, j};
+                        best_choice = {static_cast<int>(i), static_cast<int>(j)};
                     }
                 }
                 else{
@@ -498,12 +497,12 @@ OpState SolverV2::step_by_guess(){
         if (!DETERMINISTIC_GUESS){
             // choose a random cell to guess
             std::vector<Coord> unsolved_cells;
-            for (int i = 0; i < BOARD_SIZE; i++)
+            for (unsigned int i = 0; i < BOARD_SIZE; i++)
             {
-                for (int j = 0; j < BOARD_SIZE; j++)
+                for (unsigned int j = 0; j < BOARD_SIZE; j++)
                 {
                     if (this->board().get_(i, j) == 0){
-                        unsolved_cells.push_back({i, j});
+                        unsolved_cells.push_back({static_cast<int>(i), static_cast<int>(j)});
                     }
                 }
             }
@@ -514,12 +513,12 @@ OpState SolverV2::step_by_guess(){
         else{
             // choose the first unsolved cell
             bool _found = false;
-            for (int i = 0; i < BOARD_SIZE; i++)
+            for (unsigned int i = 0; i < BOARD_SIZE; i++)
             {
-                for (int j = 0; j < BOARD_SIZE; j++)
+                for (unsigned int j = 0; j < BOARD_SIZE; j++)
                 {
                     if (this->board().get_(i, j) == 0){
-                        best_choice = {i, j};
+                        best_choice = {static_cast<int>(i), static_cast<int>(j)};
                         _found = true;
                         break;
                     }

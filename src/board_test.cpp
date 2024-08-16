@@ -49,7 +49,7 @@ int main()
     std::cout << board.get(3, 4) << std::endl;
 
     int row=1;
-    for (int col=0; col<BOARD_SIZE; col++){
+    for (unsigned int col=0; col<BOARD_SIZE; col++){
         board.set(row, col, 1);
     }
 

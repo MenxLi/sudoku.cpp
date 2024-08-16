@@ -32,8 +32,8 @@ std::pair<
     std::string input_str = c.substr(0, 81);
     std::string expected_str = c.substr(82);
     ASSERT(BOARD_SIZE * BOARD_SIZE == input_str.size(), "Invalid input size");
-    for (int i = 0; i < BOARD_SIZE; i++){
-        for (int j = 0; j < BOARD_SIZE; j++){
+    for (unsigned int i = 0; i < BOARD_SIZE; i++){
+        for (unsigned int j = 0; j < BOARD_SIZE; j++){
             input[i][j] = input_str[i * BOARD_SIZE + j] - '0';
             expected[i][j] = expected_str[i * BOARD_SIZE + j] - '0';
         }
@@ -50,8 +50,8 @@ int main(){
         solver.solve();
 
         bool correct = true;
-        for (int i = 0; i < BOARD_SIZE; i++){
-            for (int j = 0; j < BOARD_SIZE; j++){
+        for (unsigned int i = 0; i < BOARD_SIZE; i++){
+            for (unsigned int j = 0; j < BOARD_SIZE; j++){
                 if (solver.board().get(i, j) != expected[i][j]){
                     correct = false;
                     break;
