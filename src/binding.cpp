@@ -48,11 +48,12 @@ py::dict solve(
 
 py::dict generate(
     unsigned int n_clues_remain, 
-    unsigned int max_retries
+    unsigned int max_retries, 
+    bool parallel_exec
 ){
     Board b;
     auto start_time = std::chrono::high_resolution_clock::now();
-    auto [generated, board] = gen::generate_board(n_clues_remain, max_retries);
+    auto [generated, board] = gen::generate_board(n_clues_remain, max_retries, parallel_exec);
     auto end_time = std::chrono::high_resolution_clock::now();
 
     if (!generated){

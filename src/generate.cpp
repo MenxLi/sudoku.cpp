@@ -181,7 +181,11 @@ namespace gen{
         return success;
     }
 
-    std::tuple<bool, Board> generate_board(unsigned int n_clues_remain, unsigned int max_retries){
+    std::tuple<bool, Board> generate_board(
+        unsigned int n_clues_remain, 
+        unsigned int max_retries, 
+        bool parallel_exec
+        ){
         Board board;
         if (n_clues_remain >= CELL_COUNT){
             return std::make_tuple(false, board);
@@ -216,7 +220,20 @@ namespace gen{
                 return std::tuple<bool, Board>{false, board};
             }
         };
+        
+        if (!parallel_exec){
+            std::cout << "Generating board (" << BOARD_SIZE << "x" << BOARD_SIZE <<
+            ") with " << n_clues_remain << " clues remaining." << std::flush;
+            for (int i = 0; i < max_retries; i++){
+                auto [success, b] = fn_thread();
+                if (success){
+                    return std::make_tuple(true, b);
+                }
+            }
+            return std::make_tuple(false, board);
+        }
 
+        // parallel execution
         const unsigned int MAX_THREADS = 8;
         unsigned int n_concurrent = std::max(std::min( std::thread::hardware_concurrency()-1, (unsigned int) MAX_THREADS), (unsigned int) 1);
         std::array<std::future<std::tuple<bool, Board>>, MAX_THREADS> futures;

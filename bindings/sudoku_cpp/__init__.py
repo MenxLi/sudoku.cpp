@@ -2,8 +2,8 @@ from . import sudoku
 
 def solve(puzzle: list[list[int]])->dict:
     return sudoku.solve(puzzle)
-def generate(n_clues: int, max_retries: int = 1024)->list[list[int]]:
-    return sudoku.generate(n_clues, max_retries)
+def generate(n_clues: int, max_retries: int = 1024, parallel_exec = False)->list[list[int]]:
+    return sudoku.generate(n_clues, max_retries, parallel_exec)
 def build_config()->dict:
     return sudoku.build_config()
 

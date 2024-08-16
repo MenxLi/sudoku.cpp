@@ -27,7 +27,7 @@ def generate_puzzle(level: str):
         return {"error": f"Invalid difficulty level: {level}"}
 
     n_clues = __difficulty_n_map.get(level, 32)
-    gen = generate(n_clues)
+    gen = generate(n_clues, max_retries=128, parallel_exec=False)
     return gen['data']
 
 def solve_puzzle(puzzle: list[list[int]]):
