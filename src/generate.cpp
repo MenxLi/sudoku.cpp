@@ -197,9 +197,6 @@ namespace gen{
         // }
 
         unsigned int n_clues_to_remove = CELL_COUNT - n_clues_remain;
-        std::cout << "Generating board (" << BOARD_SIZE << "x" << BOARD_SIZE <<
-        ") with " << n_clues_remain << " clues remaining." << std::flush;
-
         auto fn_thread = [n_clues_to_remove]() -> std::tuple<bool, Board>{
             Board board = Board();
             unsigned int n_to_remove_ = n_clues_to_remove;
@@ -230,6 +227,10 @@ namespace gen{
         std::array<std::future<std::tuple<bool, Board>>, MAX_THREADS> futures;
         ASSERT(n_concurrent <= MAX_THREADS, "n_concurrent should be less than or equal to 8");
         ASSERT(max_retries >= n_concurrent, "max_retries should be greater than n_threads");
+
+        std::cout << "Generating board (" << BOARD_SIZE << "x" << BOARD_SIZE <<
+        ") with " << n_clues_remain << " clues remaining (" << n_concurrent << " concurrent)" << std::endl;
+
 
         unsigned int submitted_counter = 0;
         // submit the first batch
