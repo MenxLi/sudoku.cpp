@@ -18,42 +18,9 @@ void Board::clear(val_t val = 0)
     }
 };
 
-Board::Board() {};
+Board::Board() {indexer.init();};
 Board::~Board() {};
-Board::Board(const Board& other) { load_data(other); };
-
-std::unique_ptr<val_t*> Board::get_row(int row)
-{
-    ASSERT(row >= 0 && row < BOARD_SIZE, "row out of bounds: " + std::to_string(row));
-    std::unique_ptr<val_t*> result(new val_t*[BOARD_SIZE]);
-    for (int i = 0; i < BOARD_SIZE; i++)
-    {
-        result.get()[i] = &m_board[row][i];
-    }
-    return std::move(result);
-};
-
-std::unique_ptr<val_t*> Board::get_col(int col)
-{
-    ASSERT(col >= 0 && col < BOARD_SIZE, "column out of bounds: " + std::to_string(col));
-    std::unique_ptr<val_t*> result(new val_t*[BOARD_SIZE]);
-    for (int i = 0; i < BOARD_SIZE; i++)
-    {
-        result.get()[i] = &m_board[i][col];
-    }
-    return std::move(result);
-};
-
-std::unique_ptr<val_t*> Board::get_grid(int row, int col){
-    ASSERT_COORD_BOUNDS(row, col);
-    std::unique_ptr<val_t*> result(new val_t*[BOARD_SIZE]);
-    for (int i = 0; i < GRID_SIZE; i++){
-        for (int j = 0; j < GRID_SIZE; j++){
-            result.get()[i * GRID_SIZE + j] = &m_board[row * GRID_SIZE + i][col * GRID_SIZE + j];
-        }
-    }
-    return std::move(result);
-};
+Board::Board(const Board& other):Board() { load_data(other); };
 
 void Board::set(unsigned int offset, val_t value)
 {
@@ -89,32 +56,38 @@ bool Board::is_filled() const
 
 bool Board::is_valid()
 {
-    auto check_validity = [](val_t** arr)->bool{
-        std::vector<bool> found(BOARD_SIZE, false);
+    auto check_validity = [this](
+        unsigned int * offsets, unsigned int size
+    )->bool{
+        auto found = std::unique_ptr<bool[]>(new bool[size]{false});
         for (int i = 0; i < BOARD_SIZE; i++){
-            if (*arr[i] == 0){ // not filled
+            const unsigned int offset = offsets[i];
+            if (this->get(offset) == 0){ // not filled
                 return false;
             }
-            if (found[*arr[i] - 1]){ // duplicate
+            if (found[this->get(offset) - 1]){ // duplicate
                 return false;
             }
-            found[*arr[i] - 1] = true;
+            found[this->get(offset) - 1] = true;
         }
         return true;
     };
 
     for (unsigned int i = 0; i < BOARD_SIZE; i++){
-        const auto row = get_row(i);
-        if (!check_validity(row.get())) return false;
+        if (!check_validity(
+            indexer.row_index[i], BOARD_SIZE
+        )) return false;
     }
     for (unsigned int i = 0; i < BOARD_SIZE; i++){
-        const auto col = get_col(i);
-        if (!check_validity(col.get())) return false;
+        if (!check_validity(
+            indexer.col_index[i], BOARD_SIZE
+        )) return false;
     }
     for (unsigned int i = 0; i < GRID_SIZE; i++){
         for (unsigned int j = 0; j < GRID_SIZE; j++){
-            const auto grid = get_grid(i, j);
-            if (!check_validity(grid.get())) return false;
+            if (!check_validity(
+                indexer.grid_coord_index[i][j], GRID_SIZE*GRID_SIZE
+            )) return false;
         }
     }
     return true;

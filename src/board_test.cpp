@@ -53,40 +53,6 @@ int main()
         board.set(row, col, 1);
     }
 
-    int col=1;
-    auto col_ptr = board.get_col(col);
-    for (int i=0; i<BOARD_SIZE; i++){
-        // this is correct
-        *col_ptr.get()[i] = 2;
-    }
-
-    auto col_ptr2 = board.get_col(col + 1);
-    for (int i=0; i<BOARD_SIZE; i++){
-        // this is wrong!
-        // val_t* x = *col_ptr2;
-        // x[i] = 3;
-
-        // this is also wrong!
-        // (*col_ptr2.get())[i] = 3;
-
-        // this is correct
-        val_t** y = col_ptr2.get();
-        *y[i] = 3;      // equivalent to *(y[i]) = 3;
-    }
-
-
-    auto grid_ptr = board.get_grid(1, 1);
-    for (int i=0; i<BOARD_SIZE; i++){
-        // this is correct, equivalent to *(grid_ptr.get()[i]) = 4;
-        *(grid_ptr.get())[i] = 4;
-    }
-
-    auto grid_ptr2 = board.get_grid(2, 2);
-    for (int i=0; i<BOARD_SIZE; i++){
-        // this is wrong!
-        (*grid_ptr2.get())[i] = 5;
-    }
-
     board.save_to_file("./output/2.txt");
     std::cout << board << std::endl;
 
