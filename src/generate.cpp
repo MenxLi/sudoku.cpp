@@ -9,10 +9,8 @@ namespace py = pybind11;
 #include "util.h"
 #include "solver_v2.h"
 #include <ostream>
-#include <random>
 #include <memory>
 #include <tuple>
-#include <vector>
 #include <algorithm>
 #include <future>
 
@@ -227,14 +225,16 @@ namespace gen{
             }
         };
 
-        unsigned int n_concurrent = std::max(std::min( std::thread::hardware_concurrency()-1, (unsigned int) 8), (unsigned int) 1);
-        std::unique_ptr<std::future<std::tuple<bool, Board>>[]> futures_ptr(new std::future<std::tuple<bool, Board>>[n_concurrent]);
+        const unsigned int MAX_THREADS = 8;
+        unsigned int n_concurrent = std::max(std::min( std::thread::hardware_concurrency()-1, (unsigned int) MAX_THREADS), (unsigned int) 1);
+        std::array<std::future<std::tuple<bool, Board>>, MAX_THREADS> futures;
+        ASSERT(n_concurrent <= MAX_THREADS, "n_concurrent should be less than or equal to 8");
         ASSERT(max_retries >= n_concurrent, "max_retries should be greater than n_threads");
 
         unsigned int submitted_counter = 0;
         // submit the first batch
         for (int i = 0; i < n_concurrent; i++){
-            futures_ptr[i] = std::async(std::launch::async, fn_thread);
+            futures[i] = std::async(std::launch::async, fn_thread);
             submitted_counter++;
         }
 
@@ -247,15 +247,15 @@ namespace gen{
             #endif
 
             for (int i = 0; i < n_concurrent; i++){
-                if (futures_ptr[i].valid() && futures_ptr[i].wait_for(std::chrono::seconds(0)) == std::future_status::ready){
-                    auto [success, b] = futures_ptr[i].get();
+                if (futures[i].valid() && futures[i].wait_for(std::chrono::seconds(0)) == std::future_status::ready){
+                    auto [success, b] = futures[i].get();
                     if (success){
                         result = std::make_tuple(true, b);
                         break;
                     }
                     // replace the finished future with a new one
                     if (submitted_counter < max_retries) {
-                        futures_ptr[i] = std::async(std::launch::async, fn_thread);
+                        futures[i] = std::async(std::launch::async, fn_thread);
                         submitted_counter++;
                     }
                 }
@@ -264,8 +264,8 @@ namespace gen{
 
         // wait for all threads to finish, and clean up
         for (int i = 0; i < n_concurrent; i++){
-            if (futures_ptr[i].valid()){
-                futures_ptr[i].wait();
+            if (futures[i].valid()){
+                futures[i].wait();
             }
         }
         std::cout << std::endl;

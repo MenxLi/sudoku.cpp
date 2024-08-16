@@ -1,8 +1,6 @@
 #pragma once
 
 #include <cstdint>
-#include <stdexcept>
-#include <string>
 #include <cassert>
 
 #ifndef GRID_SIZE
