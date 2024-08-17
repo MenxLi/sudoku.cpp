@@ -1,6 +1,7 @@
 #pragma once
 #include "config.h"
 #include "util.h"
+#include "mutex"
 
 template <unsigned int NG>   // NG is the grid size
 class Indexer
@@ -39,10 +40,15 @@ public:
 
 private:
     bool m_initialized = false;
+    std::mutex m_mutex;
 };
 
 template <unsigned int NG>
 void Indexer<NG>::init(){
+    // this is important, because I want to use this as a static member 
+    // it dooms to share global state, so need to make sure it's thread safe!
+    std::lock_guard<std::mutex> lock(m_mutex);
+
     if (m_initialized) return; 
     m_initialized = true;
 
