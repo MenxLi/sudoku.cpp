@@ -9,7 +9,6 @@ namespace py = pybind11;
 #include "util.h"
 #include "solver_v2.h"
 #include <ostream>
-#include <memory>
 #include <tuple>
 #include <algorithm>
 #include <future>
@@ -60,9 +59,9 @@ namespace gen{
             }
 
             // fill the next cell
-            std::unique_ptr<Board> forked_board(new Board(board));
-            if (fill_cell_recursive(*forked_board, offset + 1)){
-                board = *forked_board;
+            Board forked_board = Board(board);
+            if (fill_cell_recursive(forked_board, offset + 1)){
+                board.load_data(forked_board);
                 return true;
             }
         }
@@ -278,7 +277,9 @@ namespace gen{
         // wait for all threads to finish, and clean up
         for (unsigned int i = 0; i < n_concurrent; i++){
             if (futures[i].valid()){
+                // clear the future
                 futures[i].wait();
+                futures[i] = std::future<std::tuple<bool, Board>>();
             }
         }
         std::cout << std::endl;
