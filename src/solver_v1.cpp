@@ -240,7 +240,7 @@ bool SolverV1::update_by_cross(int row, int col){
 
         // check if the value is also possible in the other cells of the grid
         bool skip_flag = false;
-        for (auto offset : indexer.grid_index[row][col])
+        for (auto offset : indexer.grid_coord_index[row][col])
         {
             if (offset == row * BOARD_SIZE + col) continue;     // skip the aim cell
 
@@ -328,7 +328,7 @@ bool SolverV1::step_by_guess(){
 
         auto row_item_offsets = indexer.row_index[row];
         auto col_item_offsets = indexer.col_index[col];
-        auto grid_item_offsets = indexer.grid_index[row][col];
+        auto grid_item_offsets = indexer.grid_coord_index[row][col];
 
         for (unsigned int i = 0; i < BOARD_SIZE; i++)
         {

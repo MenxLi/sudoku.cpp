@@ -26,8 +26,8 @@ public:
     // by querying: col_index[col][...]
     unsigned int row_index[N][N];                       // pointer position for each row, input 1D row index [i]
     unsigned int col_index[N][N];                       // pointer position for each column, input 1D column index [j]
-    unsigned int grid_index[N][N][N];                   // pointer position for each grid, input 2D cell coord [i][j]
-    unsigned int grid_coord_index[NG][NG][N];           // pointer position for each grid, input 2D cell coord [i][j]
+    unsigned int grid_index[NG][NG][N];                 // pointer position for each grid, input 2D grid coord [g_i][g_j]
+    unsigned int grid_coord_index[N][N][N];             // pointer position for each grid, input 2D cell coord [i][j]
     unsigned int neighbor_index[N][N][N_NEIGHBORS];     // pointer position for each neighbor, input 2D cell coord [i][j]
 
     inline static std::array<std::array<unsigned int, 2>, util::n_combinations<N, 2>>
@@ -107,7 +107,7 @@ void Indexer<NG>::init(){
                 {
                     for (unsigned int l = 0; l < NG; l++)
                     {
-                        grid_index[i][j][k * NG + l] = (grid_row * NG + k) * N + grid_col * NG + l;
+                        grid_coord_index[i][j][k * NG + l] = (grid_row * NG + k) * N + grid_col * NG + l;
                     }
                 }
             }
@@ -122,7 +122,7 @@ void Indexer<NG>::init(){
                 {
                     for (unsigned int l = 0; l < NG; l++)
                     {
-                        grid_coord_index[i][j][k * NG + l] = (i * NG + k) * N + j * NG + l;
+                        grid_index[i][j][k * NG + l] = (i * NG + k) * N + j * NG + l;
                     }
                 }
 

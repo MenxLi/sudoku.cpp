@@ -245,9 +245,7 @@ OpState SolverV2::refine_candidates_by_naked_double(UnitType unit_type){
         {
             for (unsigned int g_j = 0; g_j < GRID_SIZE; g_j++)
             {
-                const unsigned int grid_start_row = g_i * GRID_SIZE;
-                const unsigned int grid_start_col = g_j * GRID_SIZE;
-                OpState state = solve_for_unit(indexer.grid_index[grid_start_row][grid_start_col]);
+                OpState state = solve_for_unit(indexer.grid_index[g_i][g_j]);
                 if (state == OpState::VIOLATION){ return OpState::VIOLATION; }
             }
         }
@@ -324,9 +322,7 @@ OpState SolverV2::refine_candidates_by_hidden_double(UnitType unit_type){
         {
             for (unsigned int g_j = 0; g_j < GRID_SIZE; g_j++)
             {
-                const unsigned int grid_start_row = g_i * GRID_SIZE;
-                const unsigned int grid_start_col = g_j * GRID_SIZE;
-                state = solve_for_unit(indexer.grid_index[grid_start_row][grid_start_col], m_grid_value_state[g_i][g_j]);
+                state = solve_for_unit(indexer.grid_index[g_i][g_j], m_grid_value_state[g_i][g_j]);
             }
         }
         return state;
@@ -386,9 +382,7 @@ OpState SolverV2::update_by_hidden_single(val_t value, UnitType unit_type){
             {
                 if (m_grid_value_state[g_i][g_j][v_idx] == 1){ continue; } // already filled
                 // iterate through the grid
-                const unsigned int grid_start_row = g_i * GRID_SIZE;
-                const unsigned int grid_start_col = g_j * GRID_SIZE;
-                OpState state = solve_for_unit(indexer.grid_index[grid_start_row][grid_start_col]);
+                OpState state = solve_for_unit(indexer.grid_index[g_i][g_j]);
                 // somehow must return here, instead of continue...
                 // otherwise, benchmark.py will fail?
                 if (state == OpState::SUCCESS || state == OpState::VIOLATION){
@@ -439,7 +433,7 @@ OpState SolverV2::step_by_guess(){
 
         auto row_item_offsets = indexer.row_index[row];
         auto col_item_offsets = indexer.col_index[col];
-        auto grid_item_offsets = indexer.grid_index[row][col];
+        auto grid_item_offsets = indexer.grid_coord_index[row][col];
 
         for (unsigned int i = 0; i < BOARD_SIZE; i++)
         {

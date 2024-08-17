@@ -86,7 +86,7 @@ bool Board::is_valid()
     for (unsigned int i = 0; i < GRID_SIZE; i++){
         for (unsigned int j = 0; j < GRID_SIZE; j++){
             if (!check_validity(
-                indexer.grid_coord_index[i][j], GRID_SIZE*GRID_SIZE
+                indexer.grid_index[i][j], GRID_SIZE*GRID_SIZE
             )) return false;
         }
     }
