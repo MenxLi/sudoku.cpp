@@ -12,6 +12,7 @@ namespace py = pybind11;
 #include <tuple>
 #include <algorithm>
 #include <future>
+#include <atomic>
 
 namespace gen{
     static Indexer<GRID_SIZE> indexer;
@@ -140,11 +141,15 @@ namespace gen{
     // backtracking to remove n_clues_to_remove clues
     // this is a depth-first search... may not be the best way to do this...
     static std::tuple<bool, long> remove_n_clues_recursively(
+        std::atomic_bool& stop_flag,
         Board& board, 
         const Board& solution, 
         unsigned int n_clues_to_remove, 
         long max_depth = CELL_COUNT*2
     ){
+        if (stop_flag.load()){
+            return std::make_tuple(false, max_depth);
+        }
         if (n_clues_to_remove == 0){
             // std::cout << "Found a board with max depth left: " << max_depth << std::endl;
             return std::make_tuple(true, max_depth);
@@ -164,7 +169,7 @@ namespace gen{
             if (!uniquely_solvable(forked_board, solution)) continue;
 
             auto [success, _depth_remain] = remove_n_clues_recursively(
-                forked_board, solution, n_clues_to_remove - 1, depth_remain - 1
+                stop_flag, forked_board, solution, n_clues_to_remove - 1, depth_remain - 1
             );
             depth_remain = _depth_remain;
             if (success){
@@ -175,8 +180,8 @@ namespace gen{
         return std::make_tuple(false, depth_remain);
     }
 
-    bool remove_clues_by_solve(Board& board, const Board& solution, int n_clues_to_remove){
-        auto result = remove_n_clues_recursively(board, solution, n_clues_to_remove);
+    bool remove_clues_by_solve(std::atomic_bool& stop_flag, Board& board, const Board& solution, int n_clues_to_remove){
+        auto result = remove_n_clues_recursively(stop_flag, board, solution, n_clues_to_remove);
         return std::get<0>(result);
     }
 
@@ -195,11 +200,17 @@ namespace gen{
         // }
 
         unsigned int n_clues_to_remove = CELL_COUNT - n_clues_remain;
-        auto fn_thread = [n_clues_to_remove](
+        std::atomic_bool stop_flag(false);
+        auto fn_thread = [n_clues_to_remove, &stop_flag](
             std::promise<std::tuple<bool, Board>> promise
         ){
             Board board = Board();
             unsigned int n_to_remove_ = n_clues_to_remove;
+
+            if (stop_flag.load()){
+                promise.set_value(std::make_tuple(false, board));
+                return;
+            }
 
             fill_valid_board(board);
             auto solution = Board(board);
@@ -211,7 +222,7 @@ namespace gen{
                 n_to_remove_ -= confident_remove_bound;
             }
 
-            bool generated = remove_clues_by_solve(board, solution, n_to_remove_);
+            bool generated = remove_clues_by_solve(stop_flag, board, solution, n_to_remove_);
             if (generated){
                 promise.set_value(std::make_tuple(true, board));
             }
@@ -270,6 +281,7 @@ namespace gen{
                 if (futures[i].valid() && futures[i].wait_for(std::chrono::seconds(0)) == std::future_status::ready){
                     auto [success, b] = futures[i].get();
                     if (success){
+                        stop_flag.store(true);
                         result = std::make_tuple(true, b);
                         break;
                     }
