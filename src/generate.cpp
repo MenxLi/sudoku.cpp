@@ -195,7 +195,9 @@ namespace gen{
         // }
 
         unsigned int n_clues_to_remove = CELL_COUNT - n_clues_remain;
-        auto fn_thread = [n_clues_to_remove]() -> std::tuple<bool, Board>{
+        auto fn_thread = [n_clues_to_remove](
+            std::promise<std::tuple<bool, Board>> promise
+        ){
             Board board = Board();
             unsigned int n_to_remove_ = n_clues_to_remove;
 
@@ -211,12 +213,12 @@ namespace gen{
 
             bool generated = remove_clues_by_solve(board, solution, n_to_remove_);
             if (generated){
-                return std::make_tuple(true, board);
+                promise.set_value(std::make_tuple(true, board));
             }
             else{
                 std::cout << '.';
                 std::cout.flush();
-                return std::tuple<bool, Board>{false, board};
+                promise.set_value(std::make_tuple(false, board));
             }
         };
         
@@ -224,7 +226,10 @@ namespace gen{
             std::cout << "Generating board (" << BOARD_SIZE << "x" << BOARD_SIZE <<
             ") with " << n_clues_remain << " clues remaining." << std::flush;
             for (unsigned int i = 0; i < max_retries; i++){
-                auto [success, b] = fn_thread();
+                auto promise = std::promise<std::tuple<bool, Board>>();
+                auto future = promise.get_future();
+                fn_thread(std::move(promise));
+                auto [success, b] = future.get();
                 if (success){
                     return std::make_tuple(true, b);
                 }
@@ -242,11 +247,14 @@ namespace gen{
         std::cout << "Generating board (" << BOARD_SIZE << "x" << BOARD_SIZE <<
         ") with " << n_clues_remain << " clues remaining" << " (" << n_concurrent << " concurrent)." << std::flush;
 
-
+        std::vector<std::thread> threads;
         unsigned int submitted_counter = 0;
+
         // submit the first batch
         for (unsigned int i = 0; i < n_concurrent; i++){
-            futures[i] = std::async(std::launch::async, fn_thread);
+            auto promise = std::promise<std::tuple<bool, Board>>();
+            futures[i] = promise.get_future();
+            threads.emplace_back(fn_thread, std::move(promise));
             submitted_counter++;
         }
 
@@ -267,20 +275,18 @@ namespace gen{
                     }
                     // replace the finished future with a new one
                     if (submitted_counter < max_retries) {
-                        futures[i] = std::async(std::launch::async, fn_thread);
+                        auto promise = std::promise<std::tuple<bool, Board>>();
+                        futures[i] = promise.get_future();
+                        threads.emplace_back(fn_thread, std::move(promise));
                         submitted_counter++;
                     }
                 }
             }
         }
 
-        // wait for all threads to finish, and clean up
-        for (unsigned int i = 0; i < n_concurrent; i++){
-            if (futures[i].valid()){
-                // clear the future
-                futures[i].wait();
-                futures[i] = std::future<std::tuple<bool, Board>>();
-            }
+        // wait for all threads to finish, clean up
+        for (auto& t: threads){
+            t.join();
         }
         std::cout << std::endl;
 

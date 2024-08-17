@@ -14,7 +14,7 @@ int main(){
     //     return 1;
     // }
 
-    unsigned int n_clues_remain = 18;
+    unsigned int n_clues_remain = 20;
     auto [generated, board] = gen::generate_board(n_clues_remain);
     if (!generated){
         std::cout << "Failed to generate a board with " << n_clues_remain << " clues remaining" << std::endl;
