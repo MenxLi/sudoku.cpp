@@ -25,13 +25,20 @@ all: test target
 _dst:
 	mkdir -p $(BIN_DIR) && mkdir -p $(LIB_DIR)
 
-obj: _dst
+util.o: _dst
 	$(CXX) $(COMMON_FLAGS) -o $(LIB_DIR)/util.o -c src/util.cpp
+board.o: _dst
 	$(CXX) $(COMMON_FLAGS) -o $(LIB_DIR)/board.o -c src/board.cpp
+solver.o: _dst
 	$(CXX) $(COMMON_FLAGS) -o $(LIB_DIR)/solver.o -c src/solver.cpp
+solver_v1.o: _dst
 	$(CXX) $(COMMON_FLAGS) -o $(LIB_DIR)/solver_v1.o -c src/solver_v1.cpp
+solver_v2.o: _dst
 	$(CXX) $(COMMON_FLAGS) -o $(LIB_DIR)/solver_v2.o -c src/solver_v2.cpp
+generate.o: _dst
 	$(CXX) $(COMMON_FLAGS) -o $(LIB_DIR)/generate.o -c src/generate.cpp
+
+obj: util.o board.o solver.o solver_v1.o solver_v2.o generate.o
 
 test: obj
 	$(CXX) $(COMMON_FLAGS) -o $(BIN_DIR)/util_test \

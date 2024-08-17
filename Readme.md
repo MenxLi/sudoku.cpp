@@ -9,7 +9,7 @@ python demo.py
 
 For C++ only, build with:
 ```sh
-make target
+make target -j
 ```
 
 Then run with:
