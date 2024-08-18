@@ -26,10 +26,10 @@ private:
     // global filled count for each value
     unsigned int m_filled_count[CANDIDATE_SIZE] = {0};
 
-    // unit filled count for each value
-    unsigned int m_row_value_state[BOARD_SIZE][CANDIDATE_SIZE] = {{0}};
-    unsigned int m_col_value_state[BOARD_SIZE][CANDIDATE_SIZE] = {{0}};
-    unsigned int m_grid_value_state[GRID_SIZE][GRID_SIZE][CANDIDATE_SIZE] = {{{0}}};
+    // unit filled state for each value
+    bool m_row_value_state[BOARD_SIZE][CANDIDATE_SIZE] = {{0}};
+    bool m_col_value_state[BOARD_SIZE][CANDIDATE_SIZE] = {{0}};
+    bool m_grid_value_state[GRID_SIZE][GRID_SIZE][CANDIDATE_SIZE] = {{{0}}};
 
     OpState update_by_naked_single(int row, int col);
     OpState update_by_hidden_single(val_t value, UnitType unit_type);

@@ -176,9 +176,15 @@ OpState SolverV2::fill_propagate(unsigned int row, unsigned int col, val_t value
     // update the unit fill state
     unsigned int grid_row = indexer.grid_lookup[row][col][0];
     unsigned int grid_col = indexer.grid_lookup[row][col][1];
+    if (m_grid_value_state[grid_row][grid_col][v_idx]){ return OpState::VIOLATION; }
     m_grid_value_state[grid_row][grid_col][v_idx] = 1;
+
+    if (m_row_value_state[row][v_idx]){ return OpState::VIOLATION; }
     m_row_value_state[row][v_idx] = 1;
+
+    if (m_col_value_state[col][v_idx]){ return OpState::VIOLATION; }
     m_col_value_state[col][v_idx] = 1;
+
     return OpState::SUCCESS;
 };
 
@@ -255,7 +261,7 @@ OpState SolverV2::refine_candidates_by_naked_double(UnitType unit_type){
 };
 
 OpState SolverV2::refine_candidates_by_hidden_double(UnitType unit_type){
-    auto solve_for_unit = [&](unsigned int* offset_start, unsigned int* unit_fill_state)->OpState{
+    auto solve_for_unit = [&](unsigned int* offset_start, bool* unit_fill_state)->OpState{
 
         // array of candidates, each stores it's cell index in this unit
         util::SizedArray<unsigned int, UNIT_SIZE> unit_descriptor[CANDIDATE_SIZE];
@@ -273,7 +279,7 @@ OpState SolverV2::refine_candidates_by_hidden_double(UnitType unit_type){
         for (auto v_idx_pair : indexer.subvalue_combinations_2){
             // inital validity check
             auto [v_idx1, v_idx2] = v_idx_pair;
-            if (unit_fill_state[v_idx1] == 1 || unit_fill_state[v_idx2] == 1) continue; // skip filled values
+            if (unit_fill_state[v_idx1] || unit_fill_state[v_idx2]) continue; // skip filled values
             if (unit_descriptor[v_idx1].size() != 2 || unit_descriptor[v_idx2].size() != 2) continue; // only consider hidden double
             if (!(unit_descriptor[v_idx1] == unit_descriptor[v_idx2])) continue; // only consider hidden double
 
@@ -380,7 +386,7 @@ OpState SolverV2::update_by_hidden_single(val_t value, UnitType unit_type){
         {
             for (unsigned int g_j = 0; g_j < GRID_SIZE; g_j++)
             {
-                if (m_grid_value_state[g_i][g_j][v_idx] == 1){ continue; } // already filled
+                if (m_grid_value_state[g_i][g_j][v_idx]){ continue; } // already filled
                 // iterate through the grid
                 OpState state = solve_for_unit(indexer.grid_index[g_i][g_j]);
                 // somehow must return here, instead of continue...
@@ -396,7 +402,7 @@ OpState SolverV2::update_by_hidden_single(val_t value, UnitType unit_type){
     if (unit_type == UnitType::ROW){
         for (unsigned int r = 0; r < BOARD_SIZE; r++)
         {
-            if (m_row_value_state[r][v_idx] == 1){ continue; } // already filled
+            if (m_row_value_state[r][v_idx]){ continue; } // already filled
             OpState state = solve_for_unit(indexer.row_index[r]);
             if (state == OpState::SUCCESS || state == OpState::VIOLATION){
                 return state;
@@ -407,7 +413,7 @@ OpState SolverV2::update_by_hidden_single(val_t value, UnitType unit_type){
     if (unit_type == UnitType::COL){
         for (unsigned int c = 0; c < BOARD_SIZE; c++)
         {
-            if (m_col_value_state[c][v_idx] == 1){ continue; } // already filled
+            if (m_col_value_state[c][v_idx]){ continue; } // already filled
             OpState state = solve_for_unit(indexer.col_index[c]);
             if (state == OpState::SUCCESS || state == OpState::VIOLATION){
                 return state;
@@ -483,7 +489,8 @@ OpState SolverV2::step_by_guess(){
     };
 
     // choose a cell to guess
-    Coord best_choice;
+    // this value gaurentees the cell is not valid, and should be updated in the loop
+    Coord best_choice {BOARD_SIZE, BOARD_SIZE};
     if (HEURISTIC_GUESS){
         best_choice = get_heuristic_choice();
     }
@@ -501,6 +508,7 @@ OpState SolverV2::step_by_guess(){
                 }
             }
             // random guess
+            srand(time(NULL));
             int random_idx = rand() % unsolved_cells.size();
             best_choice = unsolved_cells[random_idx];
         }
