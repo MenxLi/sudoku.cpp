@@ -1,4 +1,5 @@
 #include "solver_v2.h"
+#include "generate.h"
 #include <chrono>
 
 bool solve_for(std::string input_file, std::string output_file)
@@ -31,57 +32,85 @@ bool solve_for(std::string input_file, std::string output_file)
         std::cout << "Not solved. ";
     }
 
-    solver.board().save_to_file(output_file);
-
-    std::cout << "Output saved to: " << output_file << std::endl;
+    if (!output_file.empty()){
+        solver.board().save_to_file(output_file);
+        std::cout << "Output saved to: " << output_file << std::endl;
+    }
+    else{
+        std::cout << "Output: " << std::endl;
+        std::cout << solver.board() << std::endl;
+    }
     return solved;
+}
+
+bool generate_for(unsigned int clue_count, std::string output_file){
+    auto [success, board] = gen::generate_board(clue_count, 2048, true);
+    if (!success){
+        std::cerr << "Failed to generate a board with " << clue_count << " clues" << std::endl;
+        return false;
+    }
+
+    if (!output_file.empty()){
+        board.save_to_file(output_file);
+        std::cout << "Output saved to: " << output_file << std::endl;
+    }
+    else{
+        std::cout << "Output: " << std::endl;
+        std::cout << board << std::endl;
+    }
+    return true;
+}
+
+std::string parse_arg(std::string flag, int argc, char* argv[]){
+    for (int i = 1; i < argc; i++)
+    {
+        if (std::string(argv[i]) == flag)
+        {
+            if (i + 1 < argc)
+            {
+                return argv[i + 1];
+            }
+            else
+            {
+                std::cerr << flag << " requires an argument" << std::endl;
+                exit(1);
+            }
+        }
+    }
+    return "";
 }
 
 int main(int argc, char* argv[]){
     // parse arguments to get input and output file names
     if (argc < 2)
     {
-        std::cerr << "Usage: " << argv[0] << " -i <input_file> -o <output_file>" << std::endl;
+        std::cerr << "Usage-1: " << argv[0] << " solve -i <input_file> [-o <output_file>]" << std::endl;
+        std::cerr << "Usage-2: " << argv[0] << " generate -c <clue_count> [-o <output_file>]" << std::endl;
         exit(1);
     }
 
     // parse arguments
-    std::string input_file;
-    std::string output_file;
+    std::string mode = argv[1];
+    std::string input_file = parse_arg("-i", argc, argv);
+    std::string output_file = parse_arg("-o", argc, argv);
+    std::string clue_count_str = parse_arg("-c", argc, argv);
 
-    for (int i = 1; i < argc; i++)
-    {
-        if (std::string(argv[i]) == "-i")
+    if (mode == "solve") {
+        if (input_file.empty())
         {
-            if (i + 1 < argc)
-            {
-                input_file = argv[i + 1];
-            }
-            else
-            {
-                std::cerr << "-i requires an argument" << std::endl;
-                exit(1);
-            }
+            std::cerr << "Usage: " << argv[0] << "solve -i <input_file> [-o <output_file>]" << std::endl;
+            exit(1);
         }
-        else if (std::string(argv[i]) == "-o")
+        return solve_for(input_file, output_file) ? 0 : 1;
+    } else if (mode == "generate") {
+        if (clue_count_str.empty())
         {
-            if (i + 1 < argc)
-            {
-                output_file = argv[i + 1];
-            }
-            else
-            {
-                std::cerr << "-o requires an argument" << std::endl;
-                exit(1);
-            }
+            std::cerr << "Usage: " << argv[0] << "generate -c <clue_count> [-o <output_file>]" << std::endl;
+            exit(1);
         }
-    }
-
-    if (input_file.empty() || output_file.empty())
-    {
-        std::cerr << "Usage: " << argv[0] << " -i <input_file> -o <output_file>" << std::endl;
+        return generate_for(std::stoi(clue_count_str), output_file) ? 0 : 1;
+    } else {
+        std::cerr << "Unknown mode: " << mode << std::endl;
         exit(1);
     }
-
-    return solve_for(input_file, output_file) ? 0 : 1;
 }

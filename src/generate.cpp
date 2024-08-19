@@ -242,6 +242,7 @@ namespace gen{
                 fn_thread(std::move(promise));
                 auto [success, b] = future.get();
                 if (success){
+                    std::cout << std::endl;
                     return std::make_tuple(true, b);
                 }
             }

@@ -33,7 +33,7 @@ setup(
             include_dirs=[include_dir],
             define_macros=[
                 ("PYBIND11_BUILD", "1"), 
-                ("GRID_SIZE", "3"), 
+                ("SIZE", "9"), 
                 ("STRICT", "1"), 
             ],
             extra_compile_args=compile_args,

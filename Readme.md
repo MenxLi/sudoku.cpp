@@ -14,10 +14,7 @@ make target -j
 
 Then run with:
 ```sh
-mkdir -p output
-
-# solve a puzzle by providing the input and output file
-./bin/sudoku -i puzzles/1.txt -o output/1.txt
+./bin/sudoku solve -i puzzles/1.txt
 ```
 
 Run benchmarks (time varies depending on difficulties):

@@ -3,15 +3,29 @@
 #include <cstdint>
 #include <cassert>
 
-#ifndef GRID_SIZE
-#define GRID_SIZE 3
+#ifndef SIZE 
+#define SIZE 9
 #endif
 
 #ifndef MAX_ITER
 #define MAX_ITER 1e7
 #endif
 
-const unsigned int BOARD_SIZE = GRID_SIZE * GRID_SIZE;
+#include <cstdint>
+
+// https://stackoverflow.com/a/8625010/6775765
+constexpr size_t isqrt_impl(size_t sq, size_t dlt, size_t value){
+    return sq <= value ?
+        isqrt_impl(sq+dlt, dlt+2, value) : (dlt >> 1) - 1;
+}
+constexpr size_t isqrt(size_t value){
+    return isqrt_impl(1, 3, value);
+}
+
+const unsigned int BOARD_SIZE = SIZE;
+constexpr unsigned int GRID_SIZE = isqrt(BOARD_SIZE);
+static_assert(GRID_SIZE * GRID_SIZE == BOARD_SIZE, "SIZE must be a perfect square");
+
 const unsigned int CANDIDATE_SIZE = BOARD_SIZE;
 const unsigned int UNIT_SIZE = BOARD_SIZE;
 const unsigned int CELL_COUNT = BOARD_SIZE * BOARD_SIZE;

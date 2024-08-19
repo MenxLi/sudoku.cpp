@@ -1,8 +1,10 @@
 
+SIZE?=9
+
 CXX := g++
 STD_FLAGS := -std=c++17 -Wall
 OPTIMIZATION_FLAGS := -O3 -funroll-loops -finline-functions
-CONFIG_FLAGS := -DGRID_SIZE=3 -DSTRICT
+CONFIG_FLAGS := -DSIZE=$(SIZE) -DSTRICT
 COMMON_FLAGS := $(STD_FLAGS) $(OPTIMIZATION_FLAGS) $(CONFIG_FLAGS)
 LIB_DIR := bin/lib
 BIN_DIR := bin
