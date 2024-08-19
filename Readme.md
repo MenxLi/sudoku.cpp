@@ -1,5 +1,5 @@
 
-A Sudoku game solver. 
+A Sudoku game solver and generator.
 
 Build with `pybind11`:
 ```sh
@@ -36,35 +36,35 @@ Run benchmark on larger datasets:
 
 ```
 > python -m scripts.benchmark /Users/monsoon/Code/repo/sudoku-dataset/hard_sudokus.txt
-Read 10000 puzzles
-Submitting tasks: 100%|████████████████████████████████████████████████████████| 10000/10000 [00:00<00:00, 21433.89it/s]
-Collecting results: 100%|██████████████████████████████████████████████████████| 10000/10000 [00:00<00:00, 13791.81it/s]
 ------------------------------
 Solved: 100.00%
-Mean time: 40.0826 us
-Median time: 35.0 us
-Max time: 290 us
-Min time: 9 us
-1st quartile time: 24.0 us
-3rd quartile time: 50.0 us
+Mean time: 36.4472 us
+Median time: 32.0 us
+Max time: 462 us
+Min time: 8 us
+1st quartile time: 23.0 us
+3rd quartile time: 45.0 us
+Mean number of guesses: 1.1677
+Median number of guesses: 1.0
 ------------------------------
 
 > python -m scripts.benchmark /Users/monsoon/Code/repo/sudoku-dataset/all_17_clue_sudokus.txt
-Read 49151 puzzles
-Submitting tasks: 100%|████████████████████████████████████████████████████████| 49151/49151 [00:01<00:00, 45788.44it/s]
-Collecting results: 100%|██████████████████████████████████████████████████████| 49151/49151 [00:03<00:00, 15621.89it/s]
 ------------------------------
 Solved: 100.00%
-Mean time: 108.90942198531057 us
-Median time: 53.0 us
-Max time: 11980 us
-Min time: 15 us
-1st quartile time: 41.0 us
-3rd quartile time: 78.0 us
+Mean time: 86.91444731541576 us
+Median time: 47.0 us
+Max time: 25594 us
+Min time: 16 us
+1st quartile time: 38.0 us
+3rd quartile time: 66.0 us
+Mean number of guesses: 6.239913735224105
+Median number of guesses: 1.0
 ------------------------------
 ```
 
 </details>
+
+For generating puzzles, please refer to `demo.py`.
 
 ---
 

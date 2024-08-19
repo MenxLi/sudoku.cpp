@@ -1,14 +1,13 @@
 from sudoku_cpp import solve, generate, fmt_board
 
-gen = generate(18, parallel_exec=True)
-puzzle = gen['data']
+gen = generate(20, parallel_exec=True)
 print(gen, end='\n\n')
-
-solution = solve(puzzle)
-solved_puzzle = solution['data']
-print(solution, end='\n\n')
-
+puzzle = gen['data']
 print("Puzzle:")
 print(fmt_board(puzzle), end='\n\n')
+
+solution = solve(puzzle)
+print(solution, end='\n\n')
+solved_puzzle = solution['data']
 print("Solution:")
 print(fmt_board(solved_puzzle), end='\n\n')
