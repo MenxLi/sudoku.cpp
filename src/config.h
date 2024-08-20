@@ -1,7 +1,8 @@
 #pragma once
 
-#include <cstdint>
 #include <cassert>
+#include <cstddef>
+#include <cstdint>
 
 #ifndef SIZE 
 #define SIZE 9
@@ -10,8 +11,6 @@
 #ifndef MAX_ITER
 #define MAX_ITER 1e7
 #endif
-
-#include <cstdint>
 
 // https://stackoverflow.com/a/8625010/6775765
 constexpr size_t isqrt_impl(size_t sq, size_t dlt, size_t value){

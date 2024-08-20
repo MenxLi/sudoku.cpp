@@ -51,6 +51,9 @@ void Indexer<NG>::init(){
     // it dooms to share global state, so need to make sure it's thread safe!
     std::lock_guard<std::mutex> lock(m_mutex);
 
+    if (m_initialized) return; 
+    m_initialized = true;
+
     for (unsigned int i = 0; i < util::n_combinations<N, 2>; i++)
     {
         subunit_combinations_2[i] = util::combinations<unsigned int, N, 2>(util::range<N>())[i];
@@ -59,9 +62,6 @@ void Indexer<NG>::init(){
     {
         subvalue_combinations_2[i] = util::combinations<unsigned int, NV, 2>(util::range<NV>())[i];
     }
-
-    if (m_initialized) return; 
-    m_initialized = true;
 
     // initialize the row index
     [&]() constexpr {

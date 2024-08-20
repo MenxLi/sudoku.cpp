@@ -119,7 +119,7 @@ namespace util{
         static_assert(N >= X, "N must be greater than or equal to X");
         static_assert(X >= 1, "X must be greater than or equal to 1");
         const unsigned int res_n = n_combinations<N, X>;
-        std::array<std::array<T, X>, res_n> result = {{{0}}};
+        std::array<std::array<T, X>, res_n> result = {};
         if constexpr (N == X)     // only one result, just copy the array
         {
             for (unsigned int i = 0; i < N; i++)
