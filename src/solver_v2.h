@@ -3,7 +3,22 @@
 #include "board.h"
 #include "config.h"
 #include "solver.h"
+#include "util.h"
 
+struct SolverV2_config{
+    bool use_guess;
+    bool deterministic_guess;
+    bool heuristic_guess;
+    bool use_double;
+
+    SolverV2_config& operator=(const SolverV2_config& other){
+        use_guess = other.use_guess;
+        deterministic_guess = other.deterministic_guess;
+        heuristic_guess = other.heuristic_guess;
+        use_double = other.use_double;
+        return *this;
+    }
+};
 
 class SolverV2 : public Solver
 {
@@ -21,6 +36,9 @@ public:
     OpState fill_propagate(unsigned int row, unsigned int col, val_t value);
 
 private:
+
+    static SolverV2_config m_config;
+
     CandidateBoard m_candidates;
 
     // global filled count for each value
@@ -31,7 +49,7 @@ private:
     bool m_col_value_state[BOARD_SIZE][CANDIDATE_SIZE] = {{0}};
     bool m_grid_value_state[GRID_SIZE][GRID_SIZE][CANDIDATE_SIZE] = {{{0}}};
 
-    OpState update_by_naked_single(int row, int col);
+    OpState update_by_naked_single(unsigned int row, unsigned int col);
     OpState update_by_hidden_single(val_t value, UnitType unit_type);
 
     // handles implicit value determination
@@ -41,8 +59,5 @@ private:
     // then we can remove the other candidates from the same total-row/col
     OpState refine_candidates_by_naked_double(UnitType unit_type);
     OpState refine_candidates_by_hidden_double(UnitType unit_type);     // hidden double is a superset of naked double
-    uint8_t m_visited_double_combinations[CELL_COUNT][CELL_COUNT] = {{0}};
-
-    // this is for trail and error approach
-    SolverV2 fork();
+    unsigned int m_visited_double_combinations[CELL_COUNT][CELL_COUNT] = {{0}};
 };

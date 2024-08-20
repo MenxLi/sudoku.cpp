@@ -18,20 +18,20 @@ namespace gen{
     static Indexer<GRID_SIZE> indexer;
 
     static util::SizedArray<val_t, CANDIDATE_SIZE> get_candidates(Board& board, int row, int col){
-        uint8_t candidates[CANDIDATE_SIZE];
+        bool candidates[CANDIDATE_SIZE];
         for (unsigned int i = 0; i < CANDIDATE_SIZE; i++){
-            candidates[i] = 1;
+            candidates[i] = true;
         }
         for (auto offset: indexer.neighbor_index[row][col]){
             val_t n_value = board.get(offset);
             if (n_value != 0){
                 unsigned int v_idx = n_value - 1;
-                candidates[v_idx] = 0;
+                candidates[v_idx] = false;
             }
         }
         util::SizedArray<val_t, CANDIDATE_SIZE> result;
         for (unsigned int i = 0; i < CANDIDATE_SIZE; i++){
-            if (candidates[i] == 1){
+            if (candidates[i]){
                 result.push(i + 1);
             }
         }
@@ -114,7 +114,7 @@ namespace gen{
     //     return indices;
     // };
 
-    static  util::SizedArray<unsigned int, CELL_COUNT> get_randomized_filled_indices(Board b){
+    static util::SizedArray<unsigned int, CELL_COUNT> get_randomized_filled_indices(Board b){
         util::SizedArray<unsigned int, CELL_COUNT> indices;
         for (unsigned int i = 0; i < BOARD_SIZE * BOARD_SIZE; i++){
             if (b.get(i) != 0){

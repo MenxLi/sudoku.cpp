@@ -54,21 +54,27 @@ bool Board::is_filled() const
     return true;
 };
 
-bool Board::is_valid()
+bool Board::is_valid(bool check_filled)
 {
-    auto check_validity = [this](
+    auto check_validity = [this, check_filled](
         unsigned int * offsets, unsigned int size
     )->bool{
         auto found = std::unique_ptr<bool[]>(new bool[size]{false});
         for (unsigned int i = 0; i < BOARD_SIZE; i++){
             const unsigned int offset = offsets[i];
-            if (this->get(offset) == 0){ // not filled
+            val_t v = this->get(offset);
+            if (check_filled && v == 0){ // not filled
                 return false;
             }
-            if (found[this->get(offset) - 1]){ // duplicate
+            if (v < 0 || v > BOARD_SIZE){ // invalid value
                 return false;
             }
-            found[this->get(offset) - 1] = true;
+
+            if (v==0) continue;
+            if (found[v - 1]){ // duplicate
+                return false;
+            }
+            found[v - 1] = true;
         }
         return true;
     };
@@ -93,7 +99,7 @@ bool Board::is_valid()
     return true;
 };
 
-bool Board::is_solved(){ return is_valid(); };
+bool Board::is_solved(){ return is_valid(true); };
 
 void Board::load_from_file(const std::string& filename)
 {
@@ -196,8 +202,26 @@ std::string Board::to_string_raw() const
 CandidateBoard::CandidateBoard(){
     reset();
 }
-CandidateBoard::CandidateBoard(CandidateBoard& other){
-    std::memcpy(m_candidates, other.m_candidates, sizeof(m_candidates));
+CandidateBoard::CandidateBoard(const CandidateBoard& other){
+    // std::memcpy(m_candidates, other.m_candidates, sizeof(m_candidates));
+    for (unsigned int i = 0; i < BOARD_SIZE; i++){
+        for (unsigned int j = 0; j < BOARD_SIZE; j++){
+            for (unsigned int k = 0; k < CANDIDATE_SIZE; k++){
+                m_candidates[i][j][k] = other.m_candidates[i][j][k];
+            }
+        }
+    }
+}
+CandidateBoard& CandidateBoard::operator=(const CandidateBoard &other){
+    if (this == &other){ return *this; }
+    for (unsigned int i = 0; i < BOARD_SIZE; i++){
+        for (unsigned int j = 0; j < BOARD_SIZE; j++){
+            for (unsigned int k = 0; k < CANDIDATE_SIZE; k++){
+                m_candidates[i][j][k] = other.m_candidates[i][j][k];
+            }
+        }
+    }
+    return *this;
 }
 
 void CandidateBoard::reset(){

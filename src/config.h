@@ -9,7 +9,7 @@
 #endif
 
 #ifndef MAX_ITER
-#define MAX_ITER 1e7
+#define MAX_ITER 1e4
 #endif
 
 // https://stackoverflow.com/a/8625010/6775765
@@ -36,7 +36,7 @@ if (!(cond)) { throw std::runtime_error("Assertion failed: " __FILE__ ":" + std:
 #define ASSERT(cond, faild_reason)
 #endif
 
-typedef uint8_t val_t;
+typedef unsigned short val_t;
 
 enum class UnitType{
     ROW,

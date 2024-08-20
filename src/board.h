@@ -49,8 +49,8 @@ public:
 
     // check if the board is valid, 
     // the board should be all filled with valid values
-    bool is_valid();
-    bool is_solved();           // equal to is_valid()
+    bool is_valid(bool check_filled = false);
+    bool is_solved();           // equal to is_valid(true)
     bool is_filled() const;     // check if the board is filled, i.e. no empty cells
 
     // val_t(*data())[BOARD_SIZE];
@@ -119,7 +119,8 @@ class CandidateBoard
 public:
     inline static Indexer<GRID_SIZE> indexer;
     CandidateBoard();
-    CandidateBoard(CandidateBoard& other);
+    CandidateBoard(const CandidateBoard& other);
+    CandidateBoard& operator=(const CandidateBoard& other);
     inline bool_& get_(int row, int col, val_t value);
     inline bool_* get(int row, int col);
     inline bool_* get(int idx);

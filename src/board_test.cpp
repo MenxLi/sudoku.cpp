@@ -5,7 +5,8 @@
 
 
 // https://stackoverflow.com/questions/19562103/uint8-t-cant-be-printed-with-cout
-std::ostream& operator<<(std::ostream& os, const val_t val)
+// in case val_t is uint8_t
+std::ostream& operator<<(std::ostream& os, const uint8_t val)
 {
     os << static_cast<int>(val);
     return os;

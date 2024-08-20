@@ -2,31 +2,29 @@
 #include "config.h"
 #include "solver.h"
 #include "solver_v2.h"
-#include "util.h"
 
 #define MAX_FORK_TRAIL MAX_ITER
-
-static bool USE_GUESS;
-static bool DETERMINISTIC_GUESS;
-static bool HEURISTIC_GUESS;
-static bool USE_DOUBLE;
 
 // #define DEBUG_PRINT(x) std::cout << x << std::endl;
 #define DEBUG_PRINT(x);
 
+// initialize the static variables
+SolverV2_config SolverV2::m_config = {
+    util::parse_env_i<bool>("SOLVER_USE_GUESS", true),
+    util::parse_env_i("SOLVER_DETERMINISTIC_GUESS", false),
+    util::parse_env_i("SOLVER_HEURISTIC_GUESS", true),
+    util::parse_env_i("SOLVER_USE_DOUBLE", false)
+};
+
 SolverV2::SolverV2(const Board& board) : Solver(board) {
     // parse environment variables
-    USE_GUESS = util::parse_env_i<bool>("SOLVER_USE_GUESS", true);
-    DETERMINISTIC_GUESS = util::parse_env_i("SOLVER_DETERMINISTIC_GUESS", false);
-    HEURISTIC_GUESS = util::parse_env_i("SOLVER_HEURISTIC_GUESS", true);
-    USE_DOUBLE = util::parse_env_i("SOLVER_USE_DOUBLE", false);
     // std::cout << "Config: USE_GUESS=" << USE_GUESS << ", DETERMINISTIC_GUESS=" << DETERMINISTIC_GUESS << ", HEURISTIC_GUESS=" << HEURISTIC_GUESS << std::endl;
-
     init_states();
 };
 
 SolverV2::SolverV2(SolverV2& other) : Solver(other.board()) {
     m_candidates = other.m_candidates;
+    m_config = other.m_config;
 
     // copy iteration counter
     m_iteration_counter.current = other.m_iteration_counter.current;
@@ -34,13 +32,35 @@ SolverV2::SolverV2(SolverV2& other) : Solver(other.board()) {
     m_iteration_counter.n_guesses = other.m_iteration_counter.n_guesses;
 
     // copy unit fill state
-    std::memcpy(m_row_value_state, other.m_row_value_state, BOARD_SIZE * CANDIDATE_SIZE * sizeof(decltype(m_row_value_state[0][0])));
-    std::memcpy(m_col_value_state, other.m_col_value_state, BOARD_SIZE * CANDIDATE_SIZE * sizeof(decltype(m_col_value_state[0][0])));
-    std::memcpy(m_grid_value_state, other.m_grid_value_state, GRID_SIZE * GRID_SIZE * CANDIDATE_SIZE * sizeof(decltype(m_grid_value_state[0][0][0])));
-    std::memcpy(m_filled_count, other.m_filled_count, CANDIDATE_SIZE * sizeof(decltype(m_filled_count[0])));
+    std::memcpy(m_row_value_state, other.m_row_value_state, sizeof(m_row_value_state));
+    std::memcpy(m_col_value_state, other.m_col_value_state, sizeof(m_col_value_state));
+    std::memcpy(m_grid_value_state, other.m_grid_value_state, sizeof(m_grid_value_state));
+    std::memcpy(m_filled_count, other.m_filled_count, sizeof(m_filled_count));
+
+    // for (unsigned int i =0 ; i < BOARD_SIZE; i++){
+    //     for (unsigned int j = 0; j < CANDIDATE_SIZE; j++){
+    //         m_row_value_state[i][j] = other.m_row_value_state[i][j];
+    //         m_col_value_state[i][j] = other.m_col_value_state[i][j];
+    //     }
+    // }
+    // for (unsigned int i = 0; i < GRID_SIZE; i++){
+    //     for (unsigned int j = 0; j < GRID_SIZE; j++){
+    //         for (unsigned int k = 0; k < CANDIDATE_SIZE; k++){
+    //             m_grid_value_state[i][j][k] = other.m_grid_value_state[i][j][k];
+    //         }
+    //     }
+    // }
+    // for (unsigned int i = 0; i < CANDIDATE_SIZE; i++){
+    //     m_filled_count[i] = other.m_filled_count[i];
+    // }
 
     // copy visited double combinations buffer
-    std::memcpy(m_visited_double_combinations, other.m_visited_double_combinations, CELL_COUNT * CELL_COUNT * sizeof(decltype(m_visited_double_combinations[0][0])));
+    std::memcpy(m_visited_double_combinations, other.m_visited_double_combinations, sizeof(m_visited_double_combinations));
+    // for (unsigned int i = 0; i < CELL_COUNT; i++){
+    //     for (unsigned int j = 0; j < CELL_COUNT; j++){
+    //         m_visited_double_combinations[i][j] = other.m_visited_double_combinations[i][j];
+    //     }
+    // }
 };
 
 
@@ -96,7 +116,8 @@ bool SolverV2::step(){
     DEBUG_PRINT("SolverV2::step()");
 
     auto step_by_single = [&]()->OpState{
-        OpState state = step_by_naked_single();
+        OpState state;
+        state = step_by_naked_single();
         if (state == OpState::VIOLATION) return OpState::VIOLATION;
         if (state == OpState::SUCCESS) return OpState::SUCCESS;
         DEBUG_PRINT("SolverV2::step() - step_by_only_candidate() failed");
@@ -119,7 +140,7 @@ bool SolverV2::step(){
     if (state == OpState::SUCCESS) return true;
 
     // refine the candidates by naked double
-    if (USE_DOUBLE){
+    if (m_config.use_double){
         for (unsigned int i = 0; i < 3; i++)
         {
             UnitType unit_type = static_cast<UnitType>(i);
@@ -149,7 +170,7 @@ bool SolverV2::step(){
         }
     }
 
-    if (USE_GUESS){
+    if (m_config.use_guess){
         state = step_by_guess();
         if (state == OpState::SUCCESS) return true;
         DEBUG_PRINT("SolverV2::step() - step_by_guess() failed");
@@ -158,16 +179,18 @@ bool SolverV2::step(){
 };
 
 OpState SolverV2::fill_propagate(unsigned int row, unsigned int col, val_t value){
+    // board().set(row, col, value);
     board().get_(row, col) = value;
+
+    unsigned int v_idx = static_cast<unsigned int>(value) - 1;
 
     // clear the candidates for the neighbor cells
     for (unsigned int i = 0; i < indexer.N_NEIGHBORS; i++){
         auto offset = indexer.neighbor_index[row][col][i];
-        m_candidates.get(offset)[value - 1] = 0;
+        m_candidates.get(offset)[v_idx] = 0;
     }
 
     // update the filled count
-    unsigned int v_idx = static_cast<unsigned int>(value) - 1;
     m_filled_count[v_idx] += 1;
     if (m_filled_count[v_idx] > BOARD_SIZE){
         return OpState::VIOLATION;
@@ -337,9 +360,9 @@ OpState SolverV2::refine_candidates_by_hidden_double(UnitType unit_type){
     }
 }
 
-OpState SolverV2::update_by_naked_single(int row, int col){
+OpState SolverV2::update_by_naked_single(unsigned int row, unsigned int col){
 
-    if (this->board().get_(row, col) != 0){ return OpState::SKIP; }
+    if (this->board().get(row, col)){ return OpState::SKIP; }
 
     val_t candidate_val = 0;
     OpState s = m_candidates.remain_x(row, col, 1, &candidate_val);
@@ -424,14 +447,8 @@ OpState SolverV2::update_by_hidden_single(val_t value, UnitType unit_type){
     return OpState::FAIL;
 };
 
-SolverV2 SolverV2::fork(){
-    return SolverV2(*this);
-};
-
 OpState SolverV2::step_by_guess(){
-    this->iteration_counter().n_guesses += 1;
-
-    auto numNeighborUnsolved = [&](unsigned int row, unsigned int col)->unsigned int{
+    auto numNeighborUnsolved = [this](unsigned int row, unsigned int col)->unsigned int{
         unsigned int min_count;
         unsigned int row_count = 0;
         unsigned int col_count = 0;
@@ -491,11 +508,11 @@ OpState SolverV2::step_by_guess(){
     // choose a cell to guess
     // this value gaurentees the cell is not valid, and should be updated in the loop
     Coord best_choice {BOARD_SIZE, BOARD_SIZE};
-    if (HEURISTIC_GUESS){
+    if (m_config.heuristic_guess){
         best_choice = get_heuristic_choice();
     }
     else{
-        if (!DETERMINISTIC_GUESS){
+        if (!m_config.deterministic_guess){
             // choose a random cell to guess
             std::vector<Coord> unsolved_cells;
             for (unsigned int i = 0; i < BOARD_SIZE; i++)
@@ -552,7 +569,7 @@ OpState SolverV2::step_by_guess(){
         }
     }
 
-    if (HEURISTIC_GUESS){
+    if (m_config.heuristic_guess){
         // sort the candidate indices by the number of occurences in the board, 
         // starting with the one with the least occurences
         // this should facilitateos the backtracking process by increasing the value diversity
@@ -561,16 +578,19 @@ OpState SolverV2::step_by_guess(){
             [](CandidateFilledPair a, CandidateFilledPair b) { return a.count < b.count; }
             );
     }
-    else if (!DETERMINISTIC_GUESS){
+    else if (!m_config.deterministic_guess){
         // shuffle the candidate indices
         util::shuffle_array<CandidateFilledPair>(candidate_filled_pairs, candidate_count);
     }
 
     // make guesses with backtracking
     for (unsigned int i = 0; i < candidate_count; i++){
+        this->iteration_counter().n_guesses += 1;
+
         val_t guess = candidate_filled_pairs[i].val;
 
-        auto forked_solver = this->fork();
+        auto forked_solver = SolverV2(*this);
+        // auto forked_solver = *std::unique_ptr<SolverV2>(new SolverV2(*this));
 
         // inherit the iteration counter
         forked_solver.iteration_counter().current = this->iteration_counter().current;
@@ -578,6 +598,7 @@ OpState SolverV2::step_by_guess(){
         bool solved;
         forked_solver.fill_propagate(best_choice.row, best_choice.col, guess);
         solved = forked_solver.solve();
+
         this->iteration_counter().current = forked_solver.iteration_counter().current;
         this->m_iteration_counter.n_guesses = forked_solver.iteration_counter().n_guesses;
 
