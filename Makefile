@@ -1,9 +1,16 @@
 
 SIZE?=9
+DEBUG?=0
 
 CXX := g++
 STD_FLAGS := -std=c++17 -Wall
+
+ifeq ($(DEBUG),0)
 OPTIMIZATION_FLAGS := -O3 -funroll-loops -finline-functions
+else
+OPTIMIZATION_FLAGS := -O0 -g
+endif
+
 CONFIG_FLAGS := -DSIZE=$(SIZE) -DSTRICT
 COMMON_FLAGS := $(STD_FLAGS) $(OPTIMIZATION_FLAGS) $(CONFIG_FLAGS)
 LIB_DIR := bin/lib

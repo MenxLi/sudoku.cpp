@@ -1,5 +1,6 @@
 #pragma once
 
+#include "util_parser.hpp"
 #include <cstring>
 #include <vector>
 #include <array>
@@ -40,22 +41,6 @@ namespace util{
         unsigned int m_size = 0;
     };
 
-    template <typename T>
-    T parse_env_i(const char* env_name, T default_value)
-    {
-        const char* env_value = std::getenv(env_name);
-        if (env_value == nullptr) { return default_value; }
-        return static_cast<T>(std::stoi(env_value));
-    }
-
-    template <typename T>
-    T parse_env_f(const char* env_name, T default_value)
-    {
-        const char* env_value = std::getenv(env_name);
-        if (env_value == nullptr) { return default_value; }
-        return static_cast<T>(std::stof(env_value));
-    }
-
     // use bubble sort to sort the first size elements in the array, 
     // returns the sorted array in ascending order
     // only use this for very small arrays
@@ -76,14 +61,14 @@ namespace util{
         }
     }
 
+    static std::random_device dev;
+    static std::mt19937 rng(dev());
     // suffle the first size elements of an array 
     // using the Fisher-Yates algorithm
     // use this for very small arrays
     template <typename T>
     void shuffle_array(T* arr, unsigned int size)
     {
-        static std::random_device dev;
-        static std::mt19937 rng(dev());
         std::uniform_int_distribution<std::mt19937::result_type> dist(0, size - 1);
         for (unsigned int i = 0; i < size; i++)
         {

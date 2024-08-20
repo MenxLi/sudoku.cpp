@@ -30,11 +30,13 @@ public:
     unsigned int grid_coord_index[N][N][N];             // pointer position for each grid, input 2D cell coord [i][j]
     unsigned int neighbor_index[N][N][N_NEIGHBORS];     // pointer position for each neighbor, input 2D cell coord [i][j]
 
-    inline static std::array<std::array<unsigned int, 2>, util::n_combinations<N, 2>>
-    subunit_combinations_2{ util::combinations<unsigned int, N, 2>(util::range<N>()) };
+    std::array<std::array<unsigned int, 2>, util::n_combinations<N, 2>>
+    subunit_combinations_2;
+    // subunit_combinations_2{ util::combinations<unsigned int, N, 2>(util::range<N>()) };
 
-    inline static std::array<std::array<unsigned int, 2>, util::n_combinations<NV, 2>>
-    subvalue_combinations_2{ util::combinations<unsigned int, NV, 2>(util::range<NV>()) };
+    std::array<std::array<unsigned int, 2>, util::n_combinations<NV, 2>>
+    subvalue_combinations_2;
+    // subvalue_combinations_2{ util::combinations<unsigned int, NV, 2>(util::range<NV>()) };
 
     void init();
 
@@ -45,9 +47,18 @@ private:
 
 template <unsigned int NG>
 void Indexer<NG>::init(){
-    // this is important, because I want to use this as a static member 
+    // this is important, because we want to use this as a static member 
     // it dooms to share global state, so need to make sure it's thread safe!
     std::lock_guard<std::mutex> lock(m_mutex);
+
+    for (unsigned int i = 0; i < util::n_combinations<N, 2>; i++)
+    {
+        subunit_combinations_2[i] = util::combinations<unsigned int, N, 2>(util::range<N>())[i];
+    }
+    for (unsigned int i = 0; i < util::n_combinations<NV, 2>; i++)
+    {
+        subvalue_combinations_2[i] = util::combinations<unsigned int, NV, 2>(util::range<NV>())[i];
+    }
 
     if (m_initialized) return; 
     m_initialized = true;
