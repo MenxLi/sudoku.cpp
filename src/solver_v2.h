@@ -5,6 +5,7 @@
 #include "solver.h"
 #include "util.h"
 #include <cstring>
+#include <memory>
 
 struct SolverV2_config{
     bool use_guess;
@@ -13,11 +14,15 @@ struct SolverV2_config{
     bool use_double;
 
     SolverV2_config& operator=(const SolverV2_config& other){
+        load(other);
+        return *this;
+    }
+
+    void load(const SolverV2_config& other){
         use_guess = other.use_guess;
         deterministic_guess = other.deterministic_guess;
         heuristic_guess = other.heuristic_guess;
         use_double = other.use_double;
-        return *this;
     }
 };
 
@@ -45,6 +50,7 @@ public:
     void init_states();
 
     bool step();
+    SolverV2_config& config();
     OpState step_by_naked_single();
     OpState step_by_hidden_single(UnitType unit_type);
     OpState step_by_guess();
@@ -53,9 +59,10 @@ public:
     OpState fill_propagate(unsigned int row, unsigned int col, val_t value);
 
 private:
-    static SolverV2_config m_config;
+    // SolverV2_config m_config;
 
     // place them in the heap to avoid stack overflow
+    std::unique_ptr<SolverV2_config> m_config;
     std::unique_ptr<CandidateBoard> m_candidates;
     std::unique_ptr<FillState> m_fill_state;
 

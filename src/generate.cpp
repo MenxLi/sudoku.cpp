@@ -77,10 +77,29 @@ namespace gen{
 
 
     static bool uniquely_solvable(const Board& board, const Board& solution){
-        const unsigned int N_REPEATS = 3;
-
-        auto solve_board = [](const Board &board, const Board &solution){
+        auto solve_board = [](
+            const Board &board, 
+            const Board &solution, 
+            unsigned int solve_pattern
+            ){
             SolverV2 solver(board);     // the solver will copy the board
+            switch (solve_pattern){
+                case 0:
+                    solver.config().heuristic_guess = true;
+                    solver.config().use_double = false;
+                    break;
+                case 1:
+                    solver.config().heuristic_guess = true;
+                    solver.config().use_double = true;
+                    break;
+                case 2:
+                    solver.config().heuristic_guess = false;
+                    solver.config().use_double = true;
+                    break;
+                default:
+                    break;
+            }
+
             bool solved = solver.solve();
             if (!solved)
             {
@@ -91,9 +110,11 @@ namespace gen{
             return answer == solution;
         };
 
+        const unsigned int N_REPEATS = 3;
+
         for (unsigned int i = 0; i < N_REPEATS; i++){
-            if (!solve_board(board, solution)){
-                if (i!=0) std::cout << "Reject non-unique solution on repeats: " << i << std::endl;
+            if (!solve_board(board, solution, i)){
+                // if (i!=0) std::cout << "Reject non-unique solution on repeats: " << i << std::endl;
                 return false;
             }
         }
@@ -227,6 +248,7 @@ namespace gen{
 
         long depth_remain = max_depth;
         while (stack.size() > 0){
+            // std::cout << "Depth: " << depth_remain << " Clues: " << n_clues_to_remove << std::endl;
             if (stop_flag.load()){
                 return std::make_tuple(false, depth_remain);
             }
@@ -304,7 +326,7 @@ namespace gen{
             auto solution = Board(board);
 
             // speed up...
-            const int confident_remove_bound = CELL_COUNT / 2;
+            const int confident_remove_bound = CELL_COUNT / 3;
             if (n_to_remove_ > confident_remove_bound){
                 remove_clues_no_check(board, confident_remove_bound);
                 n_to_remove_ -= confident_remove_bound;
@@ -369,6 +391,7 @@ namespace gen{
             for (unsigned int i = 0; i < n_concurrent; i++){
                 if (futures[i].valid() && futures[i].wait_for(std::chrono::seconds(0)) == std::future_status::ready){
                     auto [success, b] = futures[i].get();
+                    // std::cout << "Checking futures " << i << std::endl;
                     if (success){
                         stop_flag.store(true);
                         result = std::make_tuple(true, b);
@@ -376,6 +399,7 @@ namespace gen{
                     }
                     // replace the finished future with a new one
                     if (submitted_counter < max_retries) {
+                        // std::cout << "Submitting new thread " << submitted_counter << std::endl;
                         auto promise = std::promise<std::tuple<bool, Board>>();
                         futures[i] = promise.get_future();
                         threads.emplace_back(fn_thread, std::move(promise));

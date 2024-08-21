@@ -10,24 +10,27 @@
 #define DEBUG_PRINT(x);
 
 // initialize the static variables
-SolverV2_config SolverV2::m_config = {
-    util::parse_env_i<bool>("SOLVER_USE_GUESS", true),
-    util::parse_env_i("SOLVER_DETERMINISTIC_GUESS", false),
-    util::parse_env_i("SOLVER_HEURISTIC_GUESS", true),
-    util::parse_env_i("SOLVER_USE_DOUBLE", false)
-};
 
-SolverV2::SolverV2(const Board& board) : Solver(board), m_candidates{ new CandidateBoard() }, m_fill_state{ new FillState() }
+SolverV2::SolverV2(const Board& board) : Solver(board), 
+m_config(new SolverV2_config()), m_candidates{ new CandidateBoard() }, m_fill_state{ new FillState() }
 { init_states(); };
 
-SolverV2::SolverV2(SolverV2& other) : Solver(other.board()), m_candidates{ new CandidateBoard() }, m_fill_state{ new FillState() }
+SolverV2::SolverV2(SolverV2& other) : Solver(other.board()), 
+m_config(new SolverV2_config()), m_candidates{ new CandidateBoard() }, m_fill_state{ new FillState() }
 {
     m_iteration_counter->load(*other.m_iteration_counter);
     m_fill_state->load(*other.m_fill_state);
     m_candidates->load(*other.m_candidates);
+    m_config->load(*other.m_config);
 };
 
 void SolverV2::init_states(){
+    *m_config = {
+        util::parse_env_i<bool>("SOLVER_USE_GUESS", true),
+        util::parse_env_i("SOLVER_DETERMINISTIC_GUESS", false),
+        util::parse_env_i("SOLVER_HEURISTIC_GUESS", true),
+        util::parse_env_i("SOLVER_USE_DOUBLE", false)
+    };
     for (unsigned int i = 0; i < BOARD_SIZE; i++)
     {
         for (unsigned int j = 0; j < BOARD_SIZE; j++)
@@ -37,6 +40,10 @@ void SolverV2::init_states(){
             fill_propagate(i, j, filled_val);
         }
     }
+};
+
+SolverV2_config& SolverV2::config(){
+    return *m_config;
 };
 
 OpState SolverV2::step_by_naked_single(){
@@ -103,7 +110,7 @@ bool SolverV2::step(){
     if (state == OpState::SUCCESS) return true;
 
     // refine the candidates by naked double
-    if (m_config.use_double){
+    if (config().use_double){
         for (unsigned int i = 0; i < 3; i++)
         {
             UnitType unit_type = static_cast<UnitType>(i);
@@ -133,7 +140,7 @@ bool SolverV2::step(){
         }
     }
 
-    if (m_config.use_guess){
+    if (config().use_guess){
         state = step_by_guess();
         if (state == OpState::SUCCESS) return true;
         DEBUG_PRINT("SolverV2::step() - step_by_guess() failed");
@@ -471,11 +478,11 @@ OpState SolverV2::step_by_guess(){
     // choose a cell to guess
     // this value gaurentees the cell is not valid, and should be updated in the loop
     Coord best_choice {BOARD_SIZE, BOARD_SIZE};
-    if (m_config.heuristic_guess){
+    if (config().heuristic_guess){
         best_choice = get_heuristic_choice();
     }
     else{
-        if (!m_config.deterministic_guess){
+        if (!config().deterministic_guess){
             // choose a random cell to guess
             std::vector<Coord> unsolved_cells;
             for (unsigned int i = 0; i < BOARD_SIZE; i++)
@@ -532,7 +539,7 @@ OpState SolverV2::step_by_guess(){
         }
     }
 
-    if (m_config.heuristic_guess){
+    if (config().heuristic_guess){
         // sort the candidate indices by the number of occurences in the board, 
         // starting with the one with the least occurences
         // this should facilitateos the backtracking process by increasing the value diversity
@@ -541,7 +548,7 @@ OpState SolverV2::step_by_guess(){
             [](CandidateFilledPair a, CandidateFilledPair b) { return a.count < b.count; }
             );
     }
-    else if (!m_config.deterministic_guess){
+    else if (!config().deterministic_guess){
         // shuffle the candidate indices
         util::shuffle_array<CandidateFilledPair>(&candidate_filled_pairs[0], candidate_count);
     }
