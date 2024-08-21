@@ -38,6 +38,7 @@ public:
     subvalue_combinations_2;
     // subvalue_combinations_2{ util::combinations<unsigned int, NV, 2>(util::range<NV>()) };
 
+    Indexer() { init(); }
     void init();
 
 private:
@@ -54,13 +55,15 @@ void Indexer<NG>::init(){
     if (m_initialized) return; 
     m_initialized = true;
 
+    auto _subunit_combinations2 = util::combinations<unsigned int, N, 2>(util::range<N>());
+    auto _subvalue_combinations2 = util::combinations<unsigned int, N, 2>(util::range<N>());
     for (unsigned int i = 0; i < util::n_combinations<N, 2>; i++)
     {
-        subunit_combinations_2[i] = util::combinations<unsigned int, N, 2>(util::range<N>())[i];
+        subunit_combinations_2[i] = _subunit_combinations2[i];
     }
     for (unsigned int i = 0; i < util::n_combinations<NV, 2>; i++)
     {
-        subvalue_combinations_2[i] = util::combinations<unsigned int, NV, 2>(util::range<NV>())[i];
+        subvalue_combinations_2[i] = _subvalue_combinations2[i];
     }
 
     // initialize the row index

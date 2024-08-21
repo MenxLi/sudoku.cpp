@@ -60,6 +60,8 @@ test: obj
 		$(objs) src/solver_test.cpp
 	$(CXX) $(COMMON_FLAGS) -o $(BIN_DIR)/generate_test \
 		$(objs) src/generate_test.cpp
+	$(CXX) $(COMMON_FLAGS) -o $(BIN_DIR)/indexer_test \
+		src/indexer_test.cpp
 
 target: obj
 	$(CXX) $(COMMON_FLAGS) -o $(BIN_DIR)/sudoku \

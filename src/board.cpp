@@ -18,7 +18,7 @@ void Board::clear(val_t val = 0)
     }
 };
 
-Board::Board() {indexer.init();};
+Board::Board() {};
 Board::~Board() {};
 Board::Board(const Board& other):Board() { load_data(other); };
 
@@ -226,7 +226,6 @@ CandidateBoard& CandidateBoard::operator=(const CandidateBoard &other){
 }
 
 void CandidateBoard::reset(){
-    indexer.init();
     for (unsigned int i = 0; i < BOARD_SIZE; i++){
         for (unsigned int j = 0; j < BOARD_SIZE; j++){
             for (unsigned int k = 0; k < CANDIDATE_SIZE; k++){

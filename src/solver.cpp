@@ -8,10 +8,7 @@
 namespace py = pybind11;
 #endif
 
-Solver::Solver(const Board& board): m_iteration_counter(new IterationCounter()), m_board(new Board(board))
-{
-    indexer.init();
-};
+Solver::Solver(const Board& board): m_iteration_counter(new IterationCounter()), m_board(new Board(board)) {};
 
 bool Solver::solve(bool verbose){
 

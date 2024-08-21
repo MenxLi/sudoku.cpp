@@ -133,7 +133,6 @@ namespace gen{
     }
 
     void fill_valid_board(Board &board){
-        indexer.init();
         board.clear(0);
         fill_cell_iterative(board);
     }
