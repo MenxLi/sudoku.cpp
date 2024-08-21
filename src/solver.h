@@ -9,6 +9,15 @@ struct IterationCounter
     unsigned long current;
     unsigned long limit;
     unsigned long n_guesses;
+
+    IterationCounter(): current(0), limit(MAX_ITER), n_guesses(0) {};
+
+    void load(const IterationCounter& other)
+    {
+        current = other.current;
+        limit = other.limit;
+        n_guesses = other.n_guesses;
+    }
 };
 
 class Solver
@@ -24,6 +33,6 @@ public:
     Board& board();
     IterationCounter& iteration_counter();
 protected:
-    IterationCounter m_iteration_counter;
-    Board m_board;
+    std::unique_ptr<IterationCounter> m_iteration_counter;
+    std::unique_ptr<Board> m_board;
 };

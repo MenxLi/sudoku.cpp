@@ -8,23 +8,19 @@
 namespace py = pybind11;
 #endif
 
-Solver::Solver(const Board& board)
+Solver::Solver(const Board& board): m_iteration_counter(new IterationCounter()), m_board(new Board(board))
 {
     indexer.init();
-    m_board.load_data(board);
-    m_iteration_counter.n_guesses = 0;
-    m_iteration_counter.current = 0;
-    m_iteration_counter.limit = MAX_ITER;
 };
 
 bool Solver::solve(bool verbose){
 
     // std::cout << "starting with iteration: " << m_iteration_counter.current << std::endl;
-    while (m_iteration_counter.current < m_iteration_counter.limit && !board().is_filled()){
+    while (m_iteration_counter->current < m_iteration_counter->limit && !board().is_filled()){
     
         if(verbose)
         {
-            std::cout << "Iteration " << m_iteration_counter.current << std::endl;
+            std::cout << "Iteration " << m_iteration_counter->current << std::endl;
             std::cout << board() << std::endl;
         }
 
@@ -38,7 +34,7 @@ bool Solver::solve(bool verbose){
 
         if (!step_result) break;
 
-        m_iteration_counter.current++;
+        m_iteration_counter->current++;
     }
 
     return board().is_solved();
@@ -46,11 +42,11 @@ bool Solver::solve(bool verbose){
 
 IterationCounter& Solver::iteration_counter()
 {
-    return m_iteration_counter;
+    return *m_iteration_counter;
 };
 
 
 Board& Solver::board()
 {
-    return m_board;
+    return *m_board;
 };

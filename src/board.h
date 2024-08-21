@@ -125,6 +125,8 @@ public:
     inline bool_* get(int row, int col);
     inline bool_* get(int idx);
 
+    void load(const CandidateBoard& board);
+
     void reset();
     unsigned int count(int row, int col) const;
 

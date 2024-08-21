@@ -4,6 +4,7 @@
 #include "config.h"
 #include "solver.h"
 #include "util.h"
+#include <cstring>
 
 struct SolverV2_config{
     bool use_guess;
@@ -17,6 +18,22 @@ struct SolverV2_config{
         heuristic_guess = other.heuristic_guess;
         use_double = other.use_double;
         return *this;
+    }
+};
+
+struct FillState{
+    unsigned int count[CANDIDATE_SIZE] = {0};
+    bool row[BOARD_SIZE][CANDIDATE_SIZE] = {{0}};
+    bool col[BOARD_SIZE][CANDIDATE_SIZE] = {{0}};
+    bool grid[GRID_SIZE][GRID_SIZE][CANDIDATE_SIZE] = {{{0}}};
+    unsigned int visited_double_combinations[CELL_COUNT][CELL_COUNT] = {{0}};
+
+    void load(const FillState& other){
+        std::memcpy (count, other.count, sizeof(count));
+        std::memcpy (row, other.row, sizeof(row));
+        std::memcpy (col, other.col, sizeof(col));
+        std::memcpy (grid, other.grid, sizeof(grid));
+        std::memcpy (visited_double_combinations, other.visited_double_combinations, sizeof(visited_double_combinations));
     }
 };
 
@@ -36,18 +53,11 @@ public:
     OpState fill_propagate(unsigned int row, unsigned int col, val_t value);
 
 private:
-
     static SolverV2_config m_config;
 
-    CandidateBoard m_candidates;
-
-    // global filled count for each value
-    unsigned int m_filled_count[CANDIDATE_SIZE] = {0};
-
-    // unit filled state for each value
-    bool m_row_value_state[BOARD_SIZE][CANDIDATE_SIZE] = {{0}};
-    bool m_col_value_state[BOARD_SIZE][CANDIDATE_SIZE] = {{0}};
-    bool m_grid_value_state[GRID_SIZE][GRID_SIZE][CANDIDATE_SIZE] = {{{0}}};
+    // place them in the heap to avoid stack overflow
+    std::unique_ptr<CandidateBoard> m_candidates;
+    std::unique_ptr<FillState> m_fill_state;
 
     OpState update_by_naked_single(unsigned int row, unsigned int col);
     OpState update_by_hidden_single(val_t value, UnitType unit_type);
@@ -59,5 +69,4 @@ private:
     // then we can remove the other candidates from the same total-row/col
     OpState refine_candidates_by_naked_double(UnitType unit_type);
     OpState refine_candidates_by_hidden_double(UnitType unit_type);     // hidden double is a superset of naked double
-    unsigned int m_visited_double_combinations[CELL_COUNT][CELL_COUNT] = {{0}};
 };

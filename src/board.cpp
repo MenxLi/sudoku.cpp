@@ -202,25 +202,23 @@ std::string Board::to_string_raw() const
 CandidateBoard::CandidateBoard(){
     reset();
 }
-CandidateBoard::CandidateBoard(const CandidateBoard& other){
-    // std::memcpy(m_candidates, other.m_candidates, sizeof(m_candidates));
+
+void CandidateBoard::load(const CandidateBoard &board){
     for (unsigned int i = 0; i < BOARD_SIZE; i++){
         for (unsigned int j = 0; j < BOARD_SIZE; j++){
             for (unsigned int k = 0; k < CANDIDATE_SIZE; k++){
-                m_candidates[i][j][k] = other.m_candidates[i][j][k];
+                m_candidates[i][j][k] = board.m_candidates[i][j][k];
             }
         }
     }
 }
+CandidateBoard::CandidateBoard(const CandidateBoard& other){
+    // std::memcpy(m_candidates, other.m_candidates, sizeof(m_candidates));
+    this->load(other);
+}
 CandidateBoard& CandidateBoard::operator=(const CandidateBoard &other){
     if (this == &other){ return *this; }
-    for (unsigned int i = 0; i < BOARD_SIZE; i++){
-        for (unsigned int j = 0; j < BOARD_SIZE; j++){
-            for (unsigned int k = 0; k < CANDIDATE_SIZE; k++){
-                m_candidates[i][j][k] = other.m_candidates[i][j][k];
-            }
-        }
-    }
+    this->load(other);
     return *this;
 }
 
