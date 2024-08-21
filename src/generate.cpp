@@ -448,7 +448,7 @@ namespace gen{
             #endif
 
             for (unsigned int i = 0; i < n_concurrent; i++){
-                if (futures[i].valid() && futures[i].wait_for(std::chrono::microseconds(0)) == std::future_status::ready){
+                if (futures[i].valid() && futures[i].wait_for(std::chrono::microseconds(10)) == std::future_status::ready){
                     auto [success, b] = futures[i].get();
                     // std::cout << "Checking futures " << i << std::endl;
                     if (success){

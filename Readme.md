@@ -1,20 +1,16 @@
 
 A Sudoku game solver and generator.
 
-Build with `pybind11`:
-```sh
-pip install pybind11 && pip install ./bindings
-python demo.py
-```
-
 For C++ only, build with:
 ```sh
-make target -j
+# specify SIZE=9 for 9x9 board
+make target -j SIZE=9
 ```
 
 Then run with:
 ```sh
-./bin/sudoku solve -i puzzles/1.txt
+./bin/sudoku solve -i puzzles/1.txt     # solve a puzzle
+./bin/sudoku generate -c 24             # generate a puzzle with 24 clues
 ```
 
 Run benchmarks (time varies depending on difficulties):
@@ -24,6 +20,12 @@ Benchmarking 3 puzzles with 100 repeats...
 Puzzle 1:    5 [us]
 Puzzle 2:   12 [us]
 Puzzle 3:   74 [us]
+```
+
+Build with `pybind11`:
+```sh
+pip install pybind11 && pip install ./bindings
+python demo.py
 ```
 
 <details>

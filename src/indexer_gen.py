@@ -12,7 +12,6 @@ def as_cpp_array(
     arr: list[int, list], 
 ):
     """ Turn a multi-dimensional array into a C++ array """
-
     def _get_dims(arr: list):
         dims = []
         while True:
@@ -33,8 +32,7 @@ def as_cpp_array(
     
     array_str = _pure_array_to_str(arr)
     dim_str = ''.join(f'[{dim}]' for dim in _get_dims(arr))
-    
-    return f"{dtype} Indexer::{name} {dim_str} = {array_str};"
+    return f"{dtype} Indexer::{name} {dim_str} = {array_str}; "
 
 T = TypeVar('T')
 def n_combinations(k: int, arr: list[T]) -> list[list[T]]:
@@ -43,21 +41,15 @@ def n_combinations(k: int, arr: list[T]) -> list[list[T]]:
     assert n >= k
     assert k >= 1
 
-    if n == k:
-        return [arr]
+    if n == k: return [arr]
+    if k == 1: return [[x] for x in arr]
     
-    if k == 1:
-        return [[x] for x in arr]
-    
-    # recursive case
     result = []
-
-    # if the first element is included
     first = arr[0]
+
     for sub_comb in n_combinations(k-1, arr[1:]):
         result.append([first] + sub_comb)
     
-    # if the first element is not included
     for sub_comb in n_combinations(k, arr[1:]):
         result.append(sub_comb)
     
@@ -68,16 +60,15 @@ def test_n_combinations():
     for k in range(1, 5):
         print(n_combinations(k, arr))
     
-    
 
 def generate_indexer_impl(N: int):
 
     src_dir = os.path.dirname(os.path.abspath(__file__))
     dst_file = os.path.join(src_dir, "indexer.cpp")
 
+    NV = N  # number of values
     NG = int(math.sqrt(N))
     assert NG * NG == N
-    NV = N
 
     def _init_lookup(fp: TextIOWrapper):
         grid_lookup = []            # N, N, 2
@@ -174,14 +165,10 @@ def generate_indexer_impl(N: int):
         fp.write(as_cpp_array("const unsigned int", "grid_index", grid_index))
         fp.write(as_cpp_array("const unsigned int", "grid_coord_index", grid_coord_index))
         fp.write(as_cpp_array("const unsigned int", "neighbor_index", neighbor_index))
-        fp.write(as_cpp_array(
-            "const unsigned int", "subunit_combinations_2", n_combinations(2, list(range(N)))
-        ))
-        fp.write(as_cpp_array(
-            "const unsigned int", "subvalue_combinations_2", n_combinations(2, list(range(NV)))
-        ))
 
-                
+    def _init_combinations(fp: TextIOWrapper):
+        fp.write(as_cpp_array( "const unsigned int", "subunit_combinations_2", n_combinations(2, list(range(N)))))
+        fp.write(as_cpp_array( "const unsigned int", "subvalue_combinations_2", n_combinations(2, list(range(NV)))))
 
     with open(dst_file, "w") as f:
         f.write("// This is a generated file, do not edit it directly\n")
@@ -189,6 +176,7 @@ def generate_indexer_impl(N: int):
         f.write('#include "indexer.h"\n')
         _init_lookup(f)
         _init_index(f)
+        _init_combinations(f)
 
 if __name__ == "__main__":
     import argparse
