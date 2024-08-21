@@ -64,14 +64,17 @@ bool Board::is_valid(bool check_filled)
             const unsigned int offset = offsets[i];
             val_t v = this->get(offset);
             if (check_filled && v == 0){ // not filled
+                // std::cout << "not filled" << std::endl;
                 return false;
             }
             if (v > BOARD_SIZE){ // invalid value
+                // std::cout << "invalid value" << std::endl;
                 return false;
             }
 
             if (v==0) continue;
             if (found[v - 1]){ // duplicate
+                // std::cout << "duplicate" << std::endl;
                 return false;
             }
             found[v - 1] = true;

@@ -1,3 +1,4 @@
+#include <chrono>
 #ifdef PYBIND11_BUILD
 #include <pybind11/pybind11.h>
 namespace py = pybind11;
@@ -13,29 +14,30 @@ namespace py = pybind11;
 #include <algorithm>
 #include <future>
 #include <atomic>
+#include <stack>
 
 namespace gen{
     static Indexer<GRID_SIZE> indexer;
 
-    static util::SizedArray<val_t, CANDIDATE_SIZE> get_candidates(Board& board, int row, int col){
-        bool candidates[CANDIDATE_SIZE];
+    static std::vector<val_t> get_candidates(Board& board, int row, int col){
+        bool candidates_idx_allowd[CANDIDATE_SIZE];
         for (unsigned int i = 0; i < CANDIDATE_SIZE; i++){
-            candidates[i] = true;
+            candidates_idx_allowd[i] = true;
         }
         for (auto offset: indexer.neighbor_index[row][col]){
             val_t n_value = board.get(offset);
             if (n_value != 0){
                 unsigned int v_idx = n_value - 1;
-                candidates[v_idx] = false;
+                candidates_idx_allowd[v_idx] = false;
             }
         }
         util::SizedArray<val_t, CANDIDATE_SIZE> result;
         for (unsigned int i = 0; i < CANDIDATE_SIZE; i++){
-            if (candidates[i]){
+            if (candidates_idx_allowd[i]){
                 result.push(i + 1);
             }
         }
-        return result;
+        return std::vector<val_t>(result.data(), result.data() + result.size());
     };
 
     static bool fill_cell_recursive(Board& board, unsigned int offset){
@@ -69,12 +71,72 @@ namespace gen{
         return false;
     }
 
+    static void fill_cell_iterative(Board& board){
+        // board should be all empty
+
+        unsigned int offset = 0;
+        
+        struct StackItem{
+            unsigned int offset;
+            std::vector<val_t> candidates;
+            unsigned int next_candidate_idx;
+        };
+
+        std::stack<StackItem> stack;
+
+        // fill the first cell
+        unsigned int row = indexer.offset_coord_lookup[offset][0];
+        unsigned int col = indexer.offset_coord_lookup[offset][1];
+
+        auto candidates = get_candidates(board, row, col);
+        util::shuffle_array(candidates.data(), candidates.size());
+        stack.push({offset, candidates, 0});
+
+        while(stack.size() > 0){
+            StackItem& top_item = stack.top();
+            if (top_item.next_candidate_idx >= top_item.candidates.size()){
+                // all candidates are tried, revert the current cell
+                board.set(top_item.offset, 0);
+                stack.pop();
+                if (stack.size() == 0){
+                    break;
+                }
+                stack.top().next_candidate_idx++;
+                continue;
+            }
+
+            // fill the next cell
+            val_t c = top_item.candidates[top_item.next_candidate_idx];
+            board.set(top_item.offset, c);
+
+            // check if the board is solved
+            if (top_item.offset == CELL_COUNT - 1){
+                ASSERT(board.is_solved(), "Invalid board, error while filling the board");
+                return;
+            }
+
+            ASSERT(top_item.offset < CELL_COUNT - 1, "Invalid offset");
+
+            // push the next cell to the stack
+            offset = top_item.offset + 1;
+            row = indexer.offset_coord_lookup[offset][0];
+            col = indexer.offset_coord_lookup[offset][1];
+            auto candidates = get_candidates(board, row, col);
+            // std::cout << "Candidates: "; for (auto c: candidates){ std::cout << c << " "; } std::cout << std::endl;
+
+            util::shuffle_array(candidates.data(), candidates.size());
+            stack.push({offset, candidates, 0});
+
+            // std::cout << "Current stack size: " << stack.size() << std::endl;
+        }
+
+    }
+
     void fill_valid_board(Board &board){
         indexer.init();
         board.clear(0);
-        fill_cell_recursive(board, 0);
+        fill_cell_iterative(board);
     }
-
 
     static bool uniquely_solvable(const Board& board, const Board& solution){
         auto solve_board = [](
@@ -92,11 +154,9 @@ namespace gen{
                     solver.config().heuristic_guess = true;
                     solver.config().use_double = true;
                     break;
-                case 2:
+                default:
                     solver.config().heuristic_guess = false;
                     solver.config().use_double = true;
-                    break;
-                default:
                     break;
             }
 
@@ -166,7 +226,7 @@ namespace gen{
         Board& board, 
         const Board& solution, 
         unsigned int n_clues_to_remove, 
-        long max_depth = CELL_COUNT*3
+        long max_depth = CELL_COUNT*BOARD_SIZE
     ){
         if (stop_flag.load()){
             return std::make_tuple(false, max_depth);
@@ -208,9 +268,9 @@ namespace gen{
         Board& board, 
         const Board& solution, 
         unsigned int n_clues_to_remove, 
-        long max_depth = CELL_COUNT*3
+        long max_depth = CELL_COUNT*BOARD_SIZE
     ){
-        // avoid stack overflow by recursion
+        // avoid stack overflow from recursion
 
         struct StackItem{
             std::vector<unsigned int> indices;
@@ -389,7 +449,7 @@ namespace gen{
             #endif
 
             for (unsigned int i = 0; i < n_concurrent; i++){
-                if (futures[i].valid() && futures[i].wait_for(std::chrono::seconds(0)) == std::future_status::ready){
+                if (futures[i].valid() && futures[i].wait_for(std::chrono::microseconds(0)) == std::future_status::ready){
                     auto [success, b] = futures[i].get();
                     // std::cout << "Checking futures " << i << std::endl;
                     if (success){
