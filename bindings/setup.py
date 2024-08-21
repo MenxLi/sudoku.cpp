@@ -1,11 +1,16 @@
-import pathlib
+import pathlib, subprocess
 from sys import platform
 from setuptools import setup
 from pybind11.setup_helpers import Pybind11Extension, ParallelCompile
 ParallelCompile("NPY_NUM_BUILD_JOBS", default=4).install()
 
+BOARD_SIZE = 9
 __root_dir__ = pathlib.Path(__file__).resolve().parent.parent
 src_dir = __root_dir__ / "src"
+
+# generate indexer implementation
+subprocess.check_call([ "python", str(src_dir / "indexer_gen.py"), str(BOARD_SIZE) ])
+
 include_dir = __root_dir__ / "include"
 exclude_patterns = ["main.cpp", "benchmark.cpp", "*_test.cpp", "solver_v1*"]
 cpp_files = [
@@ -33,7 +38,7 @@ setup(
             include_dirs=[include_dir],
             define_macros=[
                 ("PYBIND11_BUILD", "1"), 
-                ("SIZE", "9"), 
+                ("SIZE", BOARD_SIZE),
                 ("STRICT", "1"), 
             ],
             extra_compile_args=compile_args,

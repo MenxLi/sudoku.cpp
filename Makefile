@@ -16,7 +16,8 @@ COMMON_FLAGS := $(STD_FLAGS) $(OPTIMIZATION_FLAGS) $(CONFIG_FLAGS)
 LIB_DIR := bin/lib
 BIN_DIR := bin
 
-objs := $(LIB_DIR)/util.o $(LIB_DIR)/board.o $(LIB_DIR)/solver.o $(LIB_DIR)/solver_v1.o $(LIB_DIR)/solver_v2.o $(LIB_DIR)/generate.o
+objs := $(LIB_DIR)/util.o $(LIB_DIR)/indexer.o $(LIB_DIR)/board.o \
+	$(LIB_DIR)/solver.o $(LIB_DIR)/solver_v1.o $(LIB_DIR)/solver_v2.o $(LIB_DIR)/generate.o
 
 ifeq ($(OS),Windows_NT)
 	UNAME_S := Windows
@@ -32,10 +33,12 @@ endif
 all: test target
 
 _dst:
-	mkdir -p $(BIN_DIR) && mkdir -p $(LIB_DIR)
+	mkdir -p $(BIN_DIR) && mkdir -p $(LIB_DIR) && python src/indexer_gen.py $(SIZE)
 
 util.o: _dst
 	$(CXX) $(COMMON_FLAGS) -o $(LIB_DIR)/util.o -c src/util.cpp
+indexer.o: _dst
+	$(CXX) $(COMMON_FLAGS) -o $(LIB_DIR)/indexer.o -c src/indexer.cpp
 board.o: _dst
 	$(CXX) $(COMMON_FLAGS) -o $(LIB_DIR)/board.o -c src/board.cpp
 solver.o: _dst
@@ -47,14 +50,14 @@ solver_v2.o: _dst
 generate.o: _dst
 	$(CXX) $(COMMON_FLAGS) -o $(LIB_DIR)/generate.o -c src/generate.cpp
 
-obj: util.o board.o solver.o solver_v1.o solver_v2.o generate.o
+obj: util.o indexer.o board.o solver.o solver_v1.o solver_v2.o generate.o
 
 test: obj
 	$(CXX) $(COMMON_FLAGS) -o $(BIN_DIR)/util_test \
 		$(LIB_DIR)/util.o \
 		src/util_test.cpp
 	$(CXX) $(COMMON_FLAGS) -o $(BIN_DIR)/board_test \
-		$(LIB_DIR)/board.o $(LIB_DIR)/util.o \
+		$(LIB_DIR)/board.o $(LIB_DIR)/util.o $(LIB_DIR)/indexer.o \
 		src/board_test.cpp
 	$(CXX) $(COMMON_FLAGS) -o $(BIN_DIR)/solver_test \
 		$(objs) src/solver_test.cpp

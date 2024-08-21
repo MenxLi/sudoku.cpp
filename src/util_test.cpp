@@ -19,6 +19,8 @@ int main(){
     if (Factorial<0>::value != 1) { std::cout << "FAIL" << std::endl; } else { std::cout << "PASS" << std::endl; }
     if (factorial<3> != 6) { std::cout << "FAIL" << std::endl; } else { std::cout << "PASS" << std::endl; }
 
+    std::cout << util::n_combinations<17, 2> << std::endl;
+
     auto ret = combinations<int, 5, 3>({1, 2, 3, 4, 5});
     for (auto& v : ret){
         for (auto& i : v){

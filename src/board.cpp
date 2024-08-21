@@ -57,7 +57,7 @@ bool Board::is_filled() const
 bool Board::is_valid(bool check_filled)
 {
     auto check_validity = [this, check_filled](
-        unsigned int * offsets, unsigned int size
+        const unsigned int * offsets, unsigned int size
     )->bool{
         auto found = std::unique_ptr<bool[]>(new bool[size]{false});
         for (unsigned int i = 0; i < BOARD_SIZE; i++){

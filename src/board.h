@@ -8,7 +8,7 @@ providing methods to read / dump the board state.
 #include <ostream>
 #include <string>
 #include <vector>
-#include "indexer.hpp"
+#include "indexer.h"
 #include "config.h"
 
 #define ASSERT_COORD_BOUNDS(coord_row, coord_col) \
@@ -29,7 +29,7 @@ struct Coord
 class Board
 {
 public:
-    inline static Indexer<GRID_SIZE> indexer;
+    inline static Indexer indexer;
     Board();
     Board(const Board& other);
     ~Board();
@@ -117,7 +117,7 @@ typedef uint8_t bool_;
 class CandidateBoard
 {
 public:
-    inline static Indexer<GRID_SIZE> indexer;
+    inline static Indexer indexer;
     CandidateBoard();
     CandidateBoard(const CandidateBoard& other);
     CandidateBoard& operator=(const CandidateBoard& other);

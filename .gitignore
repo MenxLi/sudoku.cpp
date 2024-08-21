@@ -16,5 +16,7 @@ puzzles_tmp
 compile_commands.json
 compile_flags.txt
 
+src/indexer.cpp
+
 *.log
 *_tmp.py

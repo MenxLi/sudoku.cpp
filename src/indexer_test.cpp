@@ -1,11 +1,11 @@
 #include "config.h"
-#include "indexer.hpp"
+#include "indexer.h"
 #include <iostream>
 #include <memory>
 
 int main()
 {
-    auto indexer_p = std::make_unique<Indexer<GRID_SIZE>>();
+    auto indexer_p = std::make_unique<Indexer>();
     std::cout << "Hello, World!" << std::endl;
     // Indexer<GRID_SIZE>& indexer = *indexer_p;
     // for (unsigned int i = 0; i < indexer.N; i++)

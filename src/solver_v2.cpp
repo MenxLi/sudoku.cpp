@@ -184,7 +184,7 @@ OpState SolverV2::fill_propagate(unsigned int row, unsigned int col, val_t value
 
 
 OpState SolverV2::refine_candidates_by_naked_double(UnitType unit_type){
-    auto solve_for_unit = [&](unsigned int* offset_start)->OpState{
+    auto solve_for_unit = [&](const unsigned int* offset_start)->OpState{
         for (auto idx_pair : indexer.subunit_combinations_2){
             // initial validity check
             unsigned int offset1 = offset_start[idx_pair[0]];
@@ -255,7 +255,7 @@ OpState SolverV2::refine_candidates_by_naked_double(UnitType unit_type){
 };
 
 OpState SolverV2::refine_candidates_by_hidden_double(UnitType unit_type){
-    auto solve_for_unit = [&](unsigned int* offset_start, bool* unit_fill_state)->OpState{
+    auto solve_for_unit = [&](const unsigned int* offset_start, bool* unit_fill_state)->OpState{
 
         // array of candidates, each stores it's cell index in this unit
         util::SizedArray<unsigned int, UNIT_SIZE> unit_descriptor[CANDIDATE_SIZE];
@@ -272,7 +272,9 @@ OpState SolverV2::refine_candidates_by_hidden_double(UnitType unit_type){
 
         for (auto v_idx_pair : indexer.subvalue_combinations_2){
             // inital validity check
-            auto [v_idx1, v_idx2] = v_idx_pair;
+            // auto [v_idx1, v_idx2] = v_idx_pair;
+            unsigned int v_idx1 = v_idx_pair[0];
+            unsigned int v_idx2 = v_idx_pair[1];
             if (unit_fill_state[v_idx1] || unit_fill_state[v_idx2]) continue; // skip filled values
             if (unit_descriptor[v_idx1].size() != 2 || unit_descriptor[v_idx2].size() != 2) continue; // only consider hidden double
             if (!(unit_descriptor[v_idx1] == unit_descriptor[v_idx2])) continue; // only consider hidden double
@@ -352,7 +354,7 @@ it is the only cell in the row/col/grid that can have a certain value
 */
 OpState SolverV2::update_by_hidden_single(val_t value, UnitType unit_type){
 
-    auto solve_for_unit = [&](unsigned int* offset_start){
+    auto solve_for_unit = [&](const unsigned int* offset_start){
         unsigned int candidate_count = 0;
         Coord candidate_coord;
         for (unsigned int i = 0; i < UNIT_SIZE; i++)

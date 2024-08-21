@@ -6,7 +6,7 @@ namespace py = pybind11;
 #include "generate.h"
 #include "board.h"
 #include "config.h"
-#include "indexer.hpp"
+#include "indexer.h"
 #include "util.h"
 #include "solver_v2.h"
 #include <ostream>
@@ -17,7 +17,7 @@ namespace py = pybind11;
 #include <stack>
 
 namespace gen{
-    static Indexer<GRID_SIZE> indexer;
+    static Indexer indexer;
 
     static std::vector<val_t> get_candidates(Board& board, int row, int col){
         bool candidates_idx_allowd[CANDIDATE_SIZE];

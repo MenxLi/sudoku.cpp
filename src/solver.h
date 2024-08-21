@@ -1,7 +1,7 @@
 #pragma once
 #include "config.h"
 #include "board.h"
-#include "indexer.hpp"
+#include "indexer.h"
 #include <memory>
 
 struct IterationCounter
@@ -25,7 +25,7 @@ class Solver
 {
 public:
     // https://stackoverflow.com/a/53705993/6775765
-    inline static Indexer<GRID_SIZE> indexer;
+    inline static Indexer indexer;
 
     Solver(const Board& board);
     virtual ~Solver() = default;
