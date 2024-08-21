@@ -66,7 +66,7 @@ bool Board::is_valid(bool check_filled)
             if (check_filled && v == 0){ // not filled
                 return false;
             }
-            if (v < 0 || v > BOARD_SIZE){ // invalid value
+            if (v > BOARD_SIZE){ // invalid value
                 return false;
             }
 

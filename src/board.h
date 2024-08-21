@@ -12,12 +12,12 @@ providing methods to read / dump the board state.
 #include "config.h"
 
 #define ASSERT_COORD_BOUNDS(coord_row, coord_col) \
-    ASSERT(static_cast<unsigned int>(coord_row) >= 0 && static_cast<unsigned int>(coord_row) < BOARD_SIZE, "row out of bounds: " + std::to_string(coord_row)); \
-    ASSERT(static_cast<unsigned int>(coord_col) >= 0 && static_cast<unsigned int>(coord_col) < BOARD_SIZE, "column out of bounds: " + std::to_string(coord_col));
+    ASSERT(static_cast<unsigned int>(coord_row) < BOARD_SIZE, "row out of bounds: " + std::to_string(coord_row)); \
+    ASSERT(static_cast<unsigned int>(coord_col) < BOARD_SIZE, "column out of bounds: " + std::to_string(coord_col));
 #define ASSERT_CANDIDATE_BOUNDS(row, col, value) \
-    ASSERT(static_cast<unsigned int>(row) >= 0 && static_cast<unsigned int>(row) < BOARD_SIZE, "row out of bounds: " + std::to_string(row)); \
-    ASSERT(static_cast<unsigned int>(col) >= 0 && static_cast<unsigned int>(col) < BOARD_SIZE, "column out of bounds: " + std::to_string(col)); \
-    ASSERT(static_cast<unsigned int>(value) >= 0 && static_cast<unsigned int>(value) <= CANDIDATE_SIZE, "value out of bounds: " + std::to_string(value)); // value is 1-based, but we allow 0 to indicate empty
+    ASSERT(static_cast<unsigned int>(row) < BOARD_SIZE, "row out of bounds: " + std::to_string(row)); \
+    ASSERT(static_cast<unsigned int>(col) < BOARD_SIZE, "column out of bounds: " + std::to_string(col)); \
+    ASSERT(static_cast<unsigned int>(value) <= CANDIDATE_SIZE, "value out of bounds: " + std::to_string(value)); // value is 1-based, but we allow 0 to indicate empty
 
 
 struct Coord

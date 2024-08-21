@@ -2,6 +2,7 @@
 #include "config.h"
 #include "board.h"
 #include "indexer.hpp"
+#include <memory>
 
 struct IterationCounter
 {

@@ -2,7 +2,6 @@
 
 #include <cassert>
 #include <cstddef>
-#include <cstdint>
 
 #ifndef SIZE 
 #define SIZE 9
