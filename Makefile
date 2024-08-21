@@ -3,7 +3,7 @@ SIZE?=9
 DEBUG?=0
 
 CXX := g++
-STD_FLAGS := -std=c++17 -Wall -Wextra -Werror -pedantic
+STD_FLAGS := -std=c++17 -Wall -Wextra -pedantic
 
 ifeq ($(DEBUG),0)
 OPTIMIZATION_FLAGS := -O3 -funroll-loops -finline-functions

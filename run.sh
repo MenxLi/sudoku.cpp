@@ -8,7 +8,7 @@ for i in {1..100}; do
         continue
     fi
 
-    ./bin/sudoku -i "puzzles/${i}.txt" -o "output/${i}.txt"
+    ./bin/sudoku solve -i "puzzles/${i}.txt" -o "output/${i}.txt"
     if [ $? -eq 0 ]; then
         ((n_success++))
     fi
