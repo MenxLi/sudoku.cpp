@@ -148,11 +148,11 @@ namespace gen{
             switch (solve_pattern){
                 case 0:
                     solver.config().heuristic_guess = true;
-                    solver.config().use_double = false;
+                    solver.config().reverse_guess = false;
                     break;
                 case 1:
                     solver.config().heuristic_guess = true;
-                    solver.config().use_double = true;
+                    solver.config().reverse_guess = true;
                     break;
                 default:
                     solver.config().heuristic_guess = false;
@@ -170,7 +170,7 @@ namespace gen{
             return answer == solution;
         };
 
-        const unsigned int N_REPEATS = 3;
+        const unsigned int N_REPEATS = 2;
 
         for (unsigned int i = 0; i < N_REPEATS; i++){
             if (!solve_board(board, solution, i)){

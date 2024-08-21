@@ -12,6 +12,7 @@ struct SolverV2_config{
     bool deterministic_guess;
     bool heuristic_guess;
     bool use_double;
+    bool reverse_guess;
 
     SolverV2_config& operator=(const SolverV2_config& other){
         load(other);
@@ -23,6 +24,7 @@ struct SolverV2_config{
         deterministic_guess = other.deterministic_guess;
         heuristic_guess = other.heuristic_guess;
         use_double = other.use_double;
+        reverse_guess = other.reverse_guess;
     }
 };
 

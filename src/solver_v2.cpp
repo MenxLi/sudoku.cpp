@@ -29,7 +29,8 @@ void SolverV2::init_states(){
         util::parse_env_i<bool>("SOLVER_USE_GUESS", true),
         util::parse_env_i("SOLVER_DETERMINISTIC_GUESS", false),
         util::parse_env_i("SOLVER_HEURISTIC_GUESS", true),
-        util::parse_env_i("SOLVER_USE_DOUBLE", false)
+        util::parse_env_i("SOLVER_USE_DOUBLE", false),
+        false
     };
     for (unsigned int i = 0; i < BOARD_SIZE; i++)
     {
@@ -551,6 +552,15 @@ OpState SolverV2::step_by_guess(){
     else if (!config().deterministic_guess){
         // shuffle the candidate indices
         util::shuffle_array<CandidateFilledPair>(&candidate_filled_pairs[0], candidate_count);
+    }
+
+    if (config().reverse_guess){
+        // reverse the order of the candidates
+        for (unsigned int i = 0; i < candidate_count / 2; i++){
+            CandidateFilledPair temp = candidate_filled_pairs[i];
+            candidate_filled_pairs[i] = candidate_filled_pairs[candidate_count - i - 1];
+            candidate_filled_pairs[candidate_count - i - 1] = temp;
+        }
     }
 
     // make guesses with backtracking

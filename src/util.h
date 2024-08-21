@@ -28,6 +28,15 @@ namespace util{
         {
             return m_size;
         }
+        void reverse()
+        {
+            for (unsigned int i = 0; i < m_size / 2; i++)
+            {
+                T temp = m_data[i];
+                m_data[i] = m_data[m_size - i - 1];
+                m_data[m_size - i - 1] = temp;
+            }
+        }
         bool operator==(const SizedArray<T, size_>& other) const
         {
             return std::memcmp(m_data, other.m_data, size_ * sizeof(T)) == 0;
