@@ -1,7 +1,7 @@
 
-A Sudoku game solver and generator.
+A Sudoku game solver and generator, it deals with puzzles of any size.
 
-For C++ only, build with:
+Build with:
 ```sh
 # specify SIZE=9 for 9x9 board
 make target -j SIZE=9
@@ -27,7 +27,6 @@ Build with `pybind11`:
 pip install pybind11 && pip install ./bindings
 python demo.py
 ```
-For binding usage, please refer to `demo.py`.
 
 <details>
 <summary>

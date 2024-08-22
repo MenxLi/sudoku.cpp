@@ -368,6 +368,7 @@ namespace gen{
     }
 
     bool remove_clues_by_solve(std::atomic_bool& stop_flag, Board& board, const Board& solution, int n_clues_to_remove){
+        if (n_clues_to_remove == 0){ return board == solution; }
         auto result = gen_helper::remove_n_clues_iteratively(stop_flag, board, solution, n_clues_to_remove);
         return std::get<0>(result);
     }
@@ -378,7 +379,7 @@ namespace gen{
         bool parallel_exec
         ){
         Board board;
-        if (n_clues_remain >= CELL_COUNT){
+        if (n_clues_remain > CELL_COUNT){
             return std::make_tuple(false, board);
         }
 
