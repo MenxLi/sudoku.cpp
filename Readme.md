@@ -27,6 +27,7 @@ Build with `pybind11`:
 pip install pybind11 && pip install ./bindings
 python demo.py
 ```
+For binding usage, please refer to `demo.py`.
 
 <details>
 <summary>
@@ -62,8 +63,6 @@ Median number of guesses: 1.0
 ```
 
 </details>
-
-For generating puzzles, please refer to `demo.py`.
 
 ---
 

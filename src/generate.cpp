@@ -15,11 +15,17 @@ namespace py = pybind11;
 #include <future>
 #include <atomic>
 #include <stack>
+#include <mutex>
 
-namespace gen{
-    static Indexer indexer;
+static Indexer indexer;
+static std::mutex mtx;
 
-    static std::vector<val_t> get_candidates(Board& board, int row, int col){
+namespace gen_helper{
+    /*
+    Get a list of valid candidates for a cell in the board, 
+    based on the current state of it's neighbors
+    */
+    std::vector<val_t> get_candidates(Board& board, int row, int col){
         bool candidates_idx_allowd[CANDIDATE_SIZE];
         for (unsigned int i = 0; i < CANDIDATE_SIZE; i++){
             candidates_idx_allowd[i] = true;
@@ -40,40 +46,56 @@ namespace gen{
         return std::vector<val_t>(result.data(), result.data() + result.size());
     };
 
-    static bool fill_cell_recursive(Board& board, unsigned int offset){
-        unsigned int row = indexer.offset_coord_lookup[offset][0];
-        unsigned int col = indexer.offset_coord_lookup[offset][1];
-
-        auto candidates = get_candidates(board, row, col);
-
-        if (candidates.size() == 0){ return false; }
-
-        util::shuffle_array(candidates.data(), candidates.size());
-        for (unsigned int candidate_idx = 0; candidate_idx < candidates.size(); candidate_idx++){
-            val_t c = candidates[candidate_idx];
-
-            board.set(row, col, c);
-
-            if (offset == BOARD_SIZE * BOARD_SIZE - 1)
-            {
-                // filled the last cell, return true
-                ASSERT(board.is_solved(), "Invalid board");
-                return true;
+    /*
+    Check if the board is uniquely solvable by solving it twice with different solve patterns
+    */
+    bool uniquely_solvable(const Board& board, const Board& solution){
+        auto solve_board = [](
+            const Board &board, 
+            const Board &solution, 
+            unsigned int solve_pattern
+            ){
+            SolverV2 solver(board);     // the solver will copy the board
+            switch (solve_pattern){
+                case 0:
+                    solver.config().heuristic_guess = true;
+                    solver.config().reverse_guess = false;
+                    break;
+                case 1:
+                    solver.config().heuristic_guess = true;
+                    solver.config().reverse_guess = true;
+                    break;
+                default:
+                    solver.config().heuristic_guess = false;
+                    solver.config().use_double = true;
+                    break;
             }
 
-            // fill the next cell
-            Board forked_board = Board(board);
-            if (fill_cell_recursive(forked_board, offset + 1)){
-                board.load_data(forked_board);
-                return true;
+            bool solved = solver.solve();
+            if (!solved)
+            {
+                return false;
+            }
+
+            Board& answer = solver.board();
+            return answer == solution;
+        };
+
+        const unsigned int N_REPEATS = 2;
+
+        for (unsigned int i = 0; i < N_REPEATS; i++){
+            if (!solve_board(board, solution, i)){
+                return false;
             }
         }
-        return false;
+        return true;
     }
 
-    static void fill_cell_iterative(Board& board){
-        // board should be all empty
-
+    /* 
+    Fill the board with valid values, using backtracking 
+    Should make sure the bord is empty before calling this function
+    */
+    void fill_cell_iterative(Board& board){
         unsigned int offset = 0;
         
         struct StackItem{
@@ -122,78 +144,13 @@ namespace gen{
             row = indexer.offset_coord_lookup[offset][0];
             col = indexer.offset_coord_lookup[offset][1];
             auto candidates = get_candidates(board, row, col);
-            // std::cout << "Candidates: "; for (auto c: candidates){ std::cout << c << " "; } std::cout << std::endl;
 
             util::shuffle_array(candidates.data(), candidates.size());
             stack.push({offset, candidates, 0});
-
-            // std::cout << "Current stack size: " << stack.size() << std::endl;
         }
-
     }
 
-    void fill_valid_board(Board &board){
-        board.clear(0);
-        fill_cell_iterative(board);
-    }
-
-    static bool uniquely_solvable(const Board& board, const Board& solution){
-        auto solve_board = [](
-            const Board &board, 
-            const Board &solution, 
-            unsigned int solve_pattern
-            ){
-            SolverV2 solver(board);     // the solver will copy the board
-            switch (solve_pattern){
-                case 0:
-                    solver.config().heuristic_guess = true;
-                    solver.config().reverse_guess = false;
-                    break;
-                case 1:
-                    solver.config().heuristic_guess = true;
-                    solver.config().reverse_guess = true;
-                    break;
-                default:
-                    solver.config().heuristic_guess = false;
-                    solver.config().use_double = true;
-                    break;
-            }
-
-            bool solved = solver.solve();
-            if (!solved)
-            {
-                return false;
-            }
-
-            Board& answer = solver.board();
-            return answer == solution;
-        };
-
-        const unsigned int N_REPEATS = 2;
-
-        for (unsigned int i = 0; i < N_REPEATS; i++){
-            if (!solve_board(board, solution, i)){
-                // if (i!=0) std::cout << "Reject non-unique solution on repeats: " << i << std::endl;
-                return false;
-            }
-        }
-        return true;
-    }
-
-    // static std::vector<unsigned int> get_randomized_filled_indices(Board b){
-    //     std::vector<unsigned int> indices;
-    //     for (unsigned int i = 0; i < BOARD_SIZE * BOARD_SIZE; i++){
-    //         if (b.get(i) != 0){
-    //             indices.push_back(i);
-    //         }
-    //     }
-    //     // shuffle the indices
-    //     auto device = std::random_device();
-    //     std::mt19937 generator(device());
-    //     std::shuffle(indices.begin(), indices.end(), generator);
-    //     return indices;
-    // };
-
+    /* Get a list of indices of filled cells in a board, shuffled randomly */
     std::vector<unsigned int> get_randomized_filled_indices(Board b){
         util::SizedArray<unsigned int, CELL_COUNT> indices;
         for (unsigned int i = 0; i < BOARD_SIZE * BOARD_SIZE; i++){
@@ -205,7 +162,8 @@ namespace gen{
         return std::vector<unsigned int>(indices.data(), indices.data() + indices.size());
     };
 
-    static void remove_clues_no_check(Board& board, int n_clues_to_remove){
+    /* To remove clues from a board, without checking if the board is still uniquely solvable */
+    void remove_clues_no_check(Board& board, int n_clues_to_remove){
         auto indices = get_randomized_filled_indices(board);
         for (unsigned int i = 0; i < indices.size(); i++){
             unsigned int idx = indices[i];
@@ -215,12 +173,13 @@ namespace gen{
                 return;
             }
         }
-    }
+    }    
 
-
-    // backtracking to remove n_clues_to_remove clues
-    // this is a depth-first search... may not be the best way to do this...
-    static std::tuple<bool, long> remove_n_clues_recursively(
+    /* 
+    Remove n_clues_to_remove clues from the board, recursively
+    will make sure the board is still uniquely solvable
+    */
+    std::tuple<bool, long> remove_n_clues_recursively(
         std::atomic_bool& stop_flag,
         Board& board, 
         const Board& solution, 
@@ -231,7 +190,6 @@ namespace gen{
             return std::make_tuple(false, max_depth);
         }
         if (n_clues_to_remove == 0){
-            // std::cout << "Found a board with max depth left: " << max_depth << std::endl;
             return std::make_tuple(true, max_depth);
         }
         if (max_depth < n_clues_to_remove){ // not enough depth to remove all clues
@@ -262,52 +220,33 @@ namespace gen{
         }
         return std::make_tuple(false, depth_remain);
     }
-    static std::tuple<bool, long> remove_n_clues_iteratively(
+
+    /*
+    Remove n_clues_to_remove clues from the board, iteratively to avoid stack overflow. 
+    Will make sure the board is still uniquely solvable
+    */
+    std::tuple<bool, long> remove_n_clues_iteratively(
         std::atomic_bool& stop_flag,
         Board& board, 
         const Board& solution, 
         unsigned int n_clues_to_remove, 
         long max_depth = CELL_COUNT*BOARD_SIZE
     ){
-        // avoid stack overflow from recursion
-
         struct StackItem{
             std::vector<unsigned int> indices;
             unsigned int base_pos;  // the position that should be reverted if all indices are tried
             unsigned int next_idx;  // the next index of the indices to try
         };
-        class Stack{
-        public:
-            void push(const StackItem&& item){
-                m_stack.push_back(new StackItem(item));
-            }
-            void pop(){
-                delete m_stack.back();
-                m_stack.pop_back();
-            }
-            StackItem& top(){
-                return *m_stack.back();
-            }
-            size_t size(){
-                return m_stack.size();
-            }
-
-        private:
-            std::vector<StackItem*> m_stack;
-        };
-
         Board original_board = Board(board);
-        Stack stack;
+        std::stack<StackItem> stack;
 
         // fill the first one
         stack.push({get_randomized_filled_indices(board), 0, 0});
 
-        // print
         // for (unsigned int i = 0; i < init_indices.size(); i++){ std::cout << init_indices[i] << " " << std::flush; } std::cout << std::endl;
 
         long depth_remain = max_depth;
         while (stack.size() > 0){
-            // std::cout << "Depth: " << depth_remain << " Clues: " << n_clues_to_remove << std::endl;
             if (stop_flag.load()){
                 return std::make_tuple(false, depth_remain);
             }
@@ -320,8 +259,6 @@ namespace gen{
 
                 n_clues_to_remove++;
                 depth_remain--; if (depth_remain < n_clues_to_remove){ return std::make_tuple(false, depth_remain); }
-
-                // std::cout << "Rev: " << n_clues_to_remove << std::endl;
                 continue;
             }
 
@@ -330,7 +267,6 @@ namespace gen{
             board.set(pos, 0);
             depth_remain--; if (depth_remain < n_clues_to_remove){ return std::make_tuple(false, depth_remain); }
 
-            // std::cout << "N: " << n_clues_to_remove << " Depth: " << depth_remain << std::endl;
             if (!uniquely_solvable(board, solution)){
                 board.set(pos, original_board.get(pos));
                 top_item.next_idx++;
@@ -338,19 +274,24 @@ namespace gen{
             }
             n_clues_to_remove--;
 
-            // the board is still uniquely solvable, check if we have removed enough clues
             if (n_clues_to_remove == 0){ return std::make_tuple(true, depth_remain); }
 
-            // if we still need to remove more clues, push the current state to the stack
             auto next_indices = get_randomized_filled_indices(board);
             stack.push({next_indices, pos, 0});
         }
         return std::make_tuple(false, depth_remain);
     }
+}
+
+namespace gen{
+
+    void fill_valid_board(Board &board){
+        board.clear(0);
+        gen_helper::fill_cell_iterative(board);
+    }
 
     bool remove_clues_by_solve(std::atomic_bool& stop_flag, Board& board, const Board& solution, int n_clues_to_remove){
-        auto result = remove_n_clues_iteratively(stop_flag, board, solution, n_clues_to_remove);
-        // auto result = remove_n_clues_recursively(stop_flag, board, solution, n_clues_to_remove);
+        auto result = gen_helper::remove_n_clues_iteratively(stop_flag, board, solution, n_clues_to_remove);
         return std::get<0>(result);
     }
 
@@ -363,10 +304,6 @@ namespace gen{
         if (n_clues_remain >= CELL_COUNT){
             return std::make_tuple(false, board);
         }
-
-        // if (BOARD_SIZE == 9 && n_clues_remain < 17){
-        //     return std::make_tuple(false, board);
-        // }
 
         unsigned int n_clues_to_remove = CELL_COUNT - n_clues_remain;
         std::atomic_bool stop_flag(false);
@@ -387,7 +324,7 @@ namespace gen{
             // speed up...
             const int confident_remove_bound = CELL_COUNT / 3;
             if (n_to_remove_ > confident_remove_bound){
-                remove_clues_no_check(board, confident_remove_bound);
+                gen_helper::remove_clues_no_check(board, confident_remove_bound);
                 n_to_remove_ -= confident_remove_bound;
             }
 
@@ -396,8 +333,11 @@ namespace gen{
                 promise.set_value(std::make_tuple(true, board));
             }
             else{
-                std::cout << '.';
-                std::cout.flush();
+                {
+                    std::lock_guard<std::mutex> lock(mtx);
+                    std::cout << '.';
+                    std::cout.flush();
+                }
                 promise.set_value(std::make_tuple(false, board));
             }
         };
@@ -448,7 +388,7 @@ namespace gen{
             #endif
 
             for (unsigned int i = 0; i < n_concurrent; i++){
-                if (futures[i].valid() && futures[i].wait_for(std::chrono::microseconds(10)) == std::future_status::ready){
+                if (futures[i].valid() && futures[i].wait_for(std::chrono::microseconds(1)) == std::future_status::ready){
                     auto [success, b] = futures[i].get();
                     // std::cout << "Checking futures " << i << std::endl;
                     if (success){
