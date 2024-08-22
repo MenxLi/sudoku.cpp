@@ -1,7 +1,6 @@
 #pragma once
 #include "config.h"
 #include "util.h"
-#include "mutex"
 
 static unsigned int constexpr const_n_combinations_2(unsigned int N){
     return N * (N - 1) / 2;

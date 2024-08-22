@@ -64,6 +64,7 @@ test: obj
 	$(CXX) $(COMMON_FLAGS) -o $(BIN_DIR)/generate_test \
 		$(objs) src/generate_test.cpp
 	$(CXX) $(COMMON_FLAGS) -o $(BIN_DIR)/indexer_test \
+		$(LIB_DIR)/indexer.o $(LIB_DIR)/util.o \
 		src/indexer_test.cpp
 
 target: obj

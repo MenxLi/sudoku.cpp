@@ -186,4 +186,5 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     generate_indexer_impl(args.N)
-    print("indexer.cpp generated successfully (N={})".format(args.N))
+
+    print("\033[1;32mindexer.cpp generated successfully (N={})\033[0m".format(args.N))

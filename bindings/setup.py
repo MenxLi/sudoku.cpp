@@ -9,7 +9,7 @@ __root_dir__ = pathlib.Path(__file__).resolve().parent.parent
 src_dir = __root_dir__ / "src"
 
 # generate indexer implementation
-subprocess.check_call([ "python", str(src_dir / "indexer_gen.py"), str(BOARD_SIZE) ])
+subprocess.check_call([ "python3", str(src_dir / "indexer_gen.py"), str(BOARD_SIZE) ])
 
 include_dir = __root_dir__ / "include"
 exclude_patterns = ["main.cpp", "benchmark.cpp", "*_test.cpp", "solver_v1*"]
