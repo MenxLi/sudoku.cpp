@@ -108,6 +108,20 @@ val_t& Board::get_(const Coord& coord)
 };
 
 
+class BoardEquivalenceTransform
+{
+public:
+    // no column transformation, 
+    // it's the same as: TRANSPOSE + SWAP_ROW / SWAP_BAND
+    static void swap_row(Board& board, unsigned int band, unsigned int band_row1, unsigned int band_row2);
+    static void swap_band(Board& board, unsigned int band1, unsigned int band2);
+    static void swap_value(Board& board, val_t value1, val_t value2);
+    static void transpose(Board& board);
+private:
+    static void swap_row(Board& board, unsigned int row1, unsigned int row2);
+};
+
+
 /*
 cadidate refers to the possible values for a cell, 
 based on the values of other cells in the same row, column, and grid, 

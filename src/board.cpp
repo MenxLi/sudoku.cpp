@@ -202,6 +202,73 @@ std::string Board::to_string_raw() const
     return result;
 }
 
+void BoardEquivalenceTransform::swap_row(Board& board, unsigned int row1, unsigned int row2)
+{
+    if (row1 == row2) return;
+    ASSERT(row1 < BOARD_SIZE && row2 < BOARD_SIZE, "Invalid row index");
+    for (unsigned int j = 0; j < BOARD_SIZE; j++)
+    {
+        val_t temp = board.get(row1, j);
+        board.set(row1, j, board.get(row2, j));
+        board.set(row2, j, temp);
+    }
+}
+
+void BoardEquivalenceTransform::swap_row(Board& board, unsigned int band, unsigned int band_row1, unsigned int band_row2)
+{
+    if (band_row1 == band_row2) return;
+    ASSERT(band_row1 < GRID_SIZE && band_row2 < GRID_SIZE && band < GRID_SIZE, "Invalid band index");
+    unsigned int row1 = band * GRID_SIZE + band_row1;
+    unsigned int row2 = band * GRID_SIZE + band_row2;
+    swap_row(board, row1, row2);
+}
+
+void BoardEquivalenceTransform::swap_band(Board& board, unsigned int band1, unsigned int band2)
+{
+    if (band1 == band2) return;
+    ASSERT(band1 < GRID_SIZE && band2 < GRID_SIZE, "Invalid band index");
+    for (unsigned int i = 0; i < GRID_SIZE; i++)
+    {
+        unsigned int row1 = band1 * GRID_SIZE + i;
+        unsigned int row2 = band2 * GRID_SIZE + i;
+        swap_row(board, row1, row2);
+    }
+}
+
+void BoardEquivalenceTransform::swap_value(Board& board, val_t value1, val_t value2)
+{
+    if (value1 == value2) return;
+    ASSERT(value1 <= CANDIDATE_SIZE && value2 <= CANDIDATE_SIZE, "Invalid value");
+    for (unsigned int i = 0; i < BOARD_SIZE; i++)
+    {
+        for (unsigned int j = 0; j < BOARD_SIZE; j++)
+        {
+            val_t value = board.get(i, j);
+            if (value == value1)
+            {
+                board.set(i, j, value2);
+            }
+            else if (value == value2)
+            {
+                board.set(i, j, value1);
+            }
+        }
+    }
+}
+
+void BoardEquivalenceTransform::transpose(Board& board)
+{
+    for (unsigned int i = 0; i < BOARD_SIZE; i++)
+    {
+        for (unsigned int j = i + 1; j < BOARD_SIZE; j++)
+        {
+            val_t temp = board.get(i, j);
+            board.set(i, j, board.get(j, i));
+            board.set(j, i, temp);
+        }
+    }
+}
+
 CandidateBoard::CandidateBoard(){
     reset();
 }

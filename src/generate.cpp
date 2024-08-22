@@ -22,6 +22,77 @@ static std::mutex mtx;
 
 namespace gen_helper{
     /*
+    a meta board is a board that contains the simplist form of a filled board
+    generated with fixed strategy.
+    */
+    Board get_meta_board(){
+        auto get_iota_row = [](){
+            std::array<val_t, BOARD_SIZE> row_data;
+            std::iota(row_data.begin(), row_data.end(), 1);
+            return row_data;
+        };
+
+        auto lshift_row = [](std::array<val_t, BOARD_SIZE>& arr, unsigned int n){
+            std::rotate(arr.begin(), arr.begin() + n, arr.end());
+        };
+
+        auto meta_row = [&](unsigned int row){
+            std::array<val_t, BOARD_SIZE> row_data = get_iota_row();
+            unsigned int n_shift = row / GRID_SIZE + (row % GRID_SIZE) * GRID_SIZE;
+            lshift_row(row_data, n_shift);
+            return row_data;
+        };
+
+        Board board;
+        for (unsigned int i = 0; i < BOARD_SIZE; i++){
+            auto row_data = meta_row(i);
+            for (unsigned int j = 0; j < BOARD_SIZE; j++){
+                board.set(i, j, row_data[j]);
+            }
+        }
+        ASSERT(board.is_solved(), "Invalid meta board");
+        return board;
+    }
+
+    /*
+    Apply random equivalence transformation to the board
+    */
+    void apply_random_transform(Board& board, unsigned int n_repeats){
+        std::srand(std::time(nullptr));
+        for (unsigned int i = 0; i < n_repeats; i++){
+            unsigned int transform_type = std::rand() % 4;
+            unsigned int idx1;
+            unsigned int idx2;
+            unsigned int g_idx1;
+            unsigned int g_idx2;
+            switch (transform_type){
+                case 0:
+                    idx1 = std::rand() % GRID_SIZE;
+                    idx2 = std::rand() % GRID_SIZE;
+                    g_idx1 = std::rand() % GRID_SIZE;
+                    BoardEquivalenceTransform::swap_row(board, g_idx1, idx1, idx2);
+                    break;
+                case 1:
+                    g_idx1 = std::rand() % GRID_SIZE;
+                    g_idx2 = std::rand() % GRID_SIZE;
+                    BoardEquivalenceTransform::swap_band(board, g_idx1, g_idx2);
+                    break;
+                case 2:
+                    idx1 = std::rand() % CANDIDATE_SIZE;
+                    idx2 = std::rand() % CANDIDATE_SIZE;
+                    BoardEquivalenceTransform::swap_value(board, idx1 + 1, idx2 + 1);
+                    break;
+                case 3:
+                    BoardEquivalenceTransform::transpose(board);
+                    break;
+                default:
+                    break;
+            }
+        }
+        ASSERT(board.is_valid(), "Invalid board after applying random transform");
+    }
+
+    /*
     Get a list of valid candidates for a cell in the board, 
     based on the current state of it's neighbors
     */
@@ -184,7 +255,7 @@ namespace gen_helper{
         Board& board, 
         const Board& solution, 
         unsigned int n_clues_to_remove, 
-        long max_depth = CELL_COUNT*BOARD_SIZE
+        long max_depth = CELL_COUNT*GRID_SIZE
     ){
         if (stop_flag.load()){
             return std::make_tuple(false, max_depth);
@@ -230,7 +301,7 @@ namespace gen_helper{
         Board& board, 
         const Board& solution, 
         unsigned int n_clues_to_remove, 
-        long max_depth = CELL_COUNT*BOARD_SIZE
+        long max_depth = CELL_COUNT*GRID_SIZE
     ){
         struct StackItem{
             std::vector<unsigned int> indices;
@@ -285,9 +356,15 @@ namespace gen_helper{
 
 namespace gen{
 
-    void fill_valid_board(Board &board){
-        board.clear(0);
-        gen_helper::fill_cell_iterative(board);
+    void fill_valid_board(Board &board, FillStrategy strategy){
+        if (strategy == FillStrategy::SEARCH){
+            board.clear(0);
+            gen_helper::fill_cell_iterative(board);
+        }
+        else{
+            board.load_data(gen_helper::get_meta_board());
+            gen_helper::apply_random_transform(board, 100*BOARD_SIZE);
+        }
     }
 
     bool remove_clues_by_solve(std::atomic_bool& stop_flag, Board& board, const Board& solution, int n_clues_to_remove){
@@ -311,17 +388,13 @@ namespace gen{
             std::promise<std::tuple<bool, Board>> promise
         ){
             Board board = Board();
-            unsigned int n_to_remove_ = n_clues_to_remove;
-
-            if (stop_flag.load()){
-                promise.set_value(std::make_tuple(false, board));
-                return;
-            }
-
-            fill_valid_board(board);
+            fill_valid_board(board, FillStrategy::TRANSFORM);
             auto solution = Board(board);
 
+            if (stop_flag.load()){ promise.set_value(std::make_tuple(false, board)); return; }
+
             // speed up...
+            unsigned int n_to_remove_ = n_clues_to_remove;
             const int confident_remove_bound = CELL_COUNT / 3;
             if (n_to_remove_ > confident_remove_bound){
                 gen_helper::remove_clues_no_check(board, confident_remove_bound);
