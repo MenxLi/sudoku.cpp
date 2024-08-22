@@ -255,7 +255,7 @@ namespace gen_helper{
         Board& board, 
         const Board& solution, 
         unsigned int n_clues_to_remove, 
-        long max_depth = CELL_COUNT*GRID_SIZE
+        long max_depth = CELL_COUNT*2
     ){
         if (stop_flag.load()){
             return std::make_tuple(false, max_depth);
@@ -301,7 +301,7 @@ namespace gen_helper{
         Board& board, 
         const Board& solution, 
         unsigned int n_clues_to_remove, 
-        long max_depth = CELL_COUNT*GRID_SIZE
+        long max_depth = CELL_COUNT*2
     ){
         struct StackItem{
             std::vector<unsigned int> indices;
