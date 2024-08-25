@@ -14,20 +14,21 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-__difficulty_n_map = {
-    "easy": 32,
-    "medium": 28,
-    "hard": 25,
-    "extreme": 21,
-}
-
 @app.get("/generate")
-def generate_puzzle(level: str):
-    if level not in __difficulty_n_map:
-        return {"error": f"Invalid difficulty level: {level}"}
-
-    n_clues = __difficulty_n_map.get(level, 32)
-    gen = generate(n_clues, max_retries=128, parallel_exec=False)
+def generate_puzzle(clues: int = -1):
+    if clues == -1:
+        return {
+            "error": "Invalid query string",
+            "details": "Please specify a number of clues in the query string, e.g. '?clues=32'"
+            }
+        
+    try:
+        gen = generate(clues, max_retries=128, parallel_exec=False)
+    except:
+        return {
+            "error": "Failed to generate puzzle", 
+            "details": "The server exceeded the maximum number of retries while randomly generating a puzzle. Please try again."
+            }
     return gen['data']
 
 def solve_puzzle(puzzle: list[list[int]]):
