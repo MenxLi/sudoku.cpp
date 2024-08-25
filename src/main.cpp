@@ -1,3 +1,4 @@
+#include "parser.hpp"
 #include "solver_v2.h"
 #include "generate.h"
 #include <chrono>
@@ -61,25 +62,6 @@ bool generate_for(unsigned int clue_count, std::string output_file){
     return true;
 }
 
-std::string parse_arg(std::string flag, int argc, char* argv[]){
-    for (int i = 1; i < argc; i++)
-    {
-        if (std::string(argv[i]) == flag)
-        {
-            if (i + 1 < argc)
-            {
-                return argv[i + 1];
-            }
-            else
-            {
-                std::cerr << flag << " requires an argument" << std::endl;
-                exit(1);
-            }
-        }
-    }
-    return "";
-}
-
 int main(int argc, char* argv[]){
     // parse arguments to get input and output file names
     if (argc < 2)
@@ -91,9 +73,11 @@ int main(int argc, char* argv[]){
 
     // parse arguments
     std::string mode = argv[1];
-    std::string input_file = parse_arg("-i", argc, argv);
-    std::string output_file = parse_arg("-o", argc, argv);
-    std::string clue_count_str = parse_arg("-c", argc, argv);
+    auto parser = parser::CommandlineParser(argc, argv);
+
+    std::string input_file = parser.get_arg("-i");
+    std::string output_file = parser.get_arg("-o");
+    std::string clue_count_str = parser.get_arg("-c");
 
     if (mode == "solve") {
         if (input_file.empty())

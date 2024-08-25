@@ -1,9 +1,9 @@
 
-A Sudoku game solver and generator, it deals with puzzles of any size.
+A Sudoku game solver and generator, 
+it deals with puzzles of any size (e.g. 4x4, 9x9, 16x16, etc.).
 
-Build with:
+Build with size 9 (default):
 ```sh
-# specify SIZE=9 for 9x9 board
 make target -j SIZE=9
 ```
 

@@ -145,32 +145,36 @@ void Board::load_data(const std::vector<std::vector<val_t>> data){
 }
 
 void Board::load_data(const std::string& str_data){
-    std::istringstream iss(str_data);
-    load_data(iss);
+    std::vector<std::string> elements;
+
+    auto split_lines = util::split_string(str_data, "\n");
+    for (auto line: split_lines){
+        auto line_sp = util::split_string(line, " ");
+        for (auto s: line_sp){
+            if (s != ""){ elements.push_back(s); }
+        }
+    }
+
+    if (elements.size() != BOARD_SIZE * BOARD_SIZE){
+        throw std::runtime_error("invalid data size, the board is supposed to be " + std::to_string(BOARD_SIZE) + "x" + std::to_string(BOARD_SIZE));
+    }
+
+    for (unsigned int i = 0; i < BOARD_SIZE; i++){
+        for (unsigned int j = 0; j < BOARD_SIZE; j++){
+            m_board[i][j] = static_cast<val_t>(std::stoi(elements[i * BOARD_SIZE + j]));
+        }
+    }
+
 }
 
 void Board::load_data(std::istream& is)
 {
-    std::string line;
-    unsigned int row = 0;
-    while (std::getline(is, line)){
-        auto split = util::split_string(line, " ");
-        if (split.size() == 0){
-            continue;
-        }
-
-        if (split[split.size() - 1] == ""){
-            split.pop_back();
-        }
-
-        ASSERT(split.size() == BOARD_SIZE, "in row " + std::to_string(row));
-        ASSERT(row < BOARD_SIZE, "too many rows");
-
-        for (unsigned int i = 0; i < BOARD_SIZE; i++){
-            m_board[row][i] = static_cast<val_t>(std::stoi(split[i]));
-        }
-        row++;
+    std::string content;
+    for (std::string line; std::getline(is, line);)
+    {
+        content += line + "\n";
     }
+    load_data(content);
 }
 
 void Board::load_data(const Board& board)

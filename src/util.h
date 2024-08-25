@@ -1,6 +1,5 @@
 #pragma once
 
-#include "util_parser.hpp"
 #include <cstring>
 #include <vector>
 #include <array>

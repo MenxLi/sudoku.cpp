@@ -1,3 +1,4 @@
+#include "parser.hpp"
 #include "board.h"
 #include "config.h"
 #include "solver.h"
@@ -26,10 +27,10 @@ m_config(new SolverV2_config()), m_candidates{ new CandidateBoard() }, m_fill_st
 
 void SolverV2::init_states(){
     *m_config = {
-        util::parse_env_i<bool>("SOLVER_USE_GUESS", true),
-        util::parse_env_i("SOLVER_DETERMINISTIC_GUESS", false),
-        util::parse_env_i("SOLVER_HEURISTIC_GUESS", true),
-        util::parse_env_i("SOLVER_USE_DOUBLE", false),
+        parser::parse_env_i<bool>("SOLVER_USE_GUESS", true),
+        parser::parse_env_i("SOLVER_DETERMINISTIC_GUESS", false),
+        parser::parse_env_i("SOLVER_HEURISTIC_GUESS", true),
+        parser::parse_env_i("SOLVER_USE_DOUBLE", false),
         false
     };
     for (unsigned int i = 0; i < BOARD_SIZE; i++)
