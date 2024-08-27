@@ -12,11 +12,11 @@ src_dir = __root_dir__ / "src"
 subprocess.check_call([ "python3", str(src_dir / "indexer_gen.py"), str(BOARD_SIZE) ])
 
 include_dir = __root_dir__ / "include"
-exclude_patterns = ["main.cpp", "benchmark.cpp", "*_test.cpp", "solver_v1*"]
+exclude_patterns = ["main.cpp", "benchmark.cpp", "*_test.cpp", "solver_v1*", "indexer*.cpp"]
 cpp_files = [
     str(f) for f in src_dir.glob("*.cpp") 
     if not any(f.match(p) for p in exclude_patterns)
-]
+] + [ str(src_dir / f"indexer_impl_{BOARD_SIZE}.cpp") ]
 
 compile_args=["-O3", "-funroll-loops", "-finline-functions"]
 if platform == 'linux' or platform == 'linux2':
