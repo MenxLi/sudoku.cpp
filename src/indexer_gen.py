@@ -64,7 +64,7 @@ def test_n_combinations():
 def generate_indexer_impl(N: int):
 
     src_dir = os.path.dirname(os.path.abspath(__file__))
-    dst_file = os.path.join(src_dir, "indexer.cpp")
+    dst_file = os.path.join(src_dir, f"indexer_impl_{N}.cpp")
 
     NV = N  # number of values
     NG = int(math.sqrt(N))

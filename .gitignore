@@ -17,6 +17,7 @@ compile_commands.json
 compile_flags.txt
 
 src/indexer.cpp
+src/indexer_impl_*.cpp
 
 *.log
 *_tmp.py

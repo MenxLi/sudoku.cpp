@@ -13,11 +13,13 @@ endif
 
 CONFIG_FLAGS := -DSIZE=$(SIZE) -DSTRICT
 COMMON_FLAGS := $(STD_FLAGS) $(OPTIMIZATION_FLAGS) $(CONFIG_FLAGS)
-LIB_DIR := bin/lib
+LIB_DIR := bin/lib-$(SIZE)
 BIN_DIR := bin
 
-objs := $(LIB_DIR)/util.o $(LIB_DIR)/indexer.o $(LIB_DIR)/board.o \
+OBJS := $(LIB_DIR)/indexer_impl_$(SIZE).o $(LIB_DIR)/util.o $(LIB_DIR)/board.o \
 	$(LIB_DIR)/solver.o $(LIB_DIR)/solver_v1.o $(LIB_DIR)/solver_v2.o $(LIB_DIR)/generate.o
+
+TEST_TARGETS := $(patsubst src/%_test.cpp, $(BIN_DIR)/test_%, $(wildcard src/*_test.cpp))
 
 ifeq ($(OS),Windows_NT)
 	UNAME_S := Windows
@@ -29,46 +31,26 @@ ifeq ($(UNAME_S),Linux)
 	COMMON_FLAGS += -pthread
 endif
 
+.PHONY: target test clean dst
 
-all: test target
+target: dst $(OBJS)
+	$(CXX) $(COMMON_FLAGS) -o $(BIN_DIR)/sudoku $(OBJS) src/main.cpp
+	$(CXX) $(COMMON_FLAGS) -o $(BIN_DIR)/benchmark $(OBJS) src/benchmark.cpp
 
-_dst:
-	mkdir -p $(BIN_DIR) && mkdir -p $(LIB_DIR) && python src/indexer_gen.py $(SIZE)
+test: dst $(TEST_TARGETS)
 
-util.o: _dst
-	$(CXX) $(COMMON_FLAGS) -o $(LIB_DIR)/util.o -c src/util.cpp
-indexer.o: _dst
-	$(CXX) $(COMMON_FLAGS) -o $(LIB_DIR)/indexer.o -c src/indexer.cpp
-board.o: _dst
-	$(CXX) $(COMMON_FLAGS) -o $(LIB_DIR)/board.o -c src/board.cpp
-solver.o: _dst
-	$(CXX) $(COMMON_FLAGS) -o $(LIB_DIR)/solver.o -c src/solver.cpp
-solver_v1.o: _dst
-	$(CXX) $(COMMON_FLAGS) -o $(LIB_DIR)/solver_v1.o -c src/solver_v1.cpp
-solver_v2.o: _dst
-	$(CXX) $(COMMON_FLAGS) -o $(LIB_DIR)/solver_v2.o -c src/solver_v2.cpp
-generate.o: _dst
-	$(CXX) $(COMMON_FLAGS) -o $(LIB_DIR)/generate.o -c src/generate.cpp
+src/indexer_impl_$(SIZE).cpp: src/indexer_gen.py
+	@python src/indexer_gen.py $(SIZE)
 
-obj: util.o indexer.o board.o solver.o solver_v1.o solver_v2.o generate.o
+$(LIB_DIR)/%.o: src/%.cpp
+	$(CXX) $(COMMON_FLAGS) -o $@ -c $<
 
-test: obj
-	$(CXX) $(COMMON_FLAGS) -o $(BIN_DIR)/util_test \
-		$(LIB_DIR)/util.o \
-		src/util_test.cpp
-	$(CXX) $(COMMON_FLAGS) -o $(BIN_DIR)/board_test \
-		$(LIB_DIR)/board.o $(LIB_DIR)/util.o $(LIB_DIR)/indexer.o \
-		src/board_test.cpp
-	$(CXX) $(COMMON_FLAGS) -o $(BIN_DIR)/solver_test \
-		$(objs) src/solver_test.cpp
-	$(CXX) $(COMMON_FLAGS) -o $(BIN_DIR)/generate_test \
-		$(objs) src/generate_test.cpp
-	$(CXX) $(COMMON_FLAGS) -o $(BIN_DIR)/indexer_test \
-		$(LIB_DIR)/indexer.o $(LIB_DIR)/util.o \
-		src/indexer_test.cpp
+$(BIN_DIR)/test_%: $(OBJS) src/%.cpp
+	$(CXX) $(COMMON_FLAGS) -o $@ $(OBJS) src/$*_test.cpp
 
-target: obj
-	$(CXX) $(COMMON_FLAGS) -o $(BIN_DIR)/sudoku \
-		$(objs) src/main.cpp
-	$(CXX) $(COMMON_FLAGS) -o $(BIN_DIR)/benchmark \
-		$(objs) src/benchmark.cpp
+dst:
+	@mkdir -p $(BIN_DIR) && mkdir -p $(LIB_DIR)
+
+clean:
+	-rm -r $(BIN_DIR)
+	-rm src/indexer_impl_*.cpp
