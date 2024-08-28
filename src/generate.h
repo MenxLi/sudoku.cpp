@@ -14,6 +14,7 @@ namespace gen
     std::tuple<bool, Board> generate_board(
         unsigned int n_clues_remain, 
         unsigned int max_retries = 2048, 
-        bool parallel_exec = true
+        bool parallel_exec = true,
+        bool verbose = false
         );
 } // namespace generate

@@ -376,7 +376,8 @@ namespace gen{
     std::tuple<bool, Board> generate_board(
         unsigned int n_clues_remain, 
         unsigned int max_retries, 
-        bool parallel_exec
+        bool parallel_exec, 
+        bool verbose
         ){
         Board board;
         if (n_clues_remain > CELL_COUNT){
@@ -385,7 +386,7 @@ namespace gen{
 
         unsigned int n_clues_to_remove = CELL_COUNT - n_clues_remain;
         std::atomic_bool stop_flag(false);
-        auto fn_thread = [n_clues_to_remove, &stop_flag](
+        auto fn_thread = [n_clues_to_remove, &stop_flag, verbose](
             std::promise<std::tuple<bool, Board>> promise
         ){
             Board board = Board();
@@ -409,15 +410,14 @@ namespace gen{
             else{
                 {
                     std::lock_guard<std::mutex> lock(mtx);
-                    std::cout << '.';
-                    std::cout.flush();
+                    if (verbose) std::cout << '.'; std::cout.flush();
                 }
                 promise.set_value(std::make_tuple(false, board));
             }
         };
         
         if (!parallel_exec){
-            std::cout << "Generating board (" << BOARD_SIZE << "x" << BOARD_SIZE <<
+            if (verbose) std::cout << "Generating board (" << BOARD_SIZE << "x" << BOARD_SIZE <<
             ") with " << n_clues_remain << " clues remaining." << std::flush;
             for (unsigned int i = 0; i < max_retries; i++){
                 auto promise = std::promise<std::tuple<bool, Board>>();
@@ -439,7 +439,7 @@ namespace gen{
         ASSERT(n_concurrent <= MAX_THREADS, "n_concurrent should be less than or equal to 8");
         ASSERT(max_retries >= n_concurrent, "max_retries should be greater than n_threads");
 
-        std::cout << "Generating board (" << BOARD_SIZE << "x" << BOARD_SIZE <<
+        if (verbose) std::cout << "Generating board (" << BOARD_SIZE << "x" << BOARD_SIZE <<
         ") with " << n_clues_remain << " clues remaining" << " (" << n_concurrent << " concurrent)." << std::flush;
 
         std::vector<std::thread> threads;
@@ -486,7 +486,7 @@ namespace gen{
         for (auto& t: threads){
             t.join();
         }
-        std::cout << std::endl;
+        if (verbose) std::cout << std::endl;
 
         return result;
     }
