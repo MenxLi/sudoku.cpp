@@ -8,19 +8,27 @@
 
 namespace parser{
     template <typename T>
-    T parse_env_i(const char* env_name, T default_value)
+    T parse_env(const char* env_name, T default_value)
     {
         const char* env_value = std::getenv(env_name);
         if (env_value == nullptr) { return default_value; }
-        return static_cast<T>(std::stoi(env_value));
-    }
 
-    template <typename T>
-    T parse_env_f(const char* env_name, T default_value)
-    {
-        const char* env_value = std::getenv(env_name);
-        if (env_value == nullptr) { return default_value; }
-        return static_cast<T>(std::stof(env_value));
+        if constexpr (std::is_same<T, bool>::value || std::is_same<T, int>::value || std::is_same<T, unsigned int>::value)
+        {
+            return static_cast<T>(std::stoi(env_value));
+        }
+
+        if constexpr (std::is_same<T, float>::value || std::is_same<T, double>::value)
+        {
+            return static_cast<T>(std::stof(env_value));
+        }
+
+        if constexpr (std::is_same<T, std::string>::value)
+        {
+            return env_value;
+        }
+
+        throw std::runtime_error("Unsupported type");
     }
 
     class CommandlineParser{

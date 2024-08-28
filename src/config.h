@@ -8,7 +8,7 @@
 #endif
 
 #ifndef MAX_ITER
-#define MAX_ITER 1e4
+#define MAX_ITER 1e5
 #endif
 
 // https://stackoverflow.com/a/8625010/6775765

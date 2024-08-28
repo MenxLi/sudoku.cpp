@@ -13,19 +13,13 @@ Then run with:
 ./bin/sudoku generate -c 24             # generate a puzzle with 24 clues
 ```
 
-Run benchmarks (time varies depending on difficulties):
+Run benchmarks on included puzzles (time varies depending on difficulties):
 ```
 > ./bin/benchmark
 Benchmarking 3 puzzles with 100 repeats...
 Puzzle 1:    5 [us]
 Puzzle 2:   12 [us]
 Puzzle 3:   74 [us]
-```
-
-Build with `pybind11`:
-```sh
-SIZE=9 pip install ./bindings
-python demo.py -c 24
 ```
 
 <details>
@@ -56,16 +50,22 @@ Median guesses: 1
 
 > ./bin/benchmark ~/Downloads/16x16Dataset.csv
 Finished on 3000 cases
-Success rate: 99.8%
-Mean time: 1036 [us]
-Median time: 214 [us]
-1st quartile time: 80 [us]
-3rd quartile time: 305 [us]
-Average guesses: 27.134
+Success rate: 100%
+Mean time: 1105 [us]
+Median time: 215 [us]
+1st quartile time: 79 [us]
+3rd quartile time: 300 [us]
+Average guesses: 29.205
 Median guesses: 0
 ```
-
 </details>
+
+
+Build with `pybind11`:
+```sh
+SIZE=9 pip install ./bindings
+python demo.py -c 24
+```
 
 ---
 

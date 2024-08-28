@@ -27,10 +27,10 @@ m_config(new Solver_config()), m_candidates{ new CandidateBoard() }, m_fill_stat
 
 void Solver::init_states(){
     *m_config = {
-        parser::parse_env_i<bool>("SOLVER_USE_GUESS", true),
-        parser::parse_env_i("SOLVER_DETERMINISTIC_GUESS", false),
-        parser::parse_env_i("SOLVER_HEURISTIC_GUESS", true),
-        parser::parse_env_i("SOLVER_USE_DOUBLE", false),
+        parser::parse_env("SOLVER_USE_GUESS", true),
+        parser::parse_env("SOLVER_DETERMINISTIC_GUESS", false),
+        parser::parse_env("SOLVER_HEURISTIC_GUESS", true),
+        parser::parse_env("SOLVER_USE_DOUBLE", false),
         false
     };
     for (unsigned int i = 0; i < BOARD_SIZE; i++)

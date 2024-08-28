@@ -131,6 +131,7 @@ int run_test_on_file(const std::string& filename){
         }
         return std::chrono::duration_cast<std::chrono::microseconds>(total).count();
     })();
+    unsigned int max_time_us = std::chrono::duration_cast<std::chrono::microseconds>(results[n-1].time).count();
     unsigned int median_time_us = std::chrono::duration_cast<std::chrono::microseconds>(results[n/2].time).count();
     unsigned int one_quartile_time_us = std::chrono::duration_cast<std::chrono::microseconds>(results[n/4].time).count();
     unsigned int three_quartile_time_us = std::chrono::duration_cast<std::chrono::microseconds>(results[3*n/4].time).count();
@@ -149,14 +150,26 @@ int run_test_on_file(const std::string& filename){
 
     unsigned int median_guesses = results[n/2].n_guesses;
 
+    unsigned int max_guesses = ([&results](){
+        unsigned int max = 0;
+        for (auto res : results){
+            if (res.n_guesses > max){
+                max = res.n_guesses;
+            }
+        }
+        return max;
+    })();
+
     std::cout << "Finished on " << n << " cases" << std::endl;
     std::cout << "Success rate: " << success_rate * 100 << "%" << std::endl;
     std::cout << "Mean time: " << total_time_us / n << " [us]" << std::endl;
     std::cout << "Median time: " << median_time_us << " [us]" << std::endl;
+    std::cout << "Max time: " << max_time_us << " [us]" << std::endl;
     std::cout << "1st quartile time: " << one_quartile_time_us << " [us]" << std::endl;
     std::cout << "3rd quartile time: " << three_quartile_time_us << " [us]" << std::endl;
     std::cout << "Average guesses: " << average_guesses << std::endl;
     std::cout << "Median guesses: " << median_guesses << std::endl;
+    std::cout << "Max guesses: " << max_guesses << std::endl;
 
     return 0;
 };
