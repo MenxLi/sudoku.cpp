@@ -56,6 +56,7 @@ public:
     // val_t(*data())[BOARD_SIZE];
     val_t* data();                      // return a pointer to the raw data
     void load_data(const std::vector<std::vector<val_t>> data);
+    void load_data(const std::vector<val_t> data);
     void load_data(std::istream& is);
     void load_data(const Board& board);
     void load_data(const std::string& str_data);

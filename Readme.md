@@ -30,35 +30,39 @@ python demo.py -c 24
 
 <details>
 <summary>
-Run benchmark on larger datasets:
+Run on larger datasets.
 </summary>
 
 ```
-> python -m scripts.benchmark /Users/monsoon/Code/repo/sudoku-dataset/hard_sudokus.txt
-------------------------------
-Solved: 100.00%
-Mean time: 36.4472 us
-Median time: 32.0 us
-Max time: 462 us
-Min time: 8 us
-1st quartile time: 23.0 us
-3rd quartile time: 45.0 us
-Mean number of guesses: 1.1677
-Median number of guesses: 1.0
-------------------------------
+> ./bin/benchmark ~/repo/sudoku-dataset/hard_sudokus.txt
+Finished on 10000 cases
+Success rate: 100%
+Mean time: 32 [us]
+Median time: 27 [us]
+1st quartile time: 20 [us]
+3rd quartile time: 39 [us]
+Average guesses: 1.9085
+Median guesses: 2
 
-> python -m scripts.benchmark /Users/monsoon/Code/repo/sudoku-dataset/all_17_clue_sudokus.txt
-------------------------------
-Solved: 100.00%
-Mean time: 86.91444731541576 us
-Median time: 47.0 us
-Max time: 25594 us
-Min time: 16 us
-1st quartile time: 38.0 us
-3rd quartile time: 66.0 us
-Mean number of guesses: 6.239913735224105
-Median number of guesses: 1.0
-------------------------------
+> ./bin/benchmark ~/repo/sudoku-dataset/all_17_clue_sudokus.txt
+Finished on 49151 cases
+Success rate: 100%
+Mean time: 92 [us]
+Median time: 41 [us]
+1st quartile time: 33 [us]
+3rd quartile time: 63 [us]
+Average guesses: 11.7719
+Median guesses: 1
+
+> ./bin/benchmark ~/Downloads/16x16Dataset.csv
+Finished on 3000 cases
+Success rate: 99.8%
+Mean time: 1036 [us]
+Median time: 214 [us]
+1st quartile time: 80 [us]
+3rd quartile time: 305 [us]
+Average guesses: 27.134
+Median guesses: 0
 ```
 
 </details>

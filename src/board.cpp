@@ -144,6 +144,15 @@ void Board::load_data(const std::vector<std::vector<val_t>> data){
     }
 }
 
+void Board::load_data(const std::vector<val_t> data){
+    ASSERT(data.size() == BOARD_SIZE * BOARD_SIZE, "invalid data size");
+    for (unsigned int i = 0; i < BOARD_SIZE; i++){
+        for (unsigned int j = 0; j < BOARD_SIZE; j++){
+            m_board[i][j] = data[i * BOARD_SIZE + j];
+        }
+    }
+}
+
 void Board::load_data(const std::string& str_data){
     std::vector<std::string> elements;
 
