@@ -17,7 +17,7 @@ LIB_DIR := bin/lib-$(SIZE)
 BIN_DIR := bin
 
 OBJS := $(LIB_DIR)/indexer_impl_$(SIZE).o $(LIB_DIR)/util.o $(LIB_DIR)/board.o \
-	$(LIB_DIR)/solver.o $(LIB_DIR)/solver_v2.o $(LIB_DIR)/generate.o
+	$(LIB_DIR)/solver_base.o $(LIB_DIR)/solver_v2.o $(LIB_DIR)/generate.o
 
 TEST_TARGETS := $(patsubst src/%_test.cpp, $(BIN_DIR)/test_%, $(wildcard src/*_test.cpp))
 

@@ -1,7 +1,7 @@
 #include "parser.hpp"
 #include "board.h"
 #include "config.h"
-#include "solver.h"
+#include "solver_base.h"
 #include "solver_v2.h"
 #include <memory>
 
@@ -12,11 +12,11 @@
 
 // initialize the static variables
 
-SolverV2::SolverV2(const Board& board) : Solver(board), 
+SolverV2::SolverV2(const Board& board) : SolverBase(board), 
 m_config(new SolverV2_config()), m_candidates{ new CandidateBoard() }, m_fill_state{ new FillState() }
 { init_states(); };
 
-SolverV2::SolverV2(SolverV2& other) : Solver(other.board()), 
+SolverV2::SolverV2(SolverV2& other) : SolverBase(other.board()), 
 m_config(new SolverV2_config()), m_candidates{ new CandidateBoard() }, m_fill_state{ new FillState() }
 {
     m_iteration_counter->load(*other.m_iteration_counter);

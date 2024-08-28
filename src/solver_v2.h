@@ -2,7 +2,7 @@
 
 #include "board.h"
 #include "config.h"
-#include "solver.h"
+#include "solver_base.h"
 #include "util.h"
 #include <cstring>
 #include <memory>
@@ -44,7 +44,7 @@ struct FillState{
     }
 };
 
-class SolverV2 : public Solver
+class SolverV2 : public SolverBase
 {
 public:
     SolverV2(const Board& board);

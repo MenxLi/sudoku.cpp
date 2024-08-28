@@ -21,14 +21,14 @@ struct IterationCounter
     }
 };
 
-class Solver
+class SolverBase
 {
 public:
     // https://stackoverflow.com/a/53705993/6775765
     inline static Indexer indexer;
 
-    Solver(const Board& board);
-    virtual ~Solver() = default;
+    SolverBase(const Board& board);
+    virtual ~SolverBase() = default;
     virtual bool step() = 0;
     bool solve(bool verbose = false);
     Board& board();
