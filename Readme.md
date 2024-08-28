@@ -24,8 +24,8 @@ Puzzle 3:   74 [us]
 
 Build with `pybind11`:
 ```sh
-pip install pybind11 && pip install ./bindings
-python demo.py
+SIZE=9 pip install ./bindings
+python demo.py -c 24
 ```
 
 <details>

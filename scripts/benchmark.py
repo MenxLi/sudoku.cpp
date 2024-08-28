@@ -5,16 +5,20 @@ import numpy
 import tqdm
 import os
 
-from sudoku_cpp import sudoku
+from sudoku_cpp import build_config, solve
 
 def solve_puzzle(puzzle_str: str) -> Tuple[int, bool]:
-    def format_puzzle(puzzle_str: str):
+    def hex2int(hex_str: str)->int:
+        return int(hex_str, 24)
+
+    def format_puzzle(puzzle_str: str)->list[list[int]]:
         output = []
-        for i in range(9):
-            output.append([int(puzzle_str[i*9+j]) for j in range(9)])
+        board_size = build_config()['BOARD_SIZE']
+        for i in range(board_size):
+            output.append([hex2int(puzzle_str[i*board_size+j]) for j in range(board_size)])
         return output
     try:
-        res = sudoku.solve(format_puzzle(puzzle_str))
+        res = solve(format_puzzle(puzzle_str))
     except Exception as e:
         print(f"Error while solving puzzle: {puzzle_str}, error: {e}")
         return -1, False
@@ -22,20 +26,24 @@ def solve_puzzle(puzzle_str: str) -> Tuple[int, bool]:
 
 def read_input_file(input_file: str)->list[str]:
     """
-    The file is supposed to contain a sudoku puzzle compactly represented as a string, 
-    where each row is a string of 81 characters.
+    The file is supposed to contain a sudoku puzzle compactly represented as a hex string.
+    where each row is a string of more than CELL_COUNT characters, 
+    we only take the first CELL_COUNT characters of each row.
     013400...
     408109...
     """
-    def test_puzzle(puzzle_str: str)->bool:
+    BOARD_SIZE = build_config()['BOARD_SIZE']
+    cell_count = BOARD_SIZE*BOARD_SIZE
+    def fmt_puzzle_str(puzzle_str: str)->str:
         puzzle_str = puzzle_str.strip()
-        if len(puzzle_str) != 81: return False
-        return all(c.isdigit() for c in puzzle_str)
+        if len(puzzle_str) < cell_count: return ""
+        puzzle_str = puzzle_str[:cell_count].replace('.', '0')
+        return puzzle_str
 
     with open(input_file, 'r') as f:
         puzzle_str = f.read()
         puzzle_str = puzzle_str.replace('.', '0')
-        all_puzzles = [l for l in puzzle_str.strip().split('\n') if test_puzzle(l)]
+        all_puzzles = [f_l for l in puzzle_str.strip().split('\n') if (f_l:=fmt_puzzle_str(l))]
     return all_puzzles
 
 def test_txt(input_file: str):

@@ -1,10 +1,10 @@
-import pathlib, subprocess
+import pathlib, subprocess, os
 from sys import platform
 from setuptools import setup
 from pybind11.setup_helpers import Pybind11Extension, ParallelCompile
 ParallelCompile("NPY_NUM_BUILD_JOBS", default=4).install()
 
-BOARD_SIZE = 9
+BOARD_SIZE = os.environ.get("SIZE", 9)
 __root_dir__ = pathlib.Path(__file__).resolve().parent.parent
 src_dir = __root_dir__ / "src"
 
