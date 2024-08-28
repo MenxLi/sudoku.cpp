@@ -2,7 +2,7 @@
 #include "board.h"
 #include "config.h"
 #include "solver_base.h"
-#include "solver_v2.h"
+#include "solver.h"
 #include <memory>
 
 #define MAX_FORK_TRAIL MAX_ITER
@@ -12,12 +12,12 @@
 
 // initialize the static variables
 
-SolverV2::SolverV2(const Board& board) : SolverBase(board), 
-m_config(new SolverV2_config()), m_candidates{ new CandidateBoard() }, m_fill_state{ new FillState() }
+Solver::Solver(const Board& board) : SolverBase(board), 
+m_config(new Solver_config()), m_candidates{ new CandidateBoard() }, m_fill_state{ new FillState() }
 { init_states(); };
 
-SolverV2::SolverV2(SolverV2& other) : SolverBase(other.board()), 
-m_config(new SolverV2_config()), m_candidates{ new CandidateBoard() }, m_fill_state{ new FillState() }
+Solver::Solver(Solver& other) : SolverBase(other.board()), 
+m_config(new Solver_config()), m_candidates{ new CandidateBoard() }, m_fill_state{ new FillState() }
 {
     m_iteration_counter->load(*other.m_iteration_counter);
     m_fill_state->load(*other.m_fill_state);
@@ -25,7 +25,7 @@ m_config(new SolverV2_config()), m_candidates{ new CandidateBoard() }, m_fill_st
     m_config->load(*other.m_config);
 };
 
-void SolverV2::init_states(){
+void Solver::init_states(){
     *m_config = {
         parser::parse_env_i<bool>("SOLVER_USE_GUESS", true),
         parser::parse_env_i("SOLVER_DETERMINISTIC_GUESS", false),
@@ -44,11 +44,11 @@ void SolverV2::init_states(){
     }
 };
 
-SolverV2_config& SolverV2::config(){
+Solver_config& Solver::config(){
     return *m_config;
 };
 
-OpState SolverV2::step_by_naked_single(){
+OpState Solver::step_by_naked_single(){
     bool updated = false;
     for (unsigned int i = 0; i < BOARD_SIZE; i++)
     {
@@ -66,7 +66,7 @@ OpState SolverV2::step_by_naked_single(){
     return updated ? OpState::SUCCESS : OpState::FAIL;
 };
 
-OpState SolverV2::step_by_hidden_single(
+OpState Solver::step_by_hidden_single(
     UnitType unit_type
 ){
     bool updated = false;
@@ -84,15 +84,15 @@ OpState SolverV2::step_by_hidden_single(
     return updated ? OpState::SUCCESS : OpState::FAIL;
 }
 
-bool SolverV2::step(){
-    DEBUG_PRINT("SolverV2::step()");
+bool Solver::step(){
+    DEBUG_PRINT("Solver::step()");
 
     auto step_by_single = [&]()->OpState{
         OpState state;
         state = step_by_naked_single();
         if (state == OpState::VIOLATION) return OpState::VIOLATION;
         if (state == OpState::SUCCESS) return OpState::SUCCESS;
-        DEBUG_PRINT("SolverV2::step() - step_by_only_candidate() failed");
+        DEBUG_PRINT("Solver::step() - step_by_only_candidate() failed");
 
         for (unsigned int i = 0; i < 3; i++)
         {
@@ -101,7 +101,7 @@ bool SolverV2::step(){
             if (state == OpState::VIOLATION) return OpState::VIOLATION;
             if (state == OpState::SUCCESS) return OpState::SUCCESS;
         }
-        DEBUG_PRINT("SolverV2::step() - step_by_implicit_only_candidate() failed");
+        DEBUG_PRINT("Solver::step() - step_by_implicit_only_candidate() failed");
         return OpState::FAIL;
     };
 
@@ -145,12 +145,12 @@ bool SolverV2::step(){
     if (config().use_guess){
         state = step_by_guess();
         if (state == OpState::SUCCESS) return true;
-        DEBUG_PRINT("SolverV2::step() - step_by_guess() failed");
+        DEBUG_PRINT("Solver::step() - step_by_guess() failed");
     }
     return false;
 };
 
-OpState SolverV2::fill_propagate(unsigned int row, unsigned int col, val_t value){
+OpState Solver::fill_propagate(unsigned int row, unsigned int col, val_t value){
     // board().set(row, col, value);
     board().get_(row, col) = value;
 
@@ -184,7 +184,7 @@ OpState SolverV2::fill_propagate(unsigned int row, unsigned int col, val_t value
 };
 
 
-OpState SolverV2::refine_candidates_by_naked_double(UnitType unit_type){
+OpState Solver::refine_candidates_by_naked_double(UnitType unit_type){
     auto solve_for_unit = [&](const unsigned int* offset_start)->OpState{
         for (auto idx_pair : indexer.subunit_combinations_2){
             // initial validity check
@@ -255,7 +255,7 @@ OpState SolverV2::refine_candidates_by_naked_double(UnitType unit_type){
     return OpState::SUCCESS;
 };
 
-OpState SolverV2::refine_candidates_by_hidden_double(UnitType unit_type){
+OpState Solver::refine_candidates_by_hidden_double(UnitType unit_type){
     auto solve_for_unit = [&](const unsigned int* offset_start, bool* unit_fill_state)->OpState{
 
         // array of candidates, each stores it's cell index in this unit
@@ -334,7 +334,7 @@ OpState SolverV2::refine_candidates_by_hidden_double(UnitType unit_type){
     }
 }
 
-OpState SolverV2::update_by_naked_single(unsigned int row, unsigned int col){
+OpState Solver::update_by_naked_single(unsigned int row, unsigned int col){
 
     if (this->board().get(row, col)){ return OpState::SKIP; }
 
@@ -353,7 +353,7 @@ OpState SolverV2::update_by_naked_single(unsigned int row, unsigned int col){
 This determines the value of a cell if 
 it is the only cell in the row/col/grid that can have a certain value
 */
-OpState SolverV2::update_by_hidden_single(val_t value, UnitType unit_type){
+OpState Solver::update_by_hidden_single(val_t value, UnitType unit_type){
 
     auto solve_for_unit = [&](const unsigned int* offset_start){
         unsigned int candidate_count = 0;
@@ -421,7 +421,7 @@ OpState SolverV2::update_by_hidden_single(val_t value, UnitType unit_type){
     return OpState::FAIL;
 };
 
-OpState SolverV2::step_by_guess(){
+OpState Solver::step_by_guess(){
     auto numNeighborUnsolved = [this](unsigned int row, unsigned int col)->unsigned int{
         unsigned int min_count;
         unsigned int row_count = 0;
@@ -572,8 +572,8 @@ OpState SolverV2::step_by_guess(){
 
         val_t guess = candidate_filled_pairs[i].val;
 
-        auto forked_solver = SolverV2(*this);
-        // auto forked_solver = *std::unique_ptr<SolverV2>(new SolverV2(*this));
+        auto forked_solver = Solver(*this);
+        // auto forked_solver = *std::unique_ptr<Solver>(new Solver(*this));
 
         // inherit the iteration counter
         forked_solver.iteration_counter().current = this->iteration_counter().current;

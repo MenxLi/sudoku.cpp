@@ -4,7 +4,7 @@
 #include <chrono>
 
 #include "config.h"
-#include "solver_v2.h"
+#include "solver.h"
 #include "board.h"
 #include "generate.h"
 
@@ -30,7 +30,7 @@ py::dict solve(
     b.load_data(input);
 
     auto start_time = std::chrono::high_resolution_clock::now();
-    SolverV2 solver(b);
+    Solver solver(b);
     bool solved = solver.solve();
     auto end_time = std::chrono::high_resolution_clock::now();
 

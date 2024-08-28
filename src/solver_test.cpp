@@ -1,5 +1,5 @@
 #include "config.h"
-#include "solver_v2.h"
+#include "solver.h"
 #include <string>
 
 // case from: https://www.kaggle.com/datasets/bryanpark/sudoku/
@@ -46,7 +46,7 @@ int main(){
         auto [input, expected] = parse_case(c);
         Board board;
         board.load_data(input);
-        SolverV2 solver(board);
+        Solver solver(board);
         solver.solve();
 
         bool correct = true;

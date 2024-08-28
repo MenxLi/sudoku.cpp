@@ -1,13 +1,13 @@
 #include "board.h"
 #include "config.h"
 #include "parser.hpp"
-#include "solver_v2.h"
+#include "solver.h"
 #include "generate.h"
 #include <chrono>
 
 bool solve_for(Board board, std::string output_file, bool verbose)
 {
-    SolverV2 solver(board);
+    Solver solver(board);
     bool solved = false;
 
     try{

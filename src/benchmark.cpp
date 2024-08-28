@@ -1,5 +1,5 @@
 #include <chrono>
-#include "solver_v2.h"
+#include "solver.h"
 #include <fstream>
 #include <ostream>
 
@@ -11,7 +11,7 @@ std::chrono::duration<double> solve_for(std::string file_content)
 
     // std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
     auto start = std::chrono::high_resolution_clock::now();
-    SolverV2 solver(board);
+    Solver solver(board);
     bool ret = solver.solve();
     ASSERT(ret, "Failed to solve the puzzle");
     auto end = std::chrono::high_resolution_clock::now();

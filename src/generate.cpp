@@ -8,7 +8,7 @@ namespace py = pybind11;
 #include "config.h"
 #include "indexer.h"
 #include "util.h"
-#include "solver_v2.h"
+#include "solver.h"
 #include <ostream>
 #include <tuple>
 #include <algorithm>
@@ -126,7 +126,7 @@ namespace gen_helper{
             const Board &solution, 
             unsigned int solve_pattern
             ){
-            SolverV2 solver(board);     // the solver will copy the board
+            Solver solver(board);     // the solver will copy the board
             switch (solve_pattern){
                 case 0:
                     solver.config().heuristic_guess = true;
