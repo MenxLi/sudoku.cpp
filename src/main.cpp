@@ -1,3 +1,4 @@
+#include "config.h"
 #include "parser.hpp"
 #include "solver_v2.h"
 #include "generate.h"
@@ -63,38 +64,36 @@ bool generate_for(unsigned int clue_count, std::string output_file){
 }
 
 int main(int argc, char* argv[]){
-    // parse arguments to get input and output file names
-    if (argc < 2)
-    {
-        std::cerr << "Usage-1: " << argv[0] << " solve -i <input_file> [-o <output_file>]" << std::endl;
-        std::cerr << "Usage-2: " << argv[0] << " generate -c <clue_count> [-o <output_file>]" << std::endl;
-        exit(1);
-    }
-
-    // parse arguments
-    std::string mode = argv[1];
     auto parser = parser::CommandlineParser(argc, argv);
 
-    std::string input_file = parser.get_arg("-i");
-    std::string output_file = parser.get_arg("-o");
-    std::string clue_count_str = parser.get_arg("-c");
+    parser.set_help_message(
+        "Usage: " + parser.prog_name() + " solve|generate \n"
+        "Options:\n"
+        "  -h, --help            Show this help message and exit\n"\
+        "solve:\n"\
+        "  -i <input_file>       Input file\n"\
+        "  [-o <output_file>]    Output file\n"\
+        "generate:\n"\
+        "  [-c <clue_count>]     Number of clues\n"\
+        "  [-o <output_file>]    Output file\n"\
+        );
+    parser.check_help_exit();
 
-    if (mode == "solve") {
+    std::string input_file = parser.parse_arg<std::string>("-i", "");
+    std::string output_file = parser.parse_arg<std::string>("-o", "");
+    int clue_count = parser.parse_arg<int>("-c", CELL_COUNT);
+
+    if (parser.has_subparser("solve")) {
         if (input_file.empty())
         {
-            std::cerr << "Usage: " << argv[0] << "solve -i <input_file> [-o <output_file>]" << std::endl;
+            std::cerr << "Please provide an input file" << std::endl;
             exit(1);
         }
         return solve_for(input_file, output_file) ? 0 : 1;
-    } else if (mode == "generate") {
-        if (clue_count_str.empty())
-        {
-            std::cerr << "Usage: " << argv[0] << "generate -c <clue_count> [-o <output_file>]" << std::endl;
-            exit(1);
-        }
-        return generate_for(std::stoi(clue_count_str), output_file) ? 0 : 1;
+    } else if (parser.has_subparser("generate")) {
+        return generate_for(clue_count, output_file) ? 0 : 1;
     } else {
-        std::cerr << "Unknown mode: " << mode << std::endl;
+        std::cout << "Invalid subparser, please use -h to check usage" << std::endl;
         exit(1);
     }
 }
