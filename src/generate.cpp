@@ -410,7 +410,7 @@ namespace gen{
             else{
                 {
                     std::lock_guard<std::mutex> lock(mtx);
-                    if (verbose) std::cout << '.'; std::cout.flush();
+                    if (verbose) std::cout << '.' << std::flush;
                 }
                 promise.set_value(std::make_tuple(false, board));
             }

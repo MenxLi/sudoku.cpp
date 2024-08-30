@@ -63,15 +63,23 @@ int main(int argc, char* argv[]){
         "Usage: " + parser.prog_name() + " solve|generate \n"
         "Options:\n"
         "  -h, --help            Show this help message and exit\n"\
-        "  -v, --verbose         Show verbose output\n"\
+        "  --show-config         Show the current configuration and exit\n"\
         "solve:\n"\
         "  [-i <input_file>]     Input file, will read from stdin if not provided\n"\
         "  [-o <output_file>]    Output file\n"\
+        "  [-v, --verbose]       Show verbose output\n"\
         "generate:\n"\
         "  [-c <clue_count>]     Number of clues, will output full board if not provided\n"\
         "  [-o <output_file>]    Output file\n"\
+        "  [-v, --verbose]       Show verbose output\n"\
         );
     parser.check_help_exit();
+    if (parser.parse_flag("--show-config")){
+        std::cout << "Configurations: " << std::endl;
+        std::cout << "- Board size: " << BOARD_SIZE << "x" << BOARD_SIZE << std::endl;
+        std::cout << "- Max iteration: " << MAX_ITER << std::endl;
+        exit(0);
+    }
 
     std::string input_file = parser.parse_arg<std::string>("-i", "");
     std::string output_file = parser.parse_arg<std::string>("-o", "");
