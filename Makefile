@@ -47,7 +47,7 @@ test: init $(TEST_TARGETS)
 src/indexer_impl_$(SIZE).cpp: src/indexer_gen.py
 	@python src/indexer_gen.py $(SIZE)
 
-$(LIB_DIR)/%.o: src/%.cpp
+$(LIB_DIR)/%$(LIB_SUFFIX): src/%.cpp
 	$(CXX) $(COMMON_FLAGS) -o $@ -c $<
 
 $(BIN_DIR)/test_%: $(OBJS) src/%.cpp
