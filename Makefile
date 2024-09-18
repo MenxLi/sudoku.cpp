@@ -30,10 +30,9 @@ endif
 LIB_DIR := bin/lib-$(SIZE)
 BIN_DIR := bin
 
-LIB_STAM := indexer_impl_$(SIZE) util board solver_base solver generate
-TARGET_STAM := sudoku benchmark
+LIB_STEM := indexer_impl_$(SIZE) util board solver_base solver generate
 
-OBJS := $(patsubst %, $(LIB_DIR)/%$(LIB_SUFFIX), $(LIB_STAM))
+OBJS := $(patsubst %, $(LIB_DIR)/%$(LIB_SUFFIX), $(LIB_STEM))
 TEST_TARGETS := $(patsubst src/%_test.cpp, $(BIN_DIR)/test_%, $(wildcard src/*_test.cpp))
 
 .PHONY: target test clean init
