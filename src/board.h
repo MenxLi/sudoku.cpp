@@ -53,8 +53,6 @@ public:
     bool is_solved();           // equal to is_valid(true)
     bool is_filled() const;     // check if the board is filled, i.e. no empty cells
 
-    // val_t(*data())[BOARD_SIZE];
-    val_t* data();                      // return a pointer to the raw data
     void load_data(const std::vector<std::vector<val_t>> data);
     void load_data(const std::vector<val_t> data);
     void load_data(std::istream& is);
@@ -64,7 +62,8 @@ public:
     void save_to_file(const std::string& filename) const;
     std::string to_string() const;
 
-    val_t operator[](Coord coord);
+    inline val_t* data();                      // return a pointer to the raw data
+    inline val_t operator[](Coord coord);
     bool operator==(const Board& other) const;
 
     friend std::ostream& operator<<(std::ostream& os, const Board& board);
@@ -74,40 +73,43 @@ private:
     std::string to_string_raw() const;
 };
 
-val_t Board::get(unsigned int idx)
+inline val_t* Board::data(){
+    return &m_board[0][0];
+}
+
+inline val_t Board::get(unsigned int idx)
 {
     ASSERT(idx < BOARD_SIZE * BOARD_SIZE, "index out of bounds: " + std::to_string(idx));
     return *(data() + idx);
 };
 
-val_t& Board::get_(unsigned int idx)
+inline val_t& Board::get_(unsigned int idx)
 {
     ASSERT(idx < BOARD_SIZE * BOARD_SIZE, "index out of bounds: " + std::to_string(idx));
     return *(data() + idx);
 };
 
-val_t Board::get(int row, int col) const
+inline val_t Board::get(int row, int col) const
 {
     ASSERT_COORD_BOUNDS(row, col);
     return m_board[row][col];
 };
 
-val_t Board::get(const Coord& coord) const
+inline val_t Board::get(const Coord& coord) const
 { 
     return get(coord.row, coord.col); 
 };
 
-val_t& Board::get_(int row, int col)
+inline val_t& Board::get_(int row, int col)
 {
     ASSERT_COORD_BOUNDS(row, col);
     return m_board[row][col];
 };
 
-val_t& Board::get_(const Coord& coord)
+inline val_t& Board::get_(const Coord& coord)
 {
     return get_(coord.row, coord.col);
 };
-
 
 class BoardEquivalenceTransform
 {
@@ -159,16 +161,16 @@ private:
     bool_ m_candidates[BOARD_SIZE][BOARD_SIZE][CANDIDATE_SIZE];
 };
 
-bool_& CandidateBoard::get_(int row, int col, val_t value){
+inline bool_& CandidateBoard::get_(int row, int col, val_t value){
     ASSERT_CANDIDATE_BOUNDS(row, col, value)
     return m_candidates[row][col][value - 1];
 }
 
-bool_* CandidateBoard::get(int row, int col){
+inline bool_* CandidateBoard::get(int row, int col){
     return m_candidates[row][col];
 }
 
-bool_* CandidateBoard::get(int offset){
+inline bool_* CandidateBoard::get(int offset){
     // return m_candidates[idx / BOARD_SIZE][idx % BOARD_SIZE];
     return &m_candidates[0][0][0] + offset * CANDIDATE_SIZE;
 }

@@ -49,17 +49,17 @@ class Solver : public SolverBase
 public:
     Solver(const Board& board);
     Solver(Solver& other);
-    void init_states();
+    void init_states() noexcept;
 
     bool step();
-    Solver_config& config();
     OpState step_by_naked_single();
     OpState step_by_hidden_single(UnitType unit_type);
     OpState step_by_guess();
 
     // set the value of a cell, and propagate the value to change the states
-    OpState fill_propagate(unsigned int row, unsigned int col, val_t value);
+    OpState fill_propagate(unsigned int row, unsigned int col, val_t value) noexcept;
 
+    inline Solver_config& config() { return *m_config; }
 private:
     // Solver_config m_config;
 

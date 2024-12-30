@@ -1,6 +1,7 @@
 
 SIZE?=9
 DEBUG?=0
+STRICT?=1
 
 CXX := g++
 STD_FLAGS := -std=c++17 -Wall -Wextra
@@ -11,7 +12,12 @@ else
 OPTIMIZATION_FLAGS := -O0 -g
 endif
 
+ifeq ($(STRICT),0)
+CONFIG_FLAGS := -DSIZE=$(SIZE)
+else
 CONFIG_FLAGS := -DSIZE=$(SIZE) -DSTRICT
+endif
+
 COMMON_FLAGS := $(STD_FLAGS) $(OPTIMIZATION_FLAGS) $(CONFIG_FLAGS)
 ifeq ($(OS),Windows_NT)
 	UNAME_S := Windows

@@ -25,7 +25,7 @@ m_config(new Solver_config()), m_candidates{ new CandidateBoard() }, m_fill_stat
     m_config->load(*other.m_config);
 };
 
-void Solver::init_states(){
+void Solver::init_states() noexcept{
     *m_config = {
         parser::parse_env("SOLVER_USE_GUESS", true),
         parser::parse_env("SOLVER_DETERMINISTIC_GUESS", false),
@@ -42,10 +42,6 @@ void Solver::init_states(){
             fill_propagate(i, j, filled_val);
         }
     }
-};
-
-Solver_config& Solver::config(){
-    return *m_config;
 };
 
 OpState Solver::step_by_naked_single(){
@@ -150,7 +146,7 @@ bool Solver::step(){
     return false;
 };
 
-OpState Solver::fill_propagate(unsigned int row, unsigned int col, val_t value){
+OpState Solver::fill_propagate(unsigned int row, unsigned int col, val_t value) noexcept {
     // board().set(row, col, value);
     board().get_(row, col) = value;
 

@@ -31,8 +31,8 @@ public:
     virtual ~SolverBase() = default;
     virtual bool step() = 0;
     bool solve(bool verbose = false);
-    Board& board();
-    IterationCounter& iteration_counter();
+    inline Board& board() { return *m_board; }
+    inline IterationCounter& iteration_counter(){ return *m_iteration_counter; }
 protected:
     std::unique_ptr<IterationCounter> m_iteration_counter;
     std::unique_ptr<Board> m_board;

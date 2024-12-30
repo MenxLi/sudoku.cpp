@@ -131,9 +131,6 @@ std::string Board::to_string() const
     return to_string_raw();
 }
 
-val_t* Board::data(){
-    return &m_board[0][0];
-}
 void Board::load_data(const std::vector<std::vector<val_t>> data){
     ASSERT(data.size() == BOARD_SIZE, "invalid data row size");
     for (unsigned int i = 0; i < BOARD_SIZE; i++){

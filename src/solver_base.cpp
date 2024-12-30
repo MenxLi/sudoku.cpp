@@ -36,14 +36,3 @@ bool SolverBase::solve(bool verbose){
 
     return board().is_solved();
 };
-
-IterationCounter& SolverBase::iteration_counter()
-{
-    return *m_iteration_counter;
-};
-
-
-Board& SolverBase::board()
-{
-    return *m_board;
-};
