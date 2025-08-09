@@ -37,9 +37,9 @@ class Solver : public SolverBase
 {
 public:
     Solver(const Board& board);
-    void init_states() noexcept;
+    void init_states();
 
-    bool step();
+    bool step() override;
     OpState step_by_naked_single();
     OpState step_by_hidden_single(UnitType unit_type);
     OpState step_by_guess();
@@ -51,7 +51,7 @@ public:
 
 private:
     // copy constructor shares config, make it private
-    explicit Solver(Solver& other); 
+    explicit Solver(Solver& other) noexcept; 
     std::shared_ptr<Solver_config> m_config;
 
     // place them in the heap to avoid stack overflow

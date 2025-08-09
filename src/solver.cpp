@@ -16,14 +16,14 @@ Solver::Solver(const Board& board) :
     m_fill_state{std::make_unique<FillState>()}
 { init_states(); };
 
-Solver::Solver(Solver& other) : 
+Solver::Solver(Solver& other) noexcept : 
     SolverBase(other), 
     m_config{other.m_config}, 
     m_candidates{std::make_unique<CandidateBoard>(*other.m_candidates)},
     m_fill_state{std::make_unique<FillState>(*other.m_fill_state)}
 {};
 
-void Solver::init_states() noexcept{
+void Solver::init_states() {
     m_config = std::shared_ptr<Solver_config>(Solver_config::new_from_env());
 
     for (unsigned int i = 0; i < BOARD_SIZE; i++)

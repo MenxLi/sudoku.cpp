@@ -24,7 +24,7 @@ void Board::set(const Coord& coord, val_t value)
     set(coord.row, coord.col, value);
 };
 
-bool Board::is_filled() const
+bool Board::is_filled() const noexcept
 {
     for (unsigned int i = 0; i < BOARD_SIZE; i++)
     {
@@ -39,7 +39,7 @@ bool Board::is_filled() const
     return true;
 };
 
-bool Board::is_valid(bool check_filled)
+bool Board::is_valid(bool check_filled) noexcept
 {
     auto check_validity = [this, check_filled](
         const unsigned int * offsets, unsigned int size
@@ -87,7 +87,7 @@ bool Board::is_valid(bool check_filled)
     return true;
 };
 
-bool Board::is_solved(){ return is_valid(true); };
+bool Board::is_solved() noexcept { return is_valid(true); };
 
 void Board::load_from_file(const std::string& filename)
 {

@@ -51,9 +51,9 @@ public:
 
     // check if the board is valid, 
     // the board should be all filled with valid values
-    bool is_valid(bool check_filled = false);
-    bool is_solved();           // equal to is_valid(true)
-    bool is_filled() const;     // check if the board is filled, i.e. no empty cells
+    bool is_valid(bool check_filled = false) noexcept;
+    bool is_solved() noexcept;                  // equal to is_valid(true)
+    bool is_filled() const noexcept;            // check if the board is filled, i.e. no empty cells
 
     void load_data(const std::vector<std::vector<val_t>> data);
     void load_data(const std::vector<val_t> data);
