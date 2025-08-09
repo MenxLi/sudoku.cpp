@@ -1,6 +1,6 @@
 #include "board.h"
 #include "config.h"
-#include "solver_base.h"
+#include "solver_base.hpp"
 #include "solver.h"
 #include <memory>
 

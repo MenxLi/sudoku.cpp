@@ -1,8 +1,8 @@
 #pragma once
 
+#include "solver_base.hpp"
 #include "board.h"
 #include "config.h"
-#include "solver_base.h"
 #include "util.h"
 #include "parser.hpp"
 #include <cstring>

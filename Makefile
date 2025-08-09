@@ -36,7 +36,7 @@ endif
 LIB_DIR := bin/lib-$(SIZE)
 BIN_DIR := bin
 
-LIB_STEM := indexer_impl_$(SIZE) util board solver_base solver generate
+LIB_STEM := indexer_impl_$(SIZE) util board solver generate
 
 OBJS := $(patsubst %, $(LIB_DIR)/%$(LIB_SUFFIX), $(LIB_STEM))
 TEST_TARGETS := $(patsubst src/%_test.cpp, $(BIN_DIR)/test_%, $(wildcard src/*_test.cpp))
