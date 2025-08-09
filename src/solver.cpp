@@ -1,4 +1,3 @@
-#include "parser.hpp"
 #include "board.h"
 #include "config.h"
 #include "solver_base.h"
@@ -10,34 +9,27 @@
 // #define DEBUG_PRINT(x) std::cout << x << std::endl;
 #define DEBUG_PRINT(x);
 
-// initialize the static variables
-
-Solver::Solver(const Board& board) : SolverBase(board), 
-m_config(new Solver_config()), m_candidates{ new CandidateBoard() }, m_fill_state{ new FillState() }
+Solver::Solver(const Board& board) : 
+    SolverBase(board), 
+    m_config(std::make_unique<Solver_config>()),
+    m_candidates{std::make_unique<CandidateBoard>()}, 
+    m_fill_state{std::make_unique<FillState>()}
 { init_states(); };
 
-Solver::Solver(Solver& other) : SolverBase(other.board()), 
-m_config(new Solver_config()), m_candidates{ new CandidateBoard() }, m_fill_state{ new FillState() }
-{
-    m_iteration_counter->load(*other.m_iteration_counter);
-    m_fill_state->load(*other.m_fill_state);
-    m_candidates->load(*other.m_candidates);
-    m_config->load(*other.m_config);
-};
+Solver::Solver(Solver& other) : 
+    SolverBase(other), 
+    m_config{std::make_unique<Solver_config>(*other.m_config)}, 
+    m_candidates{std::make_unique<CandidateBoard>(*other.m_candidates)},
+    m_fill_state{std::make_unique<FillState>(*other.m_fill_state)}
+{};
 
 void Solver::init_states() noexcept{
-    *m_config = {
-        parser::parse_env("SOLVER_USE_GUESS", true),
-        parser::parse_env("SOLVER_DETERMINISTIC_GUESS", false),
-        parser::parse_env("SOLVER_HEURISTIC_GUESS", true),
-        parser::parse_env("SOLVER_USE_DOUBLE", false),
-        false
-    };
+    m_config = Solver_config::from_env();
     for (unsigned int i = 0; i < BOARD_SIZE; i++)
     {
         for (unsigned int j = 0; j < BOARD_SIZE; j++)
         {
-            val_t filled_val = board().get_(i, j);
+            val_t& filled_val = board().get_(i, j);
             if (filled_val == 0) continue;
             fill_propagate(i, j, filled_val);
         }

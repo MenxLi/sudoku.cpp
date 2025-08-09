@@ -2,13 +2,22 @@
 #include "solver_base.h"
 #include "board.h"
 #include "config.h"
+#include <memory>
 
 #ifdef PYBIND11_BUILD
 #include <pybind11/pybind11.h>
 namespace py = pybind11;
 #endif
 
-SolverBase::SolverBase(const Board& board): m_iteration_counter(new IterationCounter()), m_board(new Board(board)) {};
+SolverBase::SolverBase(const Board& board): 
+    m_iteration_counter(new IterationCounter()), 
+    m_board(new Board(board)) 
+{};
+
+SolverBase::SolverBase(const SolverBase& other): 
+    m_iteration_counter{std::make_unique<IterationCounter>(*other.m_iteration_counter)},
+    m_board{std::make_unique<Board>(*other.m_board)}
+{};
 
 bool SolverBase::solve(bool verbose){
 

@@ -12,13 +12,6 @@ struct IterationCounter
     unsigned long n_guesses;
 
     IterationCounter(): current(0), limit(MAX_ITER), n_guesses(0) {};
-
-    void load(const IterationCounter& other)
-    {
-        current = other.current;
-        limit = other.limit;
-        n_guesses = other.n_guesses;
-    }
 };
 
 class SolverBase
@@ -27,8 +20,10 @@ public:
     // https://stackoverflow.com/a/53705993/6775765
     inline static Indexer indexer;
 
-    SolverBase(const Board& board);
+    explicit SolverBase(const Board& board);
+    explicit SolverBase(const SolverBase& other);
     virtual ~SolverBase() = default;
+
     virtual bool step() = 0;
     bool solve(bool verbose = false);
     inline Board& board() { return *m_board; }

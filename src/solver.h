@@ -4,6 +4,7 @@
 #include "config.h"
 #include "solver_base.h"
 #include "util.h"
+#include "parser.hpp"
 #include <cstring>
 #include <memory>
 
@@ -13,18 +14,16 @@ struct Solver_config{
     bool heuristic_guess;
     bool use_double;
     bool reverse_guess;
-
-    Solver_config& operator=(const Solver_config& other){
-        load(other);
-        return *this;
-    }
-
-    void load(const Solver_config& other){
-        use_guess = other.use_guess;
-        deterministic_guess = other.deterministic_guess;
-        heuristic_guess = other.heuristic_guess;
-        use_double = other.use_double;
-        reverse_guess = other.reverse_guess;
+    static std::unique_ptr<Solver_config> from_env() {
+        return std::make_unique<Solver_config>(
+            Solver_config{
+                parser::parse_env("SOLVER_USE_GUESS", true),
+                parser::parse_env("SOLVER_DETERMINISTIC_GUESS", false),
+                parser::parse_env("SOLVER_HEURISTIC_GUESS", true),
+                parser::parse_env("SOLVER_USE_DOUBLE", false),
+                false
+            }
+        );
     }
 };
 
@@ -34,14 +33,6 @@ struct FillState{
     bool col[BOARD_SIZE][CANDIDATE_SIZE] = {{0}};
     bool grid[GRID_SIZE][GRID_SIZE][CANDIDATE_SIZE] = {{{0}}};
     unsigned int visited_double_combinations[CELL_COUNT][CELL_COUNT] = {{0}};
-
-    void load(const FillState& other){
-        std::memcpy (count, other.count, sizeof(count));
-        std::memcpy (row, other.row, sizeof(row));
-        std::memcpy (col, other.col, sizeof(col));
-        std::memcpy (grid, other.grid, sizeof(grid));
-        std::memcpy (visited_double_combinations, other.visited_double_combinations, sizeof(visited_double_combinations));
-    }
 };
 
 class Solver : public SolverBase

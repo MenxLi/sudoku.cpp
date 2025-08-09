@@ -7,21 +7,6 @@
 #include <vector>
 #include <cstring>
 
-void Board::clear(val_t val = 0)
-{
-    for (unsigned int i = 0; i < BOARD_SIZE; i++)
-    {
-        for (unsigned int j = 0; j < BOARD_SIZE; j++)
-        {
-            m_board[i][j] = val;
-        }
-    }
-};
-
-Board::Board() {};
-Board::~Board() {};
-Board::Board(const Board& other):Board() { load_data(other); };
-
 void Board::set(unsigned int offset, val_t value)
 {
     ASSERT(offset < BOARD_SIZE * BOARD_SIZE, "offset out of bounds: " + std::to_string(offset));
@@ -279,39 +264,6 @@ void BoardEquivalenceTransform::transpose(Board& board)
     }
 }
 
-CandidateBoard::CandidateBoard(){
-    reset();
-}
-
-void CandidateBoard::load(const CandidateBoard &board){
-    for (unsigned int i = 0; i < BOARD_SIZE; i++){
-        for (unsigned int j = 0; j < BOARD_SIZE; j++){
-            for (unsigned int k = 0; k < CANDIDATE_SIZE; k++){
-                m_candidates[i][j][k] = board.m_candidates[i][j][k];
-            }
-        }
-    }
-}
-CandidateBoard::CandidateBoard(const CandidateBoard& other){
-    // std::memcpy(m_candidates, other.m_candidates, sizeof(m_candidates));
-    this->load(other);
-}
-CandidateBoard& CandidateBoard::operator=(const CandidateBoard &other){
-    if (this == &other){ return *this; }
-    this->load(other);
-    return *this;
-}
-
-void CandidateBoard::reset(){
-    for (unsigned int i = 0; i < BOARD_SIZE; i++){
-        for (unsigned int j = 0; j < BOARD_SIZE; j++){
-            for (unsigned int k = 0; k < CANDIDATE_SIZE; k++){
-                m_candidates[i][j][k] = 1;
-            }
-        }
-    }
-}
-
 #define ASSERT_CANDIDATE_COUNT_THROW(count) \
     if (count == 0){ throw std::runtime_error("no candidate found for this cell, invalid board or candidate not initialized"); }
 
@@ -360,10 +312,6 @@ OpState CandidateBoard::remain_x(int row, int col, unsigned int count, val_t* bu
     return counter == count? OpState::SUCCESS: OpState::FAIL;
 }
 
-val_t Board::operator[](Coord coord)
-{
-    return get(coord);
-}
 bool Board::operator==(const Board& other) const
 {
     return std::memcmp(m_board, other.m_board, sizeof(m_board)) == 0;

@@ -8,6 +8,7 @@ providing methods to read / dump the board state.
 #include <ostream>
 #include <string>
 #include <vector>
+#include <algorithm>
 #include "indexer.h"
 #include "config.h"
 
@@ -30,11 +31,12 @@ class Board
 {
 public:
     inline static Indexer indexer;
-    Board();
-    Board(const Board& other);
-    ~Board();
+    Board() = default;
+    Board(const Board& other) = default;
+    Board& operator=(const Board& other) = default;
+    ~Board() = default;
 
-    void clear(val_t val);
+    inline void clear(val_t val) { std::fill_n(&m_board[0][0], CELL_COUNT, val); };
 
     inline val_t get(unsigned int idx);
     inline val_t get(int row, int col) const;
@@ -63,7 +65,7 @@ public:
     std::string to_string() const;
 
     inline val_t* data();                      // return a pointer to the raw data
-    inline val_t operator[](Coord coord);
+    inline val_t operator[](Coord coord){ return get(coord); }; // allow board[{row, col}] to get the value
     bool operator==(const Board& other) const;
 
     friend std::ostream& operator<<(std::ostream& os, const Board& board);
@@ -135,16 +137,15 @@ class CandidateBoard
 {
 public:
     inline static Indexer indexer;
-    CandidateBoard();
-    CandidateBoard(const CandidateBoard& other);
-    CandidateBoard& operator=(const CandidateBoard& other);
+    CandidateBoard() { reset(); }
+    CandidateBoard(const CandidateBoard& other) = default;
+    CandidateBoard& operator=(const CandidateBoard& other) = default;
     inline bool_& get_(int row, int col, val_t value);
     inline bool_* get(int row, int col);
     inline bool_* get(int idx);
 
-    void load(const CandidateBoard& board);
-
-    void reset();
+    void reset() 
+        { std::fill_n(&m_candidates[0][0][0], BOARD_SIZE * BOARD_SIZE * CANDIDATE_SIZE, 1); };
     unsigned int count(int row, int col) const;
 
     bool remain_0(int row, int col) const;
