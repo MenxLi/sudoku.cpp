@@ -21,7 +21,6 @@ public:
     inline static Indexer indexer;
 
     explicit SolverBase(const Board& board);
-    explicit SolverBase(const SolverBase& other);
     virtual ~SolverBase() = default;
 
     virtual bool step() = 0;
@@ -29,6 +28,7 @@ public:
     inline Board& board() { return *m_board; }
     inline IterationCounter& iteration_counter(){ return *m_iteration_counter; }
 protected:
+    explicit SolverBase(const SolverBase& other);
     std::unique_ptr<IterationCounter> m_iteration_counter;
     std::unique_ptr<Board> m_board;
 };

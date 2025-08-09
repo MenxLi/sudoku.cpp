@@ -14,16 +14,14 @@ struct Solver_config{
     bool heuristic_guess;
     bool use_double;
     bool reverse_guess;
-    static std::unique_ptr<Solver_config> from_env() {
-        return std::make_unique<Solver_config>(
-            Solver_config{
-                parser::parse_env("SOLVER_USE_GUESS", true),
-                parser::parse_env("SOLVER_DETERMINISTIC_GUESS", false),
-                parser::parse_env("SOLVER_HEURISTIC_GUESS", true),
-                parser::parse_env("SOLVER_USE_DOUBLE", false),
-                false
-            }
-        );
+    static Solver_config* new_from_env() {
+        return new Solver_config{
+            parser::parse_env("SOLVER_USE_GUESS", true),
+            parser::parse_env("SOLVER_DETERMINISTIC_GUESS", false),
+            parser::parse_env("SOLVER_HEURISTIC_GUESS", true),
+            parser::parse_env("SOLVER_USE_DOUBLE", false),
+            false
+        };
     }
 };
 
@@ -39,7 +37,6 @@ class Solver : public SolverBase
 {
 public:
     Solver(const Board& board);
-    Solver(Solver& other);
     void init_states() noexcept;
 
     bool step();
@@ -51,11 +48,13 @@ public:
     OpState fill_propagate(unsigned int row, unsigned int col, val_t value) noexcept;
 
     inline Solver_config& config() { return *m_config; }
+
 private:
-    // Solver_config m_config;
+    // copy constructor shares config, make it private
+    explicit Solver(Solver& other); 
+    std::shared_ptr<Solver_config> m_config;
 
     // place them in the heap to avoid stack overflow
-    std::unique_ptr<Solver_config> m_config;
     std::unique_ptr<CandidateBoard> m_candidates;
     std::unique_ptr<FillState> m_fill_state;
 

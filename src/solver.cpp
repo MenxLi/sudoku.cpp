@@ -11,20 +11,21 @@
 
 Solver::Solver(const Board& board) : 
     SolverBase(board), 
-    m_config(std::make_unique<Solver_config>()),
+    m_config{std::make_shared<Solver_config>()}, 
     m_candidates{std::make_unique<CandidateBoard>()}, 
     m_fill_state{std::make_unique<FillState>()}
 { init_states(); };
 
 Solver::Solver(Solver& other) : 
     SolverBase(other), 
-    m_config{std::make_unique<Solver_config>(*other.m_config)}, 
+    m_config{other.m_config}, 
     m_candidates{std::make_unique<CandidateBoard>(*other.m_candidates)},
     m_fill_state{std::make_unique<FillState>(*other.m_fill_state)}
 {};
 
 void Solver::init_states() noexcept{
-    m_config = Solver_config::from_env();
+    m_config = std::shared_ptr<Solver_config>(Solver_config::new_from_env());
+
     for (unsigned int i = 0; i < BOARD_SIZE; i++)
     {
         for (unsigned int j = 0; j < BOARD_SIZE; j++)
