@@ -38,8 +38,18 @@ bool solve_for(Board board, std::string output_file, bool verbose)
     return solved;
 }
 
-bool generate_for(unsigned int clue_count, std::string output_file, bool verbose){
-    auto [success, board] = gen::generate_board(clue_count, 1e5, true, verbose);
+bool generate_for(
+    std::string output_file, 
+    unsigned int clue_count, 
+    unsigned int max_retries,
+    int n_threads, bool verbose
+){
+    auto [success, board] = gen::generate_board(
+        clue_count, 
+        max_retries, 
+        n_threads, 
+        verbose
+    );
     if (!success){
         std::cerr << "Failed to generate a board with " << clue_count << " clues" << std::endl;
         return false;
@@ -71,6 +81,8 @@ int main(int argc, char* argv[]){
         "generate:\n"\
         "  [-c <clue_count>]     Number of clues, will output full board if not provided\n"\
         "  [-o <output_file>]    Output file\n"\
+        "  [-j <n_jobs>]         Number of threads to use, default is 0\n"\
+        "  [-r <max_retries>]    Maximum retries for each thread, default is 2048\n"\
         "  [-v, --verbose]       Show verbose output\n"\
         );
     parser.check_help_exit();
@@ -83,7 +95,9 @@ int main(int argc, char* argv[]){
 
     std::string input_file = parser.parse_arg<std::string>("-i", "");
     std::string output_file = parser.parse_arg<std::string>("-o", "");
+    int n_jobs = parser.parse_arg<int>("-j", 0);
     int clue_count = parser.parse_arg<int>("-c", CELL_COUNT);
+    unsigned int max_retries = parser.parse_arg<unsigned int>("-r", 2048);
     bool verbose = parser.parse_flag("-v") || parser.parse_flag("--verbose");
 
     if (parser.has_subparser("solve")) {
@@ -103,7 +117,7 @@ int main(int argc, char* argv[]){
         }
         return solve_for(board, output_file, verbose) ? 0 : 1;
     } else if (parser.has_subparser("generate")) {
-        return generate_for(clue_count, output_file, verbose) ? 0 : 1;
+        return generate_for(output_file, clue_count, max_retries, n_jobs, verbose) ? 0 : 1;
     } else {
         std::cout << "Invalid subparser, please use -h to check usage" << std::endl;
         exit(1);

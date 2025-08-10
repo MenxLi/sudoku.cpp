@@ -4,6 +4,7 @@
 #include <chrono>
 
 #include "config.h"
+#include "pybind11/gil.h"
 #include "solver.h"
 #include "board.h"
 #include "generate.h"
@@ -49,12 +50,19 @@ py::dict solve(
 py::dict generate(
     unsigned int n_clues_remain, 
     unsigned int max_retries, 
-    bool parallel_exec, 
+    int n_threads,
     bool verbose
 ){
     Board b;
     auto start_time = std::chrono::high_resolution_clock::now();
-    auto [generated, board] = gen::generate_board(n_clues_remain, max_retries, parallel_exec, verbose);
+    // std::cout << "Arguments: " 
+    //           << "n_clues_remain: " << n_clues_remain 
+    //           << ", max_retries: " << max_retries 
+    //           << ", n_threads: " << n_threads 
+    //           << ", verbose: " << verbose 
+    //           << std::endl;
+
+    auto [generated, board] = gen::generate_board(n_clues_remain, max_retries, n_threads, verbose);
     auto end_time = std::chrono::high_resolution_clock::now();
 
     if (!generated){

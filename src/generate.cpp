@@ -207,28 +207,25 @@ namespace gen{
         return std::get<0>(result);
     }
 
-    std::tuple<bool, Board> generate_board(
+    std::tuple<bool, Board> generate_board_worker(
+        std::atomic_bool& stop_flag, 
         unsigned int n_clues_remain, 
         unsigned int max_retries, 
-        bool parallel_exec, 
-        bool verbose
-        ){
-        Board board;
+        std::function<void(unsigned int)> progress_callback
+    ){
         if (n_clues_remain > CELL_COUNT){
-            return std::make_tuple(false, board);
+            return std::make_tuple(false, Board{});
         }
 
         unsigned int n_clues_to_remove = CELL_COUNT - n_clues_remain;
-        std::atomic_bool stop_flag(false);
-        auto fn_thread = [n_clues_to_remove, &stop_flag, verbose](
-            std::promise<std::tuple<bool, Board>> promise
-        ){
-            Board board = Board();
+
+        for (unsigned int i = 0; i < max_retries; i++){
+            if (stop_flag.load()){
+                return std::make_tuple(false, Board{});
+            }
+            Board board;
             fill_board(board, FillStrategy::NAIVE);
-
             auto solution = Board(board);
-
-            if (stop_flag.load()){ promise.set_value(std::make_tuple(false, board)); return; }
 
             // speed up...
             unsigned int n_to_remove_ = n_clues_to_remove;
@@ -239,91 +236,64 @@ namespace gen{
             }
 
             bool generated = remove_clues_by_solve(stop_flag, board, solution, n_to_remove_);
-            if (generated){
-                promise.set_value(std::make_tuple(true, board));
+
+            if (progress_callback != nullptr){
+                progress_callback(i);
             }
-            else{
-                {
-                    std::lock_guard<std::mutex> lock(mtx);
-                    if (verbose) std::cout << '.' << std::flush;
-                }
-                promise.set_value(std::make_tuple(false, board));
+            if (generated){
+                stop_flag.store(true);
+                return std::make_tuple(true, board);
             }
         };
-        
-        if (!parallel_exec){
-            if (verbose) std::cout << "Generating board (" << BOARD_SIZE << "x" << BOARD_SIZE <<
-            ") with " << n_clues_remain << " clues remaining." << std::flush;
-            for (unsigned int i = 0; i < max_retries; i++){
-                auto promise = std::promise<std::tuple<bool, Board>>();
-                auto future = promise.get_future();
-                fn_thread(std::move(promise));
-                auto [success, b] = future.get();
-                if (success){
-                    std::cout << std::endl;
-                    return std::make_tuple(true, b);
-                }
-            }
-            return std::make_tuple(false, board);
-        }
 
-        // parallel execution
-        const unsigned int MAX_THREADS = 8;
-        unsigned int n_concurrent = std::max(std::min( std::thread::hardware_concurrency()-1, (unsigned int) MAX_THREADS), (unsigned int) 1);
-        std::array<std::future<std::tuple<bool, Board>>, MAX_THREADS> futures;
-        ASSERT(n_concurrent <= MAX_THREADS, "n_concurrent should be less than or equal to 8");
-        ASSERT(max_retries >= n_concurrent, "max_retries should be greater than n_threads");
-
-        if (verbose) std::cout << "Generating board (" << BOARD_SIZE << "x" << BOARD_SIZE <<
-        ") with " << n_clues_remain << " clues remaining" << " (" << n_concurrent << " concurrent)." << std::flush;
-
-        std::vector<std::thread> threads;
-        unsigned int submitted_counter = 0;
-
-        // submit the first batch
-        for (unsigned int i = 0; i < n_concurrent; i++){
-            auto promise = std::promise<std::tuple<bool, Board>>();
-            futures[i] = promise.get_future();
-            threads.emplace_back(fn_thread, std::move(promise));
-            submitted_counter++;
-        }
-
-        std::tuple<bool, Board> result{false, board};
-        while(submitted_counter < max_retries && !std::get<0>(result)){
-            #ifdef PYBIND11_BUILD
-            if (PyErr_CheckSignals() != 0){
-                throw py::error_already_set();
-            }
-            #endif
-
-            for (unsigned int i = 0; i < n_concurrent; i++){
-                if (futures[i].valid() && futures[i].wait_for(std::chrono::microseconds(1)) == std::future_status::ready){
-                    auto [success, b] = futures[i].get();
-                    // std::cout << "Checking futures " << i << std::endl;
-                    if (success){
-                        stop_flag.store(true);
-                        result = std::make_tuple(true, b);
-                        break;
-                    }
-                    // replace the finished future with a new one
-                    if (submitted_counter < max_retries) {
-                        // std::cout << "Submitting new thread " << submitted_counter << std::endl;
-                        auto promise = std::promise<std::tuple<bool, Board>>();
-                        futures[i] = promise.get_future();
-                        threads.emplace_back(fn_thread, std::move(promise));
-                        submitted_counter++;
-                    }
-                }
-            }
-        }
-
-        // wait for all threads to finish, clean up
-        for (auto& t: threads){
-            t.join();
-        }
-        if (verbose) std::cout << std::endl;
-
-        return result;
+        return std::make_tuple(false, Board{});
     }
 
+    std::tuple<bool, Board> generate_board(
+        unsigned int n_clues_remain, 
+        unsigned int max_retries, 
+        int n_threads, 
+        bool verbose
+    ){
+        std::atomic_bool stop_flag(false);
+        if (verbose){
+            std::cout << "Generating board with " << n_clues_remain << " clues remaining, max retries: " << max_retries << std::endl;
+        }
+
+        if (n_threads == 0){
+            auto r = generate_board_worker(
+                stop_flag, n_clues_remain, max_retries, 
+                [verbose](unsigned int){ if (verbose){ std::cout << "." << std::flush; } }
+            );
+            if (verbose) std::cout << std::endl;
+            return r;
+        }
+
+        if (n_threads < 0){
+            n_threads = std::thread::hardware_concurrency() - 1; // leave one thread for the main thread
+        }
+
+        std::vector<std::future<std::tuple<bool, Board>>> futures;
+        for (int i = 0; i < n_threads; i++){
+            auto fut = std::async(std::launch::async, generate_board_worker, std::ref(stop_flag), n_clues_remain, max_retries, 
+                [verbose](unsigned int){
+                    if (verbose){
+                        std::lock_guard<std::mutex> lock(mtx);
+                        std::cout << "." << std::flush;
+                    }
+                }
+            );
+            futures.push_back(std::move(fut));
+        }
+        std::tuple<bool, Board> result = std::make_tuple(false, Board{});
+        for (auto& future: futures){
+            auto [success, board] = future.get();
+            if (success){
+                if (std::get<0>(result)){ continue; }
+                result = std::make_tuple(true, board);
+            }
+        }
+        if (verbose) std::cout << std::endl;
+        return result;
+    };
 }
