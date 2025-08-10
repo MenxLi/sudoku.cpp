@@ -10,7 +10,6 @@ namespace py = pybind11;
 #include "indexer.h"
 #include "util.h"
 #include "solver.h"
-#include <ostream>
 #include <tuple>
 #include <algorithm>
 #include <future>
@@ -93,6 +92,7 @@ namespace gen_helper{
     }    
 
     /* 
+    [Deprecated]
     Remove n_clues_to_remove clues from the board, recursively
     will make sure the board is still uniquely solvable
     */
@@ -147,7 +147,7 @@ namespace gen_helper{
         Board& board, 
         const Board& solution, 
         unsigned int n_clues_to_remove, 
-        long max_depth = CELL_COUNT*4
+        long max_depth = CELL_COUNT*2
     ){
         struct StackItem{
             std::vector<unsigned int> indices;
@@ -167,13 +167,15 @@ namespace gen_helper{
 
         long depth_remain = max_depth;
 
+        const float TRAIL_PERCENTILE = 0.5f;
         while (stack.size() > 0){
 
             if (stop_flag.load())
                 return std::make_tuple(false, depth_remain);
 
             StackItem& top_item = stack.top();
-            if (top_item.next_idx >= top_item.indices.size()){
+            auto trail_size = static_cast<unsigned int>(top_item.indices.size() * TRAIL_PERCENTILE);
+            if (top_item.next_idx >= trail_size){
                 // all indices are tried, revert the base index
                 board.set(top_item.base_pos, original_board.get(top_item.base_pos));
                 stack.pop();
@@ -192,16 +194,16 @@ namespace gen_helper{
             board.set(pos, 0);
             depth_remain--; 
 
-            if (depth_remain < n_clues_to_remove)
-                return std::make_tuple(false, depth_remain); 
-
             if (!uniquely_solvable(board, solution)){
                 // std::cout << "Depth remain [c]: " << depth_remain << ", clues to remove: " << n_clues_to_remove << std::endl;
                 board.set(pos, original_board.get(pos));
                 top_item.next_idx++;
                 continue;
             }
+
             n_clues_to_remove--;
+            if (depth_remain < n_clues_to_remove)
+                return std::make_tuple(false, depth_remain); 
 
             if (n_clues_to_remove == 0)
                 return std::make_tuple(true, depth_remain); 

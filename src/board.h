@@ -5,7 +5,6 @@ providing methods to read / dump the board state.
 
 #pragma once
 #include <iostream>
-#include <ostream>
 #include <string>
 #include <vector>
 #include <algorithm>
