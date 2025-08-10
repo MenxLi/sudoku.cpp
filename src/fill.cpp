@@ -35,9 +35,9 @@ namespace gen {
     }
 
     void apply_random_transform(Board& board, unsigned int n_repeats){
-        auto transform_type_smplr = UniformIntDist<0, 3>();
-        auto idx_smplr = UniformIntDist<0, GRID_SIZE - 1>();
-        auto value_smplr = UniformIntDist<0, CANDIDATE_SIZE - 1>();
+        static thread_local auto transform_type_smplr = UniformIntDist<0, 3>();
+        static thread_local auto idx_smplr = UniformIntDist<0, GRID_SIZE - 1>();
+        static thread_local auto value_smplr = UniformIntDist<0, CANDIDATE_SIZE - 1>();
         for (unsigned int i = 0; i < n_repeats; i++){
             unsigned int transform_type = transform_type_smplr.sample();
             unsigned int idx1;

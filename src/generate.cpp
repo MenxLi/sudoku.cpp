@@ -1,4 +1,5 @@
 #include <chrono>
+#include <iostream>
 #ifdef PYBIND11_BUILD
 #include <pybind11/pybind11.h>
 namespace py = pybind11;
@@ -146,7 +147,7 @@ namespace gen_helper{
         Board& board, 
         const Board& solution, 
         unsigned int n_clues_to_remove, 
-        long max_depth = CELL_COUNT*2
+        long max_depth = CELL_COUNT*4
     ){
         struct StackItem{
             std::vector<unsigned int> indices;
@@ -154,18 +155,22 @@ namespace gen_helper{
             unsigned int next_idx;  // the next index of the indices to try
         };
         Board original_board = Board(board);
+
+        if (!uniquely_solvable(board, solution)){
+            return std::make_tuple(false, max_depth);
+        }
+
         std::stack<StackItem> stack;
 
         // fill the first one
         stack.push({get_randomized_filled_indices(board), 0, 0});
 
-        // for (unsigned int i = 0; i < init_indices.size(); i++){ std::cout << init_indices[i] << " " << std::flush; } std::cout << std::endl;
-
         long depth_remain = max_depth;
+
         while (stack.size() > 0){
-            if (stop_flag.load()){
+
+            if (stop_flag.load())
                 return std::make_tuple(false, depth_remain);
-            }
 
             StackItem& top_item = stack.top();
             if (top_item.next_idx >= top_item.indices.size()){
@@ -174,26 +179,37 @@ namespace gen_helper{
                 stack.pop();
 
                 n_clues_to_remove++;
-                depth_remain--; if (depth_remain < n_clues_to_remove){ return std::make_tuple(false, depth_remain); }
+                depth_remain--; 
+                
+                if (depth_remain < n_clues_to_remove)
+                    return std::make_tuple(false, depth_remain); 
+
                 continue;
             }
 
             // remove the next index and check if the board is still uniquely solvable
             unsigned int pos = top_item.indices[top_item.next_idx];
             board.set(pos, 0);
-            depth_remain--; if (depth_remain < n_clues_to_remove){ return std::make_tuple(false, depth_remain); }
+            depth_remain--; 
+
+            if (depth_remain < n_clues_to_remove)
+                return std::make_tuple(false, depth_remain); 
 
             if (!uniquely_solvable(board, solution)){
+                // std::cout << "Depth remain [c]: " << depth_remain << ", clues to remove: " << n_clues_to_remove << std::endl;
                 board.set(pos, original_board.get(pos));
                 top_item.next_idx++;
                 continue;
             }
             n_clues_to_remove--;
 
-            if (n_clues_to_remove == 0){ return std::make_tuple(true, depth_remain); }
+            if (n_clues_to_remove == 0)
+                return std::make_tuple(true, depth_remain); 
 
             auto next_indices = get_randomized_filled_indices(board);
             stack.push({next_indices, pos, 0});
+
+            // std::cout << "Depth remain: " << depth_remain << ", clues to remove: " << n_clues_to_remove << std::endl;
         }
         return std::make_tuple(false, depth_remain);
     }

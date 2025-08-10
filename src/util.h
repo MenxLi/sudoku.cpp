@@ -69,14 +69,14 @@ namespace util{
         }
     }
 
-    static std::random_device dev;
-    static std::mt19937 rng(dev());
     // suffle the first size elements of an array 
     // using the Fisher-Yates algorithm
     // use this for very small arrays
     template <typename T>
     void shuffle_array(T* arr, unsigned int size)
     {
+        static thread_local std::random_device dev;
+        static thread_local std::mt19937 rng(dev());
         std::uniform_int_distribution<std::mt19937::result_type> dist(0, size - 1);
         for (unsigned int i = 0; i < size; i++)
         {
