@@ -50,19 +50,14 @@ py::dict solve(
 py::dict generate(
     unsigned int n_clues_remain, 
     unsigned int max_retries, 
-    int n_threads,
     bool verbose
 ){
     Board b;
     auto start_time = std::chrono::high_resolution_clock::now();
-    // std::cout << "Arguments: " 
-    //           << "n_clues_remain: " << n_clues_remain 
-    //           << ", max_retries: " << max_retries 
-    //           << ", n_threads: " << n_threads 
-    //           << ", verbose: " << verbose 
-    //           << std::endl;
 
-    auto [generated, board] = gen::generate_board(n_clues_remain, max_retries, n_threads, verbose);
+    // here only one thread is used, 
+    // because python's GIL handling is too complex to properly checking for keyboard interrupts...
+    auto [generated, board] = gen::generate_board(n_clues_remain, max_retries, 0, verbose);
     auto end_time = std::chrono::high_resolution_clock::now();
 
     if (!generated){

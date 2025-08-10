@@ -2,17 +2,18 @@ from . import sudoku
 
 def solve(puzzle: list[list[int]])->dict:
     return sudoku.solve(puzzle)
-def generate(n_clues: int, max_retries: int = 1024, n_threads = 0, verbose = True)->list[list[int]]:
+
+def generate(n_clues: int, max_retries: int = 1024, verbose = True)->list[list[int]]:
     """
     Generate a Sudoku puzzle with a given number of clues.
     - n_clues: Number of clues to leave in the puzzle.
-    - max_retries: Maximum retries for each thread to generate a valid puzzle.
-    - n_threads: Number of threads to use for generation. If 0, no-multithreading is used.
+    - max_retries: Maximum retries to generate a valid puzzle.
     - verbose: If True, print verbose output during generation.
     Returns a list of lists representing the Sudoku board.
     May raise an exception if generation fails.
     """
-    return sudoku.generate(n_clues, max_retries, n_threads, verbose)
+    return sudoku.generate(n_clues, max_retries, verbose)
+
 def build_config()->dict:
     return sudoku.build_config()
 

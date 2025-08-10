@@ -7,10 +7,9 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", "--clues", type=int, default=cell_count//2, help="Number of clues")
-    parser.add_argument("-j", "--n_jobs", type=int, default=0, help="Number of threads to use, default is 0 (no multithreading)")
     args = parser.parse_args()
 
-    gen = generate(args.clues, n_threads=args.n_jobs, verbose=True)
+    gen = generate(args.clues, verbose=True)
     print(gen, end='\n\n')
     puzzle = gen['data']
     print("Puzzle:")
