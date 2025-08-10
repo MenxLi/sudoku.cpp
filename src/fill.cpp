@@ -5,7 +5,7 @@
 
 namespace gen {
 
-    Board get_meta_board(){
+    constexpr Board get_meta_board(){
         auto get_iota_row = [](){
             std::array<val_t, BOARD_SIZE> row_data;
             std::iota(row_data.begin(), row_data.end(), 1);
@@ -30,7 +30,7 @@ namespace gen {
                 board.set(i, j, row_data[j]);
             }
         }
-        ASSERT(board.is_solved(), "Invalid meta board");
+        // ASSERT(board.is_solved(), "Invalid meta board");
         return board;
     }
 

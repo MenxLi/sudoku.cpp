@@ -52,8 +52,8 @@ public:
     // check if the board is valid, 
     // the board should be all filled with valid values
     bool is_valid(bool check_filled = false) noexcept;
-    bool is_solved() noexcept;                  // equal to is_valid(true)
-    bool is_filled() const noexcept;            // check if the board is filled, i.e. no empty cells
+    bool is_filled() const noexcept;    // check if the board is filled, i.e. no empty cells
+    bool is_solved() noexcept {return is_valid(true);};
 
     void load_data(const std::vector<std::vector<val_t>> data);
     void load_data(const std::vector<val_t> data);
@@ -71,7 +71,7 @@ public:
     friend std::ostream& operator<<(std::ostream& os, const Board& board);
 
 private:
-    val_t m_board[BOARD_SIZE][BOARD_SIZE];
+    val_t m_board[BOARD_SIZE][BOARD_SIZE] = {{0}};
     std::string to_string_raw() const;
 };
 

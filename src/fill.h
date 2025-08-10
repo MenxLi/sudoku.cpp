@@ -25,7 +25,7 @@ public:
 a meta board is a board that contains the simplist form of a filled board
 generated with fixed strategy.
 */
-Board get_meta_board();
+constexpr Board get_meta_board();
 
 /* Apply random equivalence transformation to the board */
 void apply_random_transform(Board& board, unsigned int n_repeats);
@@ -35,7 +35,6 @@ Get a list of valid candidates for a cell in the board,
 based on the current state of it's neighbors
 */
 std::vector<val_t> get_candidates(Board& board, int row, int col);
-
 
 /*
 Fill the board with valid values, from transforming a meta board, 

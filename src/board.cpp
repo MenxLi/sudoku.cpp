@@ -87,8 +87,6 @@ bool Board::is_valid(bool check_filled) noexcept
     return true;
 };
 
-bool Board::is_solved() noexcept { return is_valid(true); };
-
 void Board::load_from_file(const std::string& filename)
 {
     std::ifstream file(filename, std::ios::in);
