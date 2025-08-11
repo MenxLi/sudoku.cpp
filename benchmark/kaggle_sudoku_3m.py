@@ -7,26 +7,20 @@ import argparse, csv
 from pathlib import Path
 from typing import Iterable
 import tqdm
-import sudoku_cpp
+import sudoku_cpp as sudoku
 
-def load_sudoku_data(file_path: str):
-    def fmt_puzzle(puzzle_str: str) -> Iterable[list[list[int]]]:
-        """Convert a string representation of a Sudoku puzzle into a 2D list."""
-        t = []
-        for i in range(0, 81, 9):
-            r = [int(digit) if digit != '.' else 0 for digit in puzzle_str[i:i+9]]
-            t.append(r)
-        return t
+def load_sudoku_data(file_path: Path) -> Iterable[tuple[sudoku.Board, sudoku.Board]]:
+    def fmt_puzzle(puzzle_str: str):
+        return sudoku.Board.from_str(puzzle_str, sp='', nl='')
 
     with open(file_path, 'r') as file:
         reader = csv.reader(file)
         for row in reader:
             if row[0] == 'id':
                 continue    # Skip header row
-            # Return puzzle and solution
             yield fmt_puzzle(row[1]), fmt_puzzle(row[2])
 
-def benchmark_sudoku(file_path: str):
+def benchmark_sudoku(file_path: Path) -> dict:
     """
     Benchmark the Sudoku solver on a dataset of puzzles.
     - file_path: Path to the CSV file containing Sudoku puzzles.
@@ -41,7 +35,7 @@ def benchmark_sudoku(file_path: str):
     for puzzle, solution in tqdm.tqdm(load_sudoku_data(file_path)):
         stats['total_puzzles'] += 1
         try:
-            result = sudoku_cpp.solve(puzzle)
+            result = sudoku.solve(puzzle)
             if result['solved']:
                 stats['solved'] += 1
             else:

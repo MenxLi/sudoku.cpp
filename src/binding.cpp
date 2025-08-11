@@ -18,7 +18,11 @@ namespace py = pybind11;
 class SudokuBoard {
     std::unique_ptr<Board> m_board;
 public:
-    SudokuBoard(std::unique_ptr<Board> board) : m_board(std::move(board)) {}
+
+    explicit SudokuBoard() : m_board(std::make_unique<Board>()) {}
+    explicit SudokuBoard(std::unique_ptr<Board> board) : m_board(std::move(board)) {}
+    explicit SudokuBoard(const Board& board) : m_board(std::make_unique<Board>(board)) {}
+    Board& board() { return *m_board; }
 
     static SudokuBoard from_list1d(std::vector<val_t> data) {
         auto board = std::make_unique<Board>();
@@ -32,8 +36,8 @@ public:
     }
     static SudokuBoard from_str(
         std::string str_data, 
-        std::string sp,          // seperator for values
-        std::string nl           // newline character
+        std::string sp= " ",           // seperator for values
+        std::string nl = "\n"           // newline character
     ) {
 
         auto board = std::make_unique<Board>();
@@ -107,48 +111,39 @@ public:
         }
         return data;
     }
+
+    val_t get(int row, int col) const {
+        return m_board->get(row, col);
+    }
+
+    val_t set(int row, int col, val_t value) {
+        m_board->set(row, col, value);
+        return value;
+    }
 };
 
-std::vector<std::vector<val_t>> board_to_vector(Board& b){
-    std::vector<std::vector<val_t>> data;
-    val_t* raw_data = b.data();
-    for (unsigned int i=0; i<BOARD_SIZE; i++){
-        std::vector<val_t> row;
-        for (unsigned int j=0; j<BOARD_SIZE; j++){
-            row.push_back( raw_data[i*BOARD_SIZE + j]);
-        }
-        data.push_back(row);
-    }
-    return data;
-}
-
-py::dict solve(
-    std::vector<std::vector<val_t>> input
-){
-    Board b;
-    b.load_data(input);
+py::dict solve(SudokuBoard& sudoku_board) {
+    Board b(sudoku_board.board());
 
     auto start_time = std::chrono::high_resolution_clock::now();
     Solver solver(b);
     bool solved = solver.solve();
     auto end_time = std::chrono::high_resolution_clock::now();
 
-    auto data = board_to_vector(solver.board());
-
     py::dict result;
+    result["board"] = SudokuBoard(std::make_unique<Board>(solver.board()));
     result["solved"] = solved;
     result["iterations"] = solver.iteration_counter().current;
     result["iteration_limit"] = solver.iteration_counter().limit;
     result["n_guesses"] = solver.iteration_counter().n_guesses;
-    result["data"] = data;
     result["time_us"] = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
     return result;
 }
 
 py::dict generate(
     unsigned int n_clues_remain, 
-    unsigned int max_retries, 
-    bool verbose
+    unsigned int max_retries = 1024,
+    bool verbose = false
 ){
     Board b;
     auto start_time = std::chrono::high_resolution_clock::now();
@@ -162,10 +157,8 @@ py::dict generate(
         throw std::runtime_error("Failed to generate a board with " + std::to_string(n_clues_remain) + " clues remaining");
     }
 
-    std::vector<std::vector<val_t>> data = board_to_vector(board);
-
     py::dict result;
-    result["data"] = data;
+    result["board"] = SudokuBoard(board);
     result["time_us"] = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
     return result;
 }
@@ -179,16 +172,26 @@ py::dict build_config(){
 }
 
 PYBIND11_MODULE(sudoku, m) {
-    py::class_<SudokuBoard>(m, "SudokuBoard")
+    py::class_<SudokuBoard>(m, "Board")
         .def(py::init<std::unique_ptr<Board>>())
+        .def_static("from_str", &SudokuBoard::from_str, 
+                    py::arg("str_data"), 
+                    py::arg("sp") = " ", 
+                    py::arg("nl") = "\n"
+                )
         .def_static("from_list1d", &SudokuBoard::from_list1d)
         .def_static("from_list2d", &SudokuBoard::from_list2d)
-        .def_static("from_str", &SudokuBoard::from_str)
         .def("to_list1d", &SudokuBoard::to_list1d)
-        .def("to_list2d", &SudokuBoard::to_list2d);
+        .def("to_list2d", &SudokuBoard::to_list2d)
+        .def("get", &SudokuBoard::get, py::arg("row"), py::arg("col"))
+        .def("set", &SudokuBoard::set, py::arg("row"), py::arg("col"), py::arg("value"));
 
-    m.doc() = "Sudoku solver"; // optional module docstring
+    m.doc() = "Sudoku solver and generator using C++ backend";
     m.def("solve", &solve, "Solve a sudoku puzzle");
-    m.def("generate", &generate, "Generate a sudoku puzzle");
+    m.def("generate", &generate, "Generate a sudoku puzzle", 
+          py::arg("n_clues_remain"), 
+          py::arg("max_retries") = 1024, 
+          py::arg("verbose") = false
+        );
     m.def("build_config", &build_config, "Build config");
 }

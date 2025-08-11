@@ -1,23 +1,7 @@
-from . import sudoku
+from .sudoku import *
 
-def solve(puzzle: list[list[int]])->dict:
-    return sudoku.solve(puzzle)
-
-def generate(n_clues: int, max_retries: int = 1024, verbose = True)->list[list[int]]:
-    """
-    Generate a Sudoku puzzle with a given number of clues.
-    - n_clues: Number of clues to leave in the puzzle.
-    - max_retries: Maximum retries to generate a valid puzzle.
-    - verbose: If True, print verbose output during generation.
-    Returns a list of lists representing the Sudoku board.
-    May raise an exception if generation fails.
-    """
-    return sudoku.generate(n_clues, max_retries, verbose)
-
-def build_config()->dict:
-    return sudoku.build_config()
-
-def fmt_board(board: list[list[int]]) -> str:
+def fmt_board(b: Board) -> str:
+    board = b.to_list2d()
     board_size = sudoku.build_config()['BOARD_SIZE']
     grid_size = sudoku.build_config()['GRID_SIZE']
     assert len(board) == board_size

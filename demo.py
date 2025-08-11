@@ -11,12 +11,12 @@ if __name__ == "__main__":
 
     gen = generate(args.clues, verbose=True)
     print(gen, end='\n\n')
-    puzzle = gen['data']
+    puzzle = gen['board']
     print("Puzzle:")
     print(fmt_board(puzzle), end='\n\n')
 
     solution = solve(puzzle)
     print(solution, end='\n\n')
-    solved_puzzle = solution['data']
+    solved_puzzle = solution['board']
     print("Solution:")
     print(fmt_board(solved_puzzle), end='\n\n')
