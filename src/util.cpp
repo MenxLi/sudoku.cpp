@@ -22,4 +22,15 @@ std::vector<std::string> split_string(const std::string& str, const std::string&
     return result;
 }
 
+std::string replace_string(const std::string& str, const std::string& old_s, const std::string& new_s)
+{
+    std::string result = str;
+    size_t pos = 0;
+    while ((pos = result.find(old_s, pos)) != std::string::npos) {
+        result.replace(pos, old_s.length(), new_s);
+        pos += new_s.length();
+    }
+    return result;
+}
+
 }

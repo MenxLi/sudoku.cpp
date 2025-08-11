@@ -8,6 +8,7 @@
 
 namespace util{
     std::vector<std::string> split_string(const std::string& str, const std::string& delimiter);
+    std::string replace_string(const std::string& str, const std::string& old_s, const std::string& new_s);
 
     template <typename T, unsigned int size_>
     class SizedArray
