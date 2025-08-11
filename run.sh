@@ -3,6 +3,10 @@
 n_success=0
 n_total=0
 
+if [ ! -d "output" ]; then
+    mkdir output
+fi
+
 for i in {1..100}; do
     if [ ! -f "puzzles/${i}.txt" ]; then
         continue
@@ -15,4 +19,4 @@ for i in {1..100}; do
     ((n_total++))
 done
 
-echo "Success rate: ${n_success}/${n_total}"
+echo "Success: ${n_success}/${n_total}"
