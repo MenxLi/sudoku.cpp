@@ -1,6 +1,8 @@
 
-A Sudoku game solver and generator, 
+A fast Sudoku game solver, 
 it deals with puzzles of any size (e.g. 4x4, 9x9, 16x16, etc.).
+
+It solves 3 million 9x9 puzzles in 5 minutes using single thread. [Refer to this kaggle kernel](https://www.kaggle.com/code/monsoonli/a-fast-sudoku-solver) for more details.
 
 Build with size 9 (default):
 ```sh
@@ -64,7 +66,7 @@ Median guesses: 0
 Build with `pybind11`:
 ```sh
 SIZE=9 pip install ./bindings
-python demo.py -c 24
+python demo.py -c 24    # generate and solve a puzzle with 24 clues
 ```
 
 ---
