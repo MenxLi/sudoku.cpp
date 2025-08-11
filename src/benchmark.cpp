@@ -1,5 +1,6 @@
 #include "config.h"
 #include "solver.h"
+#include "parser.hpp"
 
 #include <chrono>
 #include <cstdlib>
@@ -101,7 +102,11 @@ int run_default_test(){
     return 0;
 }
 
-int run_test_on_file(const std::string& filename){
+int run_test_on_file(
+    const std::string& filename, 
+    unsigned int offset = 0,
+    unsigned int max_cases = 100000
+){
     std::ifstream file(filename);
     if (!file.is_open()){
         return 1;
@@ -109,17 +114,22 @@ int run_test_on_file(const std::string& filename){
 
     std::string line_content;
     std::vector<CaseResult> results;
+    size_t line_counter = 0;
     while (std::getline(file, line_content)){
-        if (line_content.size() < CELL_COUNT){
-            continue;
+        if (line_counter < offset) continue; 
+        if (line_counter - offset > max_cases) {
+            std::cout << "[Warn] Reached max cases limit: " << max_cases << ", skip rest." << std::endl;
+            break;
         }
+        line_counter++;
+        if (line_content.size() < CELL_COUNT) continue;
+        if (line_content[0] == '#') continue; // skip comment lines
         auto data = data_from_compact_line(line_content);
         auto data_vector = std::vector<val_t>(data.begin(), data.end());
         auto res = solve_for(data_vector);
         results.push_back(res);
     }
 
-    // print statistics
     std::qsort(results.data(), results.size(), sizeof(CaseResult), [](const void* a, const void* b){
         return ((CaseResult*)a)->time.count() < ((CaseResult*)b)->time.count()? -1 : 1;
     });
@@ -176,15 +186,31 @@ int run_test_on_file(const std::string& filename){
 
 int main(int argc, char* argv[])
 {
+    auto parser = parser::CommandlineParser(argc, argv);
+    parser.set_help_message(
+        "Usage: " + std::string(argv[0]) + "[filename] [options]\n"
+        "Options:\n"
+        "  -h, --help          Show this help message and exit\n"
+        "  --offset <n>        Offset for the file (default: 0)\n"
+        "  --limit <n>         Maximum number of cases to run (default: 100000)\n"
+    );
+
+    parser.check_help_exit();
 
     if (argc == 1){
         exit(run_default_test());
     }
 
-    if (argc == 2){
-        exit(run_test_on_file(argv[1]));
+    unsigned int offset = parser.parse_arg<unsigned int>("--offset", 0);
+    unsigned int limit = parser.parse_arg<unsigned int>("--limit", 100000);
+
+    std::string filename = argv[1];
+    if (filename[0] == '-'){
+        std::cerr << "Error: filename cannot start with '-'" << std::endl;
+        exit(1);
     }
 
+    exit(run_test_on_file(filename, offset, limit));
     std::cout << "Usage: " << argv[0] << " [filename]" << std::endl;
 
 }
