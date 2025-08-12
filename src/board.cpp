@@ -10,13 +10,13 @@
 void Board::set(unsigned int offset, val_t value)
 {
     ASSERT(offset < BOARD_SIZE * BOARD_SIZE, "offset out of bounds: " + std::to_string(offset));
-    *(&m_board[0][0] + offset) = value;
+    (data() + offset)->assign(value);
 };
 
 void Board::set(int row, int col, val_t value)
 {
     ASSERT_CANDIDATE_BOUNDS(row, col, value)
-    m_board[row][col] = value;
+    m_board[row][col].assign(value);
 };
 
 void Board::set(const Coord& coord, val_t value)
@@ -24,13 +24,13 @@ void Board::set(const Coord& coord, val_t value)
     set(coord.row, coord.col, value);
 };
 
-bool Board::is_filled() const noexcept
+bool Board::is_filled() noexcept
 {
     for (unsigned int i = 0; i < BOARD_SIZE; i++)
     {
         for (unsigned int j = 0; j < BOARD_SIZE; j++)
         {
-            if (m_board[i][j] == 0)
+            if (!m_board[i][j].is_solved())
             {
                 return false;
             }
@@ -44,20 +44,19 @@ bool Board::is_valid(bool check_filled) noexcept
     auto check_validity = [this, check_filled](
         const unsigned int * offsets, unsigned int size
     )->bool{
-        auto found = std::unique_ptr<bool[]>(new bool[size]{false});
-        for (unsigned int i = 0; i < BOARD_SIZE; i++){
+        auto found = std::unique_ptr<bool[]>(new bool[CANDIDATE_SIZE]{false});
+
+        for (unsigned int i = 0; i < size; i++){
             const unsigned int offset = offsets[i];
-            val_t v = this->get(offset);
-            if (check_filled && v == 0){ // not filled
+            auto& cell = this->get(offset);
+            bool is_cell_solved = cell.is_solved();
+            if (check_filled && !is_cell_solved){ // not filled
                 // std::cout << "not filled" << std::endl;
                 return false;
             }
-            if (v > BOARD_SIZE){ // invalid value
-                // std::cout << "invalid value" << std::endl;
-                return false;
-            }
 
-            if (v==0) continue;
+            if (!is_cell_solved) continue;
+            auto v = cell.retrive_nocheck();
             if (found[v - 1]){ // duplicate
                 // std::cout << "duplicate" << std::endl;
                 return false;
@@ -98,7 +97,7 @@ void Board::load_from_file(const std::string& filename)
     file.close();
 }
 
-void Board::save_to_file(const std::string& filename) const
+void Board::save_to_file(const std::string& filename)
 {
     std::ofstream file(filename, std::ios::trunc);
     if (!file.is_open())
@@ -109,7 +108,7 @@ void Board::save_to_file(const std::string& filename) const
     file.close();
 }
 
-std::string Board::to_string() const
+std::string Board::to_string()
 {
     return to_string_raw();
 }
@@ -119,7 +118,7 @@ void Board::load_data(const std::vector<std::vector<val_t>> data){
     for (unsigned int i = 0; i < BOARD_SIZE; i++){
         ASSERT(data.size() == BOARD_SIZE, "invalid data column size");
         for (unsigned int j = 0; j < BOARD_SIZE; j++){
-            m_board[i][j] = data[i][j];
+            m_board[i][j].assign(data[i][j]);
         }
     }
 }
@@ -128,7 +127,7 @@ void Board::load_data(const std::vector<val_t> data){
     ASSERT(data.size() == BOARD_SIZE * BOARD_SIZE, "invalid data size");
     for (unsigned int i = 0; i < BOARD_SIZE; i++){
         for (unsigned int j = 0; j < BOARD_SIZE; j++){
-            m_board[i][j] = data[i * BOARD_SIZE + j];
+            m_board[i][j].assign(data[i * BOARD_SIZE + j]);
         }
     }
 }
@@ -150,7 +149,7 @@ void Board::load_data(const std::string& str_data){
 
     for (unsigned int i = 0; i < BOARD_SIZE; i++){
         for (unsigned int j = 0; j < BOARD_SIZE; j++){
-            m_board[i][j] = static_cast<val_t>(std::stoi(elements[i * BOARD_SIZE + j]));
+            m_board[i][j].assign(static_cast<val_t>(std::stoi(elements[i * BOARD_SIZE + j])));
         }
     }
 
@@ -172,19 +171,19 @@ void Board::load_data(const Board& board)
     {
         for (unsigned int j = 0; j < BOARD_SIZE; j++)
         {
-            m_board[i][j] = board.get(i, j);
+            m_board[i][j] = board.m_board[i][j];
         }
     }
 }
 
-std::string Board::to_string_raw() const
+std::string Board::to_string_raw()
 {
     std::string result;
     for (unsigned int i = 0; i < BOARD_SIZE; i++)
     {
         for (unsigned int j = 0; j < BOARD_SIZE; j++)
         {
-            result += std::to_string(m_board[i][j]);
+            result += std::to_string(m_board[i][j].retrive());
             if (j < BOARD_SIZE - 1)
             {
                 result += " ";
@@ -201,7 +200,7 @@ void BoardEquivalenceTransform::swap_row(Board& board, unsigned int row1, unsign
     ASSERT(row1 < BOARD_SIZE && row2 < BOARD_SIZE, "Invalid row index");
     for (unsigned int j = 0; j < BOARD_SIZE; j++)
     {
-        val_t temp = board.get(row1, j);
+        auto temp = board.get(row1, j);
         board.set(row1, j, board.get(row2, j));
         board.set(row2, j, temp);
     }
@@ -236,7 +235,7 @@ void BoardEquivalenceTransform::swap_value(Board& board, val_t value1, val_t val
     {
         for (unsigned int j = 0; j < BOARD_SIZE; j++)
         {
-            val_t value = board.get(i, j);
+            val_t value = board.get(i, j).retrive();
             if (value == value1)
             {
                 board.set(i, j, value2);
@@ -255,7 +254,7 @@ void BoardEquivalenceTransform::transpose(Board& board)
     {
         for (unsigned int j = i + 1; j < BOARD_SIZE; j++)
         {
-            val_t temp = board.get(i, j);
+            auto temp = board.get(i, j);
             board.set(i, j, board.get(j, i));
             board.set(j, i, temp);
         }
@@ -265,56 +264,56 @@ void BoardEquivalenceTransform::transpose(Board& board)
 #define ASSERT_CANDIDATE_COUNT_THROW(count) \
     if (count == 0){ throw std::runtime_error("no candidate found for this cell, invalid board or candidate not initialized"); }
 
-unsigned int CandidateBoard::count(int row, int col) const{
-    ASSERT_COORD_BOUNDS(row, col)
-    unsigned int count = 0;
-    for (unsigned int i = 0; i < CANDIDATE_SIZE; i++){
-        count += m_candidates[row][col][i];
-    }
-    ASSERT_CANDIDATE_COUNT_THROW(count)
-    return count;
-}
+// unsigned int CandidateBoard::count(int row, int col) const{
+//     ASSERT_COORD_BOUNDS(row, col)
+//     unsigned int count = 0;
+//     for (unsigned int i = 0; i < CANDIDATE_SIZE; i++){
+//         count += m_candidates[row][col][i];
+//     }
+//     ASSERT_CANDIDATE_COUNT_THROW(count)
+//     return count;
+// }
 
-bool CandidateBoard::remain_0(int row, int col) const{
-    ASSERT_COORD_BOUNDS(row, col)
-    const bool_ aim[CANDIDATE_SIZE] = {0};
-    return std::memcmp(m_candidates[row][col], aim, CANDIDATE_SIZE * sizeof(bool_)) == 0;
-}
+// bool CandidateBoard::remain_0(int row, int col) const{
+//     ASSERT_COORD_BOUNDS(row, col)
+//     const bool_ aim[CANDIDATE_SIZE] = {0};
+//     return std::memcmp(m_candidates[row][col], aim, CANDIDATE_SIZE * sizeof(bool_)) == 0;
+// }
 
-bool CandidateBoard::remain_0(unsigned int offset) const{
-    unsigned int row = indexer.offset_coord_lookup[offset][0];
-    unsigned int col = indexer.offset_coord_lookup[offset][1];
-    return remain_0(row, col);
-}
+// bool CandidateBoard::remain_0(unsigned int offset) const{
+//     unsigned int row = indexer.offset_coord_lookup[offset][0];
+//     unsigned int col = indexer.offset_coord_lookup[offset][1];
+//     return remain_0(row, col);
+// }
 
-OpState CandidateBoard::remain_x(unsigned int offset, unsigned int count, val_t* buffer) const{
-    unsigned int row = indexer.offset_coord_lookup[offset][0];
-    unsigned int col = indexer.offset_coord_lookup[offset][1];
-    return remain_x(row, col, count, buffer);
-};
+// OpState CandidateBoard::remain_x(unsigned int offset, unsigned int count, val_t* buffer) const{
+//     unsigned int row = indexer.offset_coord_lookup[offset][0];
+//     unsigned int col = indexer.offset_coord_lookup[offset][1];
+//     return remain_x(row, col, count, buffer);
+// };
 
-OpState CandidateBoard::remain_x(int row, int col, unsigned int count, val_t* buffer) const{
-    ASSERT_COORD_BOUNDS(row, col);
-    unsigned int counter = 0;
-    for (unsigned int i = 0; i < CANDIDATE_SIZE; i++){
-        if (m_candidates[row][col][i]){
-            if (counter >= count){
-                // in-case of buffer overflow
-                return OpState::FAIL;
-            }
-            *(buffer + counter) = i + 1;
-            counter++;
-        }
-    }
-    if (counter == 0) return OpState::VIOLATION;
-    return counter == count? OpState::SUCCESS: OpState::FAIL;
-}
+// OpState CandidateBoard::remain_x(int row, int col, unsigned int count, val_t* buffer) const{
+//     ASSERT_COORD_BOUNDS(row, col);
+//     unsigned int counter = 0;
+//     for (unsigned int i = 0; i < CANDIDATE_SIZE; i++){
+//         if (m_candidates[row][col][i]){
+//             if (counter >= count){
+//                 // in-case of buffer overflow
+//                 return OpState::FAIL;
+//             }
+//             *(buffer + counter) = i + 1;
+//             counter++;
+//         }
+//     }
+//     if (counter == 0) return OpState::VIOLATION;
+//     return counter == count? OpState::SUCCESS: OpState::FAIL;
+// }
 
 bool Board::operator==(const Board& other) const
 {
     return std::memcmp(m_board, other.m_board, sizeof(m_board)) == 0;
 }
-std::ostream& operator<<(std::ostream& os, const Board& board)
+std::ostream& operator<<(std::ostream& os, Board& board)
 {
     os << board.to_string_raw();
     return os;

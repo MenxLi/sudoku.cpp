@@ -98,7 +98,7 @@ public:
     std::vector<val_t> to_list1d() const {
         std::vector<val_t> data(CELL_COUNT, 0);
         for (unsigned int i = 0; i < CELL_COUNT; i++) {
-            data[i] = m_board->get(i);
+            data[i] = m_board->get(i).retrive();
         }
         return data;
     }
@@ -106,14 +106,14 @@ public:
         std::vector<std::vector<val_t>> data(BOARD_SIZE, std::vector<val_t>(BOARD_SIZE, 0));
         for (unsigned int i = 0; i < BOARD_SIZE; i++) {
             for (unsigned int j = 0; j < BOARD_SIZE; j++) {
-                data[i][j] = m_board->get(i, j);
+                data[i][j] = m_board->get(i, j).retrive();
             }
         }
         return data;
     }
 
     val_t get(int row, int col) const {
-        return m_board->get(row, col);
+        return m_board->get(row, col).retrive();
     }
 
     val_t set(int row, int col, val_t value) {

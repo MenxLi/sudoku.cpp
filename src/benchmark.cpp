@@ -88,7 +88,12 @@ int run_default_test(){
         std::cout << "Puzzle " << i+1 << ": " ;
         for (unsigned int j = 0; j < n_repeats; j++)
         {
-            total_time += (solve_for(file_content)).time;
+            auto r = solve_for(file_content);
+            if (!r.solved){
+                std::cout << "[Error]: failed to solve puzzle " << i+1 << std::endl;
+                exit(1);
+            }
+            total_time += r.time;
         }
         unsigned long time = std::chrono::duration_cast<std::chrono::microseconds>(total_time).count() / n_repeats;
         // format to 5 characters by adding leading blanks

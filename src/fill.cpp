@@ -77,7 +77,7 @@ namespace gen {
             candidates_idx_allowd[i] = true;
         }
         for (auto offset: Board::indexer.neighbor_index[row][col]){
-            val_t n_value = board.get(offset);
+            val_t n_value = board.get(offset).retrive();
             if (n_value != 0){
                 unsigned int v_idx = n_value - 1;
                 candidates_idx_allowd[v_idx] = false;
@@ -160,7 +160,7 @@ namespace gen {
                 fill_board_naive(board); break;
 
             case FillStrategy::BACKTRACK:
-                board.clear(0);
+                board.clear();
                 fill_board_backtrack(board); break;
 
             default:

@@ -21,3 +21,4 @@ src/indexer_impl_*.cpp
 
 *.log
 *_tmp.py
+a.out

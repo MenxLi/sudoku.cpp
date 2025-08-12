@@ -12,25 +12,67 @@ struct Solver_config{
     bool use_guess;
     bool deterministic_guess;
     bool heuristic_guess;
-    bool use_double;
     bool reverse_guess;
     static Solver_config* new_from_env() {
         return new Solver_config{
             parser::parse_env("SOLVER_USE_GUESS", true),
             parser::parse_env("SOLVER_DETERMINISTIC_GUESS", false),
             parser::parse_env("SOLVER_HEURISTIC_GUESS", true),
-            parser::parse_env("SOLVER_USE_DOUBLE", false),
             false
         };
     }
 };
 
-struct FillState{
+class FillState{
+    inline static Indexer indexer;
+
+    std::bitset<CELL_COUNT> solved;         // solved cells, default to all 0s
     unsigned int count[CANDIDATE_SIZE] = {0};
-    bool row[BOARD_SIZE][CANDIDATE_SIZE] = {{0}};
-    bool col[BOARD_SIZE][CANDIDATE_SIZE] = {{0}};
-    bool grid[GRID_SIZE][GRID_SIZE][CANDIDATE_SIZE] = {{{0}}};
-    unsigned int visited_double_combinations[CELL_COUNT][CELL_COUNT] = {{0}};
+
+    Cell row[BOARD_SIZE];                   // use up is 0, bitmask default to all 1s
+    Cell col[BOARD_SIZE];
+    Cell grid[GRID_SIZE][GRID_SIZE];
+
+public:
+    /*
+    This is used to update the filled state of the board,
+    if constraints are violated,
+    e.g. a value is filled more than once in a row, column, or grid
+    it will return false [When this happens, the fill object will be in a broken state]
+    */
+    bool on_fill(unsigned int row, unsigned int col, val_t value);
+
+    inline bool is_cell_solved(unsigned int row, unsigned int col) const {
+        return this->solved.test(indexer.coord_offset_lookup[row][col]);
+    }
+    inline bool is_cell_solved(unsigned int offset) const {
+        return this->solved.test(offset);
+    }
+
+    inline bool is_value_useup(val_t value) const {
+        unsigned int v_idx = static_cast<unsigned int>(value) - 1;
+        return this->count[v_idx] == BOARD_SIZE;
+    }
+
+    inline bool get_value_count(val_t value) const {
+        unsigned int v_idx = static_cast<unsigned int>(value) - 1;
+        return this->count[v_idx];
+    }
+
+    inline bool is_in_row(unsigned int row, val_t value) const {
+        unsigned int v_idx = static_cast<unsigned int>(value) - 1;
+        return !this->row[row].test(v_idx);
+    }
+
+    inline bool is_in_col(unsigned int col, val_t value) const {
+        unsigned int v_idx = static_cast<unsigned int>(value) - 1;
+        return !this->col[col].test(v_idx);
+    }
+
+    inline bool is_in_grid(unsigned int grid_row, unsigned int grid_col, val_t value) const {
+        unsigned int v_idx = static_cast<unsigned int>(value) - 1;
+        return !this->grid[grid_row][grid_col].test(v_idx);
+    }
 };
 
 class Solver : public SolverBase
@@ -40,8 +82,19 @@ public:
     void init_states();
 
     bool step() override;
+
+    /*
+    This determines the value of a cell if
+    there is only one candidate left in the cell
+    */
     OpState step_by_naked_single();
+
+    /*
+    This determines the value of a cell if 
+    it is the only cell in the row/col/grid that can have a certain value
+    */
     OpState step_by_hidden_single(UnitType unit_type);
+
     OpState step_by_guess();
 
     // set the value of a cell, and propagate the value to change the states
@@ -55,17 +108,9 @@ private:
     std::shared_ptr<Solver_config> m_config;
 
     // place them in the heap to avoid stack overflow
-    std::unique_ptr<CandidateBoard> m_candidates;
-    std::unique_ptr<FillState> m_fill_state;
+    std::unique_ptr<FillState> m_fstate;
 
     OpState update_by_naked_single(unsigned int row, unsigned int col);
     OpState update_by_hidden_single(val_t value, UnitType unit_type);
 
-    // handles implicit value determination (subsets)
-    // i.e. if a sub-row/col in a grid has multiple candidates for a value,
-    // but can uniquely determine the value based on the row/col 
-    // (e.g. 57, 75, 375 appears in one row/col of a grid, determins 7 and 5 must be in the same row/col)
-    // then we can remove the other candidates from the same total-row/col
-    OpState refine_candidates_by_naked_double(UnitType unit_type);
-    OpState refine_candidates_by_hidden_double(UnitType unit_type);     // hidden double is a superset of naked double
 };

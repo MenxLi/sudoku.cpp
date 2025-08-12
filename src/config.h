@@ -35,7 +35,7 @@ if (!(cond)) { throw std::runtime_error("Assertion failed: " __FILE__ ":" + std:
 #define ASSERT(cond, faild_reason)
 #endif
 
-typedef unsigned short val_t;
+typedef unsigned int val_t;
 
 enum class UnitType{
     ROW,

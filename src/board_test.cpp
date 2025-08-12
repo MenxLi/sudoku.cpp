@@ -27,18 +27,22 @@ const std::string valid_board_str = \
 int main()
 {
     Board board;
+    std::cout << "Is board 1 initialized? " << board.get(0, 0).is_full() << std::endl;
+
+    std::cout << "Initial board is valid: " << board.is_valid() << std::endl;
     board.load_from_file("./puzzles/1.txt");
     std::cout << board << std::endl;
+    std::cout << "Is board 1 initialized? " << board.get(0, 2).is_full() << std::endl;
 
-    board.clear(1);
+    board.clear();
     std::cout << board << std::endl;
 
     board.load_from_file("./puzzles/2.txt");
     std::cout << board << std::endl;
 
     std::cout << "--------" << std::endl;
-    std::cout << board.get(3, 4) << std::endl;
-    std::cout << board[{3, 4}] << std::endl;
+    std::cout << board.get(3, 4).retrive() << std::endl;
+    std::cout << board[{3, 4}].retrive() << std::endl;
 
     std::istringstream iss(valid_board_str);
     board = Board();
@@ -47,7 +51,7 @@ int main()
     std::cout << "Board is solved: " << board.is_filled() << std::endl;
 
     board.set(3, 4, 1);
-    std::cout << board.get(3, 4) << std::endl;
+    std::cout << board.get(3, 4).retrive() << std::endl;
 
     int row=1;
     for (unsigned int col=0; col<BOARD_SIZE; col++){

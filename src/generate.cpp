@@ -42,7 +42,6 @@ namespace gen_helper{
                     break;
                 default:
                     solver.config().heuristic_guess = false;
-                    solver.config().use_double = true;
                     break;
             }
 
@@ -70,7 +69,7 @@ namespace gen_helper{
     std::vector<unsigned int> get_randomized_filled_indices(Board b){
         util::SizedArray<unsigned int, CELL_COUNT> indices;
         for (unsigned int i = 0; i < BOARD_SIZE * BOARD_SIZE; i++){
-            if (b.get(i) != 0){
+            if (b.get(i).is_solved()){
                 indices.push(i);
             }
         }
