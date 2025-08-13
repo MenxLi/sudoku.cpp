@@ -6,19 +6,18 @@ https://www.kaggle.com/datasets/radcliffe/3-million-sudoku-puzzles-with-ratings/
 import argparse, csv
 from pathlib import Path
 from typing import Iterable
+import functools
 import tqdm
+
 import sudoku_cpp as sudoku
 
 def load_sudoku_data(file_path: Path) -> Iterable[tuple[sudoku.Board, sudoku.Board]]:
-    def fmt_puzzle(puzzle_str: str):
-        return sudoku.Board.from_str(puzzle_str, sp='', nl='')
-
+    as_board = functools.partial(sudoku.Board.from_str, sp='', nl='')
     with open(file_path, 'r') as file:
         reader = csv.reader(file)
         for row in reader:
-            if row[0] == 'id':
-                continue    # Skip header row
-            yield fmt_puzzle(row[1]), fmt_puzzle(row[2])
+            if row[0] == 'id': continue    # Skip header row
+            yield as_board(row[1]), as_board(row[2])
 
 def benchmark_sudoku(file_path: Path) -> dict:
     """
@@ -29,20 +28,18 @@ def benchmark_sudoku(file_path: Path) -> dict:
     stats = {
         'total_puzzles': 0,
         'solved': 0,
-        'unsolved': 0,
+        'calculation_time_us': 0,
+        'n_guesses': 0,
     }
 
     for puzzle, solution in tqdm.tqdm(load_sudoku_data(file_path)):
         stats['total_puzzles'] += 1
-        try:
-            result = sudoku.solve(puzzle)
-            if result['solved']:
-                stats['solved'] += 1
-            else:
-                stats['unsolved'] += 1
-        except Exception as e:
-            print(f"Error solving puzzle: {e}")
-            stats['unsolved'] += 1
+        result = sudoku.solve(puzzle)
+        success = result['board'] == solution
+
+        stats['solved'] += 1 if success else 0
+        stats['calculation_time_us'] += result['time_us']
+        stats['n_guesses'] += result['n_guesses']
 
     return stats
 
@@ -55,8 +52,8 @@ if __name__ == "__main__":
 
     if file_path.exists():
         stats = benchmark_sudoku(file_path)
-        print(f"Total puzzles: {stats['total_puzzles']}")
-        print(f"Solved: {stats['solved']}")
-        print(f"Unsolved: {stats['unsolved']}")
+        print(f"Success rate: {stats['solved'] / stats['total_puzzles'] * 100:.2f}% ({stats['solved']} out of {stats['total_puzzles']})")
+        print(f"Average time per puzzle: {stats['calculation_time_us'] / stats['total_puzzles']:.2f}us")
+        print(f"Average guesses per puzzle: {stats['n_guesses'] / stats['total_puzzles']:.2f}")
     else:
         print(f"File not found: {file_path}")

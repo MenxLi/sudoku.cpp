@@ -120,6 +120,10 @@ public:
         m_board->set(row, col, value);
         return value;
     }
+
+    bool equals(const SudokuBoard& other) const {
+        return *m_board == *other.m_board;
+    }
 };
 
 py::dict solve(SudokuBoard& sudoku_board) {
@@ -184,7 +188,8 @@ PYBIND11_MODULE(sudoku, m) {
         .def("to_list1d", &SudokuBoard::to_list1d)
         .def("to_list2d", &SudokuBoard::to_list2d)
         .def("get", &SudokuBoard::get, py::arg("row"), py::arg("col"))
-        .def("set", &SudokuBoard::set, py::arg("row"), py::arg("col"), py::arg("value"));
+        .def("set", &SudokuBoard::set, py::arg("row"), py::arg("col"), py::arg("value"))
+        .def("__eq__", &SudokuBoard::equals, py::arg("other"));
 
     m.doc() = "Sudoku solver and generator using C++ backend";
     m.def("solve", &solve, "Solve a sudoku puzzle");
