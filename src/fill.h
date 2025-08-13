@@ -51,9 +51,12 @@ void fill_board_backtrack(Board& board);
 enum class FillStrategy
 {
     NAIVE, 
-    BACKTRACK
+    BACKTRACK, 
 };
 
-void fill_board(Board& board, FillStrategy strategy);
+void fill_board(
+    Board& board, 
+    FillStrategy strategy = FillStrategy::BACKTRACK
+);
 
 }

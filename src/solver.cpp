@@ -5,8 +5,6 @@
 #include <memory>
 #include <random>
 
-#define MAX_FORK_TRAIL MAX_ITER
-
 // #define DEBUG_PRINT(x) std::cout << x << std::endl;
 #define DEBUG_PRINT(x)
 
@@ -51,7 +49,6 @@ void Solver::init_states() {
     {
         for (unsigned int j = 0; j < BOARD_SIZE; j++)
         {
-            // TODO: this could be problematic...?
             val_t filled_val = board().get(i, j).retrive();
             if (filled_val == 0) continue;
             fill_propagate(i, j, filled_val);
@@ -67,11 +64,9 @@ OpState Solver::step_by_naked_single() noexcept {
         {
             OpState state = update_by_naked_single(i, j);
             if (state == OpState::SUCCESS){ 
-                DEBUG_PRINT("Cell (" << i << ", " << j << ") updated by naked single");
                 updated = true;
             }
             else if ( state == OpState::VIOLATION){
-                DEBUG_PRINT("Cell (" << i << ", " << j << ") caused violation in naked single");
                 return state;
             }
         }
@@ -88,11 +83,9 @@ OpState Solver::step_by_hidden_single(
         if (m_fstate->is_value_useup(i+1)) continue;
         OpState state = update_by_hidden_single(i + 1, unit_type);
         if (state == OpState::SUCCESS){
-            DEBUG_PRINT("Hidden single for value " << i + 1 << " updated");
             updated = true;
         }
         else if (state == OpState::VIOLATION){
-            DEBUG_PRINT("Hidden single caused violation for value " << i + 1);
             return state;
         }
     }
@@ -116,7 +109,6 @@ bool Solver::step(){
             if (state == OpState::VIOLATION) return OpState::VIOLATION;
             if (state == OpState::SUCCESS) return OpState::SUCCESS;
         }
-        DEBUG_PRINT("Solver::step() - step_by_implicit_only_candidate() failed");
         return OpState::FAIL;
     };
 
@@ -129,7 +121,6 @@ bool Solver::step(){
     if (config().use_guess){
         state = step_by_guess();
         if (state == OpState::SUCCESS) return true;
-        DEBUG_PRINT("Solver::step() - step_by_guess() failed");
     }
     return false;
 };
@@ -138,7 +129,6 @@ OpState Solver::fill_propagate(unsigned int row, unsigned int col, val_t value) 
     board().set(row, col, value);
     bool success = m_fstate->on_fill(row, col, value);
     if (!success){
-        DEBUG_PRINT("Solver::fill_propagate() - fill failed for cell (" << row << ", " << col << ") with value " << value);
         return OpState::VIOLATION; // fill failed, invalid board
     }
 
@@ -190,9 +180,8 @@ OpState Solver::update_by_hidden_single(val_t value, UnitType unit_type){
             find_offset = static_cast<int>(offset);
         }
         if (find_offset == -1) {
-            // should check that the value is not already filled in the unit before
-            DEBUG_PRINT("Find no candidate for value " << value << " in unit type " << static_cast<int>(unit_type))
-            return OpState::VIOLATION;  // TODO: maybe failed? 
+            // should check the value is avaliable in the unit before calling
+            return OpState::VIOLATION;
         }
 
         auto row = indexer.offset_coord_lookup[find_offset][0];
@@ -303,10 +292,10 @@ std::pair<Coord, std::vector<val_t>> Solver::find_best_guess() noexcept {
                 if (candidate_count < min_candidate_count) {
                     best_choices.clear();
                     min_candidate_count = candidate_count;
-                    best_choices.push_back({static_cast<int>(i), static_cast<int>(j)});
+                    best_choices.push_back({i, j});
                 }
                 else if (candidate_count == min_candidate_count){
-                    best_choices.push_back({static_cast<int>(i), static_cast<int>(j)});
+                    best_choices.push_back({i, j});
                 }
             }
         }
@@ -340,7 +329,7 @@ std::pair<Coord, std::vector<val_t>> Solver::find_best_guess() noexcept {
                 for (unsigned int j = 0; j < BOARD_SIZE; j++)
                 {
                     if (!this->m_fstate->is_cell_solved(i, j)){
-                        unsolved_cells.push_back({static_cast<int>(i), static_cast<int>(j)});
+                        unsolved_cells.push_back({i, j});
                     }
                 }
             }
@@ -357,7 +346,7 @@ std::pair<Coord, std::vector<val_t>> Solver::find_best_guess() noexcept {
                 for (unsigned int j = 0; j < BOARD_SIZE; j++)
                 {
                     if (!this->m_fstate->is_cell_solved(i, j)){
-                        best_choice = {static_cast<int>(i), static_cast<int>(j)};
+                        best_choice = {i, j};
                         _found = true;
                         break;
                     }

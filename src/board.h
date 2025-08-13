@@ -23,8 +23,8 @@ providing methods to read / dump the board state.
 
 struct Coord
 {
-    int row;
-    int col;
+    unsigned int row;
+    unsigned int col;
 };
 
 // one-hot encoding of the candidates
@@ -46,7 +46,6 @@ public:
     Retrieves the value of the cell.
     If exactly one bit is set, it returns the index of that bit + 1 (1-based index).
     If no bits are set, it returns 0.
-    (TODO: may optimize to lookup?)
      */
     inline val_t retrive()
     {
@@ -60,7 +59,24 @@ public:
                 return i + 1;
             }
         }
-        throw std::runtime_error("Cell is not solved, no candidate found");
+        return 0; // no bits set, return 0
+    }
+    // Retrieves a random value from the cell, 
+    // if the cell is empty, it returns 0.
+    val_t retrive_random() const {
+        static thread_local std::random_device rd;
+        static thread_local std::mt19937 gen(rd());
+        auto count = m_bitmask.count();
+        if (count == 0) return 0; // no candidates available
+        std::uniform_int_distribution<> dis(0, count - 1);
+        auto n = dis(gen);
+        for (val_t i = 0; i < N; ++i) {
+            if (m_bitmask.test(i)) {
+                if (n == 0) { return i + 1; }
+                n--;
+            }
+        };
+        return 0; // should not reach here, but just in case
     }
 
     // Assigns a value to the cell.

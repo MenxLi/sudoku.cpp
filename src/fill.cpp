@@ -1,6 +1,9 @@
 #include "fill.h"
+#include "board.h"
 #include "config.h"
+#include <cassert>
 #include <ctime>
+#include <random>
 #include <stack>
 
 namespace gen {

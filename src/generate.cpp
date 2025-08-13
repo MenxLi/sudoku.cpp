@@ -241,7 +241,7 @@ namespace gen{
                 return std::make_tuple(false, Board{});
             }
             Board board;
-            fill_board(board, FillStrategy::NAIVE);
+            fill_board(board);
             auto solution = Board(board);
 
             // speed up...
