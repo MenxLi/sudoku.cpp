@@ -102,7 +102,7 @@ public:
     inline bool is_full() const
         { return m_bitmask == bit_t().set(); }
     
-    inline bool is_solved() 
+    inline bool is_solved() const
         { return count() == 1; }
     
     inline size_t count() const { 
@@ -225,53 +225,3 @@ public:
 private:
     static void swap_row(Board& board, unsigned int row1, unsigned int row2);
 };
-
-
-/*
-cadidate refers to the possible values for a cell, 
-based on the values of other cells in the same row, column, and grid, 
-it serves as a draft for the actual value of the cell when solving the puzzle
-*/
-// typedef uint8_t bool_;
-// class CandidateBoard
-// {
-// public:
-//     inline static Indexer indexer;
-//     CandidateBoard() { reset(); }
-//     CandidateBoard(const CandidateBoard& other) = default;
-//     CandidateBoard& operator=(const CandidateBoard& other) = default;
-//     inline bool_& get(int row, int col, val_t value);
-//     inline bool_* get(int row, int col);
-//     inline bool_* get(int idx);
-
-//     void reset() 
-//         { std::fill_n(&m_candidates[0][0][0], BOARD_SIZE * BOARD_SIZE * CANDIDATE_SIZE, 1); };
-//     unsigned int count(int row, int col) const;
-
-//     bool remain_0(int row, int col) const;
-//     bool remain_0(unsigned int offset) const;
-
-//     // return if the cell has only count candidates left
-//     // and store the candidates in the buffer
-//     OpState remain_x(int row, int col, unsigned int count, val_t* buffer) const;
-
-//     OpState remain_x(unsigned int offset, unsigned int count, val_t* buffer) const;
-
-// private:
-//     // one-hot encoding of the candidates
-//     bool_ m_candidates[BOARD_SIZE][BOARD_SIZE][CANDIDATE_SIZE];
-// };
-
-// inline bool_& CandidateBoard::get(int row, int col, val_t value){
-//     ASSERT_CANDIDATE_BOUNDS(row, col, value)
-//     return m_candidates[row][col][value - 1];
-// }
-
-// inline bool_* CandidateBoard::get(int row, int col){
-//     return m_candidates[row][col];
-// }
-
-// inline bool_* CandidateBoard::get(int offset){
-//     // return m_candidates[idx / BOARD_SIZE][idx % BOARD_SIZE];
-//     return &m_candidates[0][0][0] + offset * CANDIDATE_SIZE;
-// }

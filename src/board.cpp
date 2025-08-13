@@ -264,51 +264,6 @@ void BoardEquivalenceTransform::transpose(Board& board)
 #define ASSERT_CANDIDATE_COUNT_THROW(count) \
     if (count == 0){ throw std::runtime_error("no candidate found for this cell, invalid board or candidate not initialized"); }
 
-// unsigned int CandidateBoard::count(int row, int col) const{
-//     ASSERT_COORD_BOUNDS(row, col)
-//     unsigned int count = 0;
-//     for (unsigned int i = 0; i < CANDIDATE_SIZE; i++){
-//         count += m_candidates[row][col][i];
-//     }
-//     ASSERT_CANDIDATE_COUNT_THROW(count)
-//     return count;
-// }
-
-// bool CandidateBoard::remain_0(int row, int col) const{
-//     ASSERT_COORD_BOUNDS(row, col)
-//     const bool_ aim[CANDIDATE_SIZE] = {0};
-//     return std::memcmp(m_candidates[row][col], aim, CANDIDATE_SIZE * sizeof(bool_)) == 0;
-// }
-
-// bool CandidateBoard::remain_0(unsigned int offset) const{
-//     unsigned int row = indexer.offset_coord_lookup[offset][0];
-//     unsigned int col = indexer.offset_coord_lookup[offset][1];
-//     return remain_0(row, col);
-// }
-
-// OpState CandidateBoard::remain_x(unsigned int offset, unsigned int count, val_t* buffer) const{
-//     unsigned int row = indexer.offset_coord_lookup[offset][0];
-//     unsigned int col = indexer.offset_coord_lookup[offset][1];
-//     return remain_x(row, col, count, buffer);
-// };
-
-// OpState CandidateBoard::remain_x(int row, int col, unsigned int count, val_t* buffer) const{
-//     ASSERT_COORD_BOUNDS(row, col);
-//     unsigned int counter = 0;
-//     for (unsigned int i = 0; i < CANDIDATE_SIZE; i++){
-//         if (m_candidates[row][col][i]){
-//             if (counter >= count){
-//                 // in-case of buffer overflow
-//                 return OpState::FAIL;
-//             }
-//             *(buffer + counter) = i + 1;
-//             counter++;
-//         }
-//     }
-//     if (counter == 0) return OpState::VIOLATION;
-//     return counter == count? OpState::SUCCESS: OpState::FAIL;
-// }
-
 bool Board::operator==(const Board& other) const
 {
     return std::memcmp(m_board, other.m_board, sizeof(m_board)) == 0;

@@ -87,20 +87,20 @@ public:
     This determines the value of a cell if
     there is only one candidate left in the cell
     */
-    OpState step_by_naked_single();
+    OpState step_by_naked_single() noexcept ;
 
     /*
     This determines the value of a cell if 
     it is the only cell in the row/col/grid that can have a certain value
     */
-    OpState step_by_hidden_single(UnitType unit_type);
+    OpState step_by_hidden_single(UnitType unit_type) noexcept;
 
-    OpState step_by_guess();
+    OpState step_by_guess() noexcept;
 
     // set the value of a cell, and propagate the value to change the states
     OpState fill_propagate(unsigned int row, unsigned int col, val_t value) noexcept;
 
-    inline Solver_config& config() { return *m_config; }
+    inline Solver_config& config() const { return *m_config; }
 
 private:
     // copy constructor shares config, make it private
@@ -113,4 +113,5 @@ private:
     OpState update_by_naked_single(unsigned int row, unsigned int col);
     OpState update_by_hidden_single(val_t value, UnitType unit_type);
 
+    std::pair<Coord, std::vector<val_t>> find_best_guess() noexcept;
 };

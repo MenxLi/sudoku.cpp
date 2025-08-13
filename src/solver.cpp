@@ -3,6 +3,7 @@
 #include "solver_base.hpp"
 #include "solver.h"
 #include <memory>
+#include <random>
 
 #define MAX_FORK_TRAIL MAX_ITER
 
@@ -58,7 +59,7 @@ void Solver::init_states() {
     }
 };
 
-OpState Solver::step_by_naked_single(){
+OpState Solver::step_by_naked_single() noexcept {
     bool updated = false;
     for (unsigned int i = 0; i < BOARD_SIZE; i++)
     {
@@ -80,7 +81,7 @@ OpState Solver::step_by_naked_single(){
 
 OpState Solver::step_by_hidden_single(
     UnitType unit_type
-){
+) noexcept {
     bool updated = false;
     for (unsigned int i = 0; i < CANDIDATE_SIZE; i++)
     {
@@ -240,27 +241,49 @@ OpState Solver::update_by_hidden_single(val_t value, UnitType unit_type){
     return OpState::FAIL;
 };
 
-OpState Solver::step_by_guess(){
-    auto numNeighborUnsolved = [this](unsigned int row, unsigned int col)->unsigned int{
-        unsigned int min_count;
-        unsigned int row_count = 0;
-        unsigned int col_count = 0;
-        unsigned int grid_count = 0;
+OpState Solver::step_by_guess() noexcept {
+    auto [best_choice, values_to_guess] = find_best_guess();
 
-        auto row_item_offsets = indexer.row_index[row];
-        auto col_item_offsets = indexer.col_index[col];
-        auto grid_item_offsets = indexer.grid_coord_index[row][col];
+    // make guesses with backtracking
+    for (auto guess : values_to_guess){
 
-        for (unsigned int i = 0; i < BOARD_SIZE; i++)
-        {
-            if (!this->m_fstate->is_cell_solved(row_item_offsets[i])) row_count++;
-            if (!this->m_fstate->is_cell_solved(col_item_offsets[i])) col_count++;
-            if (!this->m_fstate->is_cell_solved(grid_item_offsets[i])) grid_count++;
+        this->iteration_counter().n_guesses += 1;
+
+        auto forked_solver = Solver(*this);
+
+        // inherit the iteration counter
+        forked_solver.iteration_counter().limit = 
+            this->iteration_counter().limit - this->iteration_counter().current;
+
+        forked_solver.fill_propagate(best_choice.row, best_choice.col, guess);
+        bool solved = forked_solver.solve();
+
+        this->iteration_counter().current = forked_solver.iteration_counter().current;
+        this->iteration_counter().n_guesses = forked_solver.iteration_counter().n_guesses;
+
+        if (!solved){ continue; }
+
+        this->board().load_data(forked_solver.board());
+        return OpState::SUCCESS;
+    }
+
+    // ideally, we should never reach here...
+    // unless the board is invalid, trail limit is reached, or the guess is wrong. 
+    return OpState::FAIL;
+};
+
+std::pair<Coord, std::vector<val_t>> Solver::find_best_guess() noexcept {
+    static thread_local std::random_device random_rd;
+    static thread_local std::mt19937 random_gen(random_rd());
+
+    auto n_neighbor_unsolved = [this](unsigned int row, unsigned int col)->unsigned int{
+        unsigned int unsolved_count = 0;
+        for (auto offset : indexer.neighbor_index[row][col]){
+            if (!this->m_fstate->is_cell_solved(offset)){
+                unsolved_count++;
+            }
         }
-        min_count = row_count;
-        if (col_count < min_count) min_count = col_count;
-        if (grid_count < min_count) min_count = grid_count;
-        return min_count;
+        return unsolved_count;
     };
 
     // find the best cell to guess, 
@@ -268,31 +291,35 @@ OpState Solver::step_by_guess(){
     // 1. the cell with the least number of candidates
     // 2. the cell with the largest number of unsolved neighbors (maximizing it's impact for quick feedback)
     auto get_heuristic_choice = [&]()->Coord {
-        Coord best_choice;
+
+        std::vector<Coord> best_choices;
         unsigned int min_candidate_count = 1e4;
-        unsigned int max_neighbor_count = 1e4;
         for (unsigned int i = 0; i < BOARD_SIZE; i++)
         {
             for (unsigned int j = 0; j < BOARD_SIZE; j++)
             {
                 if (this->m_fstate->is_cell_solved(i, j)){ continue; }; // skip the solved cells
-
                 unsigned int candidate_count = this->board().get(i, j).count();
-                if (candidate_count < min_candidate_count){
+                if (candidate_count < min_candidate_count) {
+                    best_choices.clear();
                     min_candidate_count = candidate_count;
-                    max_neighbor_count = numNeighborUnsolved(i, j);
-                    best_choice = {static_cast<int>(i), static_cast<int>(j)};
+                    best_choices.push_back({static_cast<int>(i), static_cast<int>(j)});
                 }
                 else if (candidate_count == min_candidate_count){
-                    unsigned int neighbor_count = numNeighborUnsolved(i, j);
-                    if (neighbor_count > max_neighbor_count){
-                        max_neighbor_count = neighbor_count;
-                        best_choice = {static_cast<int>(i), static_cast<int>(j)};
-                    }
+                    best_choices.push_back({static_cast<int>(i), static_cast<int>(j)});
                 }
-                else{
-                    // do nothing if the candidate count is larger
-                }
+            }
+        }
+        if (best_choices.size() == 1){ return best_choices[0]; }
+
+        // compare the neighbor counts
+        unsigned int max_neighbor_count = 0;
+        Coord best_choice;
+        for (auto choice : best_choices){
+            unsigned int neighbor_count = n_neighbor_unsolved(choice.row, choice.col);
+            if (neighbor_count > max_neighbor_count){
+                max_neighbor_count = neighbor_count;
+                best_choice = choice;
             }
         }
         return best_choice;
@@ -318,9 +345,8 @@ OpState Solver::step_by_guess(){
                 }
             }
             // random guess
-            // TODO: use a better random generator
-            srand(time(NULL));
-            int random_idx = rand() % unsolved_cells.size();
+            std::uniform_int_distribution<> dis(0, unsolved_cells.size() - 1);
+            int random_idx = dis(random_gen);
             best_choice = unsolved_cells[random_idx];
         }
         else{
@@ -349,7 +375,7 @@ OpState Solver::step_by_guess(){
         unsigned int count;
     };
 
-    auto candidate_filled_pairs = std::unique_ptr<CandidateFilledPair[]>(new CandidateFilledPair[CANDIDATE_SIZE]);
+    auto candidate_filled_pairs = std::vector<CandidateFilledPair>(CANDIDATE_SIZE);
     unsigned int candidate_count = 0;
 
     // candidate_values.reserve(CANDIDATE_SIZE);
@@ -386,31 +412,11 @@ OpState Solver::step_by_guess(){
         }
     }
 
-    // make guesses with backtracking
+    // return the best guess
+    std::vector<val_t> candidate_values(candidate_count);
     for (unsigned int i = 0; i < candidate_count; i++){
-        this->iteration_counter().n_guesses += 1;
-
-        val_t guess = candidate_filled_pairs[i].val;
-
-        auto forked_solver = Solver(*this);
-
-        // inherit the iteration counter
-        forked_solver.iteration_counter().current = this->iteration_counter().current;
-
-        bool solved;
-        forked_solver.fill_propagate(best_choice.row, best_choice.col, guess);
-        solved = forked_solver.solve();
-
-        this->iteration_counter().current = forked_solver.iteration_counter().current;
-        this->iteration_counter().n_guesses = forked_solver.iteration_counter().n_guesses;
-
-        if (!solved){ continue; }
-
-        this->board().load_data(forked_solver.board());
-        return OpState::SUCCESS;
+        candidate_values[i] = candidate_filled_pairs[i].val;
     }
 
-    // ideally, we should never reach here...
-    // unless the board is invalid, trail limit is reached, or the guess is wrong. 
-    return OpState::FAIL;
-};
+    return {best_choice, candidate_values};
+}
