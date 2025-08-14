@@ -168,7 +168,7 @@ def generate_indexer_impl(N: int):
 
     def _init_combinations(fp: TextIOWrapper):
         fp.write(as_cpp_array( "const unsigned int", "subunit_combinations_2", n_combinations(2, list(range(N)))))
-        fp.write(as_cpp_array( "const unsigned int", "subvalue_combinations_2", n_combinations(2, list(range(NV)))))
+        fp.write(as_cpp_array( "const val_t", "subvalue_combinations_2", n_combinations(2, list(range(1, NV+1)))))
 
     with open(dst_file, "w") as f:
         f.write("// This is a generated file, do not edit it directly\n")

@@ -75,4 +75,5 @@ Environment variables:
 - `SOLVER_USE_GUESS` enable guessing when solving the puzzle. Default is `1`.
 - `SOLVER_HEURISTIC_GUESS` enable heuristic choosing of starting cell when guessing. Default is `1`.
 - `SOLVER_DETERMINISTIC_GUESS` enable deterministic solving. Default is `0`.
+- `SOLVER_USE_XWING` enable X-Wing solving. Default is `0`.
 - `SOLVER_USE_DOUBLE` enable naked/hidden double solving. Default is `0`.

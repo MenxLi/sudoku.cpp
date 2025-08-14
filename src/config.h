@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <cstddef>
+#include <stdexcept>
 
 #ifndef SIZE 
 #define SIZE 9
@@ -43,6 +44,14 @@ enum class UnitType{
     GRID,
 };
 
+enum class OpStateTentative
+{
+    MAYBE_SUCCESS, // indicate no checking
+    FAIL,
+    SKIP, 
+    VIOLATION, 
+};
+
 enum class OpState
 {
     SUCCESS,
@@ -50,3 +59,12 @@ enum class OpState
     SKIP, 
     VIOLATION
 };
+
+inline OpState opstate_from_tentative(OpStateTentative tentative_state){
+    switch (tentative_state){
+        case OpStateTentative::FAIL: return OpState::FAIL;
+        case OpStateTentative::SKIP: return OpState::SKIP;
+        case OpStateTentative::VIOLATION: return OpState::VIOLATION;
+        default: throw std::runtime_error("Invalid OpStateTentative");
+    }
+}

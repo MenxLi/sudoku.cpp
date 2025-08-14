@@ -4,6 +4,7 @@
 #include <sstream>
 #include <fstream>
 #include <memory>
+#include <string_view>
 #include <vector>
 #include <cstring>
 
@@ -190,6 +191,25 @@ std::string Board::to_string_raw()
             }
         }
         result += "\n";
+    }
+    return result;
+}
+
+std::string Board::to_bitstring(std::string_view sp, std::string_view nl, std::string_view ld) const
+{
+    std::string result;
+    for (unsigned int i = 0; i < BOARD_SIZE; i++)
+    {
+        for (unsigned int j = 0; j < BOARD_SIZE; j++)
+        {
+            result += ld; 
+            result += m_board[i][j].bitmask().to_string();
+            if (j < BOARD_SIZE - 1)
+            {
+                result += sp;
+            }
+        }
+        result += nl;
     }
     return result;
 }

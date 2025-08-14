@@ -8,16 +8,23 @@
 #include <cstring>
 #include <memory>
 
+// #define DEBUG_PRINT(x) std::cout << x << std::endl;
+#define DEBUG_PRINT(x)
+
 struct Solver_config{
     bool use_guess;
     bool deterministic_guess;
     bool heuristic_guess;
+    bool use_double;
+    bool use_xwing;
     bool reverse_guess;
     static Solver_config* new_from_env() {
         return new Solver_config{
             parser::parse_env("SOLVER_USE_GUESS", true),
             parser::parse_env("SOLVER_DETERMINISTIC_GUESS", false),
             parser::parse_env("SOLVER_HEURISTIC_GUESS", true),
+            parser::parse_env("SOLVER_USE_DOUBLE", false),
+            parser::parse_env("SOLVER_USE_XWING", false), 
             false
         };
     }
@@ -94,6 +101,10 @@ public:
     it is the only cell in the row/col/grid that can have a certain value
     */
     OpState step_by_hidden_single(UnitType unit_type) noexcept;
+
+    OpStateTentative step_by_double() noexcept;
+
+    OpStateTentative step_by_xwing() noexcept;
 
     OpState step_by_guess() noexcept;
 

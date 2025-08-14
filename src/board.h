@@ -6,6 +6,7 @@ providing methods to read / dump the board state.
 #pragma once
 #include <iostream>
 #include <string>
+#include <string_view>
 #include <vector>
 #include <algorithm>
 #include <bitset>
@@ -140,6 +141,12 @@ public:
     
     inline Cell& operator&=(const Cell& other) 
         { m_bitmask &= other.m_bitmask; return *this; }
+    
+    inline bool operator==(const Cell& other) const
+        { return m_bitmask == other.m_bitmask; }
+
+    inline bool operator!=(const Cell& other) const
+        { return m_bitmask != other.m_bitmask; }
 
 private:
     bit_t m_bitmask;
@@ -195,6 +202,11 @@ public:
     void load_from_file(const std::string& filename);
     void save_to_file(const std::string& filename);
     std::string to_string();
+    std::string to_bitstring(
+        std::string_view sp = " ", 
+        std::string_view nl = "\n",
+        std::string_view ld = ""
+    ) const;
 
     inline Cell* data();                      // return a pointer to the raw data
     inline Cell operator[](Coord coord){ return get(coord); }; // allow board[{row, col}] to get the value

@@ -34,8 +34,8 @@ public:
     static const unsigned int neighbor_index[N][N][N_NEIGHBORS];     // pointer position for each neighbor, input 2D cell coord [i][j]
 
     // static const std::array<std::array<unsigned int, 2>, util::n_combinations<N, 2>>
-    static const unsigned int subunit_combinations_2[const_n_combinations_2(N)][2];  // all combinations of 2 elements in [0, N)
+    static const unsigned int subunit_combinations_2[const_n_combinations_2(N)][2];     // all combinations of 2 elements in [0, N)
 
     // static const std::array<std::array<unsigned int, 2>, util::n_combinations<NV, 2>>
-    static const unsigned int subvalue_combinations_2[const_n_combinations_2(NV)][2];  // all combinations of 2 elements in [0, NV)
+    static const val_t subvalue_combinations_2[const_n_combinations_2(NV)][2];      // all combinations of 2 elements in [1, NV(N)+1)
 };

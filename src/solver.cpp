@@ -5,8 +5,8 @@
 #include <memory>
 #include <random>
 
-// #define DEBUG_PRINT(x) std::cout << x << std::endl;
-#define DEBUG_PRINT(x)
+#include "x_double.cpp"
+#include "x_xwing.cpp"
 
 bool FillState::on_fill(unsigned int row, unsigned int col, val_t value){
     unsigned int v_idx = static_cast<unsigned int>(value) - 1;
@@ -117,6 +117,35 @@ bool Solver::step(){
     state = step_by_single();
     if (state == OpState::SUCCESS) return true;
     if (state == OpState::VIOLATION) return false;
+
+    std::unique_ptr<Board> board_record = nullptr;
+    if (config().use_double || config().use_xwing){
+        board_record = std::make_unique<Board>(board());
+    }
+    auto state_from_tentative = [&](OpStateTentative t_state) -> OpState {
+        if (t_state == OpStateTentative::MAYBE_SUCCESS) {
+            if (board() == *board_record){ state = OpState::FAIL; }
+            else { state = OpState::SUCCESS; }
+        }
+        else{
+            state = opstate_from_tentative(t_state);
+        }
+        return state;
+    };
+
+    if (config().use_xwing){
+        auto t_state = step_by_xwing();
+        state = state_from_tentative(t_state);
+        if (state == OpState::SUCCESS) return true;
+        if (state == OpState::VIOLATION) return false;
+    }
+
+    if (config().use_double){
+        auto t_state = step_by_double();
+        state = state_from_tentative(t_state);
+        if (state == OpState::SUCCESS) return true;
+        if (state == OpState::VIOLATION) return false;
+    }
 
     if (config().use_guess){
         state = step_by_guess();
