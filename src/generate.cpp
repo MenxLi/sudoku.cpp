@@ -90,53 +90,6 @@ namespace gen_helper{
         }
     }    
 
-    /* 
-    [Deprecated]
-    Remove n_clues_to_remove clues from the board, recursively
-    will make sure the board is still uniquely solvable
-    */
-    std::tuple<bool, long> remove_n_clues_recursively(
-        std::atomic_bool& stop_flag,
-        Board& board, 
-        const Board& solution, 
-        unsigned int n_clues_to_remove, 
-        long max_depth = CELL_COUNT*2
-    ){
-        if (stop_flag.load()){
-            return std::make_tuple(false, max_depth);
-        }
-        if (n_clues_to_remove == 0){
-            return std::make_tuple(true, max_depth);
-        }
-        if (max_depth < n_clues_to_remove){ // not enough depth to remove all clues
-            return std::make_tuple(false, 0);
-        }
-
-        auto indices = get_randomized_filled_indices(board);
-
-        long depth_remain = max_depth;
-        for (unsigned int i = 0; i < indices.size(); i++){
-
-            unsigned int idx = indices[i];
-            // auto forked_board = Board(board);
-            auto forked_board = std::unique_ptr<Board>(new Board(board));
-            forked_board->set(idx, 0);
-            depth_remain--; if (depth_remain < n_clues_to_remove){ return std::make_tuple(false, depth_remain); }
-
-            if (!uniquely_solvable(*forked_board, solution)) continue;
-
-            auto [success, _depth_remain] = remove_n_clues_recursively(
-                stop_flag, *forked_board, solution, n_clues_to_remove - 1, depth_remain
-            );
-            depth_remain = _depth_remain;
-            if (success){
-                board.load_data(*forked_board);
-                return std::make_tuple(true, depth_remain);
-            }
-        }
-        return std::make_tuple(false, depth_remain);
-    }
-
     /*
     Remove n_clues_to_remove clues from the board, iteratively to avoid stack overflow. 
     Will make sure the board is still uniquely solvable

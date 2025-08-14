@@ -102,9 +102,11 @@ public:
     */
     OpState step_by_hidden_single(UnitType unit_type) noexcept;
 
-    OpStateTentative step_by_double() noexcept;
-
+    /* Using X-Wing to update the candidates */
     OpStateTentative step_by_xwing() noexcept;
+
+    /* Using naked/hidden double to update the candidates */
+    OpStateTentative step_by_double() noexcept;
 
     OpState step_by_guess() noexcept;
 

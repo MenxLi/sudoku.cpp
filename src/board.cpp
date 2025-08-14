@@ -105,13 +105,8 @@ void Board::save_to_file(const std::string& filename)
     {
         throw std::runtime_error("Failed to open file: " + filename);
     }
-    file << to_string_raw();
+    file << to_string();
     file.close();
-}
-
-std::string Board::to_string()
-{
-    return to_string_raw();
 }
 
 void Board::load_data(const std::vector<std::vector<val_t>> data){
@@ -175,43 +170,6 @@ void Board::load_data(const Board& board)
             m_board[i][j] = board.m_board[i][j];
         }
     }
-}
-
-std::string Board::to_string_raw()
-{
-    std::string result;
-    for (unsigned int i = 0; i < BOARD_SIZE; i++)
-    {
-        for (unsigned int j = 0; j < BOARD_SIZE; j++)
-        {
-            result += std::to_string(m_board[i][j].retrive());
-            if (j < BOARD_SIZE - 1)
-            {
-                result += " ";
-            }
-        }
-        result += "\n";
-    }
-    return result;
-}
-
-std::string Board::to_bitstring(std::string_view sp, std::string_view nl, std::string_view ld) const
-{
-    std::string result;
-    for (unsigned int i = 0; i < BOARD_SIZE; i++)
-    {
-        for (unsigned int j = 0; j < BOARD_SIZE; j++)
-        {
-            result += ld; 
-            result += m_board[i][j].bitmask().to_string();
-            if (j < BOARD_SIZE - 1)
-            {
-                result += sp;
-            }
-        }
-        result += nl;
-    }
-    return result;
 }
 
 void BoardEquivalenceTransform::swap_row(Board& board, unsigned int row1, unsigned int row2)
@@ -290,6 +248,6 @@ bool Board::operator==(const Board& other) const
 }
 std::ostream& operator<<(std::ostream& os, Board& board)
 {
-    os << board.to_string_raw();
+    os << board.to_string();
     return os;
 }

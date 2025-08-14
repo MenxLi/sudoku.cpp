@@ -48,7 +48,7 @@ public:
     If exactly one bit is set, it returns the index of that bit + 1 (1-based index).
     If no bits are set, it returns 0.
      */
-    inline val_t retrive()
+    inline val_t retrive() const
     {
         if (!is_solved()) { return 0; }
         return retrive_nocheck();
@@ -201,7 +201,16 @@ public:
     void load_data(const std::string& str_data);
     void load_from_file(const std::string& filename);
     void save_to_file(const std::string& filename);
-    std::string to_string();
+
+    static Board from_string(
+        const std::string& str_data, 
+        std::string_view sp = " ",
+        std::string_view nl = "\n"
+    );
+    std::string to_string(
+        std::string_view sp = " ", 
+        std::string_view nl = "\n"
+    ) const;
     std::string to_bitstring(
         std::string_view sp = " ", 
         std::string_view nl = "\n",
@@ -216,7 +225,6 @@ public:
 
 private:
     Cell m_board[BOARD_SIZE][BOARD_SIZE];
-    std::string to_string_raw();
 };
 
 inline Cell* Board::data(){

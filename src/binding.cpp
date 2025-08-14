@@ -22,6 +22,7 @@ public:
     explicit SudokuBoard() : m_board(std::make_unique<Board>()) {}
     explicit SudokuBoard(std::unique_ptr<Board> board) : m_board(std::move(board)) {}
     explicit SudokuBoard(const Board& board) : m_board(std::make_unique<Board>(board)) {}
+    explicit SudokuBoard(Board&& board) : m_board(std::make_unique<Board>(std::move(board))) {}
     Board& board() { return *m_board; }
 
     static SudokuBoard from_list1d(std::vector<val_t> data) {
@@ -34,76 +35,25 @@ public:
         board->load_data(std::move(data));
         return SudokuBoard(std::move(board));
     }
+
     static SudokuBoard from_str(
         std::string str_data, 
         std::string sp= " ",           // seperator for values
         std::string nl = "\n"           // newline character
     ) {
-
-        auto board = std::make_unique<Board>();
-
-        // the default case, no need to split
-        if (sp == " " && nl == "\n") {  
-            board->load_data(str_data);
-            return SudokuBoard(std::move(board));
-        }
-
-        if (sp != "" && nl =="")
-            throw std::runtime_error("Invalid separator, nl cannot be empty if sp is not empty"); 
-        if (BOARD_SIZE > 16 && sp == "") 
-            throw std::runtime_error("Invalid separator (empty) for large boards"); 
-
-        // maybe replace nl with sp (move to mark str_data not use anymore)
-        std::string sdata;
-        nl != sp ? 
-            sdata = util::replace_string(std::move(str_data), nl, sp): 
-            sdata = std::move(str_data);
-        
-        // handle the case where sp is empty
-        if (sp == "") {
-            std::vector<val_t> board_data(CELL_COUNT);
-            if (sdata.size() != CELL_COUNT) {
-                throw std::runtime_error("Invalid data size, expected " + std::to_string(CELL_COUNT) + " values, got " + std::to_string(str_data.size()));
-            }
-            for (unsigned int i = 0; i < sdata.size(); i++) {
-                char c = sdata[i];
-                if (c == '.') { board_data[i] = 0; } 
-                else if (c == ' ') { board_data[i] = 0; } 
-                else if (c >= '0' && c <= '9') { board_data[i] = static_cast<val_t>(c - '0'); } 
-                else if (c >= 'a' && c <= 'f') { board_data[i] = static_cast<val_t>(c - 'a' + 10); } 
-                else if (c >= 'A' && c <= 'F') { board_data[i] = static_cast<val_t>(c - 'A' + 10); } 
-                else {
-                    throw std::runtime_error("Invalid character in input: " + std::string(1, c));
-                }
-            }
-            return from_list1d(std::move(board_data));
-        }
-
-        // sp is not empty, split the string
-        std::vector<std::string> vals = util::split_string(sdata, sp);
-        if (vals.size() != CELL_COUNT) {
-            throw std::runtime_error("Invalid data size, expected " + std::to_string(CELL_COUNT) + " values, got " + std::to_string(vals.size()));
-        }
-
-        std::vector<val_t> board_data(CELL_COUNT);
-        for (unsigned int i = 0; i < CELL_COUNT; i++) {
-            std::string c = vals[i];
-            c == "."?
-                board_data[i] = 0 : 
-                board_data[i] = static_cast<val_t>(std::stoi(c));
-        }
-        return from_list1d(board_data);
+        Board board = Board::from_string(str_data, sp, nl);
+        return SudokuBoard(std::move(board));
     }
 
     std::vector<val_t> to_list1d() const {
-        std::vector<val_t> data(CELL_COUNT, 0);
+        std::vector<val_t> data(CELL_COUNT);
         for (unsigned int i = 0; i < CELL_COUNT; i++) {
             data[i] = m_board->get(i).retrive();
         }
         return data;
     }
     std::vector<std::vector<val_t>> to_list2d() const {
-        std::vector<std::vector<val_t>> data(BOARD_SIZE, std::vector<val_t>(BOARD_SIZE, 0));
+        std::vector<std::vector<val_t>> data(BOARD_SIZE, std::vector<val_t>(BOARD_SIZE));
         for (unsigned int i = 0; i < BOARD_SIZE; i++) {
             for (unsigned int j = 0; j < BOARD_SIZE; j++) {
                 data[i][j] = m_board->get(i, j).retrive();

@@ -5,9 +5,6 @@
 #include <memory>
 #include <random>
 
-#include "x_double.cpp"
-#include "x_xwing.cpp"
-
 bool FillState::on_fill(unsigned int row, unsigned int col, val_t value){
     unsigned int v_idx = static_cast<unsigned int>(value) - 1;
 

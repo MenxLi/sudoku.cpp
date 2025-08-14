@@ -20,11 +20,6 @@ def load_sudoku_data(file_path: Path) -> Iterable[tuple[sudoku.Board, sudoku.Boa
             yield as_board(row[1]), as_board(row[2])
 
 def benchmark_sudoku(file_path: Path) -> dict:
-    """
-    Benchmark the Sudoku solver on a dataset of puzzles.
-    - file_path: Path to the CSV file containing Sudoku puzzles.
-    Returns a dictionary with statistics about the solving process.
-    """
     stats = {
         'total_puzzles': 0,
         'solved': 0,
@@ -45,7 +40,7 @@ def benchmark_sudoku(file_path: Path) -> dict:
 
 if __name__ == "__main__":
 
-    parser = argparse.ArgumentParser(description="Benchmark Sudoku solver on Kaggle dataset.")
+    parser = argparse.ArgumentParser(description="Benchmark Sudoku solver on a Kaggle dataset.")
     parser.add_argument('file_path', type=str, help='Path to the CSV file containing Sudoku puzzles.')
     args = parser.parse_args()
     file_path = Path(args.file_path)
