@@ -24,7 +24,7 @@ if platform == 'linux' or platform == 'linux2':
 
 setup(
     name='sudoku-cpp',
-    version='0.0.2',
+    version='0.0.3',
     author='Li, Mengxun', 
     description='A fast sudoku solver written in C++',
     packages=['sudoku_cpp'],

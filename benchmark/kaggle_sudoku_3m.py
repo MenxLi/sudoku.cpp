@@ -12,7 +12,7 @@ import tqdm
 import sudoku_cpp as sudoku
 
 def load_sudoku_data(file_path: Path) -> Iterable[tuple[sudoku.Board, sudoku.Board]]:
-    as_board = functools.partial(sudoku.Board.from_str, sp='', nl='')
+    as_board = functools.partial(sudoku.Board.from_str, sp='', nl='', empty='.')
     with open(file_path, 'r') as file:
         reader = csv.reader(file)
         for row in reader:

@@ -10,13 +10,13 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     gen = generate(args.clues, verbose=True)
-    print(gen, end='\n\n')
+    if (not gen['success']):
+        exit(f"Failed to generate puzzle with {args.clues} clues.")
     puzzle = gen['board']
     print("Puzzle:")
-    print(fmt_board(puzzle), end='\n\n')
+    print(fmt_board(puzzle))
 
     solution = solve(puzzle)
-    print(solution, end='\n\n')
     solved_puzzle = solution['board']
     print("Solution:")
-    print(fmt_board(solved_puzzle), end='\n\n')
+    print(fmt_board(solved_puzzle))

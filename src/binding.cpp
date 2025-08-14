@@ -38,10 +38,16 @@ public:
 
     static SudokuBoard from_str(
         std::string str_data, 
-        std::string sp= " ",           // seperator for values
-        std::string nl = "\n"           // newline character
+        std::string sp= " ",                // seperator for values
+        std::string nl = "\n",              // newline character
+        std::string empty = "0"             // empty value representation
     ) {
-        Board board = Board::from_string(str_data, sp, nl);
+        Board board = Board::from_string(
+            str_data, 
+            std::move(sp), 
+            std::move(nl), 
+            std::move(empty)
+        );
         return SudokuBoard(std::move(board));
     }
 
@@ -60,6 +66,18 @@ public:
             }
         }
         return data;
+    }
+
+    std::string to_str(
+        std::string sp = " ", 
+        std::string nl = "\n", 
+        std::string empty = "0"  // default empty value representation
+    ) const {
+        return m_board->to_string(
+            std::move(sp), 
+            std::move(nl), 
+            std::move(empty)
+        );
     }
 
     val_t get(int row, int col) const {
@@ -86,7 +104,7 @@ py::dict solve(SudokuBoard& sudoku_board) {
 
     py::dict result;
     result["board"] = SudokuBoard(std::make_unique<Board>(solver.board()));
-    result["solved"] = solved;
+    result["success"] = solved;
     result["iterations"] = solver.iteration_counter().current;
     result["iteration_limit"] = solver.iteration_counter().limit;
     result["n_guesses"] = solver.iteration_counter().n_guesses;
@@ -107,11 +125,8 @@ py::dict generate(
     auto [generated, board] = gen::generate_board(n_clues_remain, max_retries, 0, verbose);
     auto end_time = std::chrono::high_resolution_clock::now();
 
-    if (!generated){
-        throw std::runtime_error("Failed to generate a board with " + std::to_string(n_clues_remain) + " clues remaining");
-    }
-
     py::dict result;
+    result["success"] = generated;
     result["board"] = SudokuBoard(board);
     result["time_us"] = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
     return result;
@@ -131,12 +146,18 @@ PYBIND11_MODULE(sudoku, m) {
         .def_static("from_str", &SudokuBoard::from_str, 
                     py::arg("str_data"), 
                     py::arg("sp") = " ", 
-                    py::arg("nl") = "\n"
+                    py::arg("nl") = "\n", 
+                    py::arg("empty") = "0"
                 )
         .def_static("from_list1d", &SudokuBoard::from_list1d)
         .def_static("from_list2d", &SudokuBoard::from_list2d)
         .def("to_list1d", &SudokuBoard::to_list1d)
         .def("to_list2d", &SudokuBoard::to_list2d)
+        .def("to_str", &SudokuBoard::to_str, 
+                py::arg("sp") = " ", 
+                py::arg("nl") = "\n", 
+                py::arg("empty") = "0"
+            )
         .def("get", &SudokuBoard::get, py::arg("row"), py::arg("col"))
         .def("set", &SudokuBoard::set, py::arg("row"), py::arg("col"), py::arg("value"))
         .def("__eq__", &SudokuBoard::equals, py::arg("other"));

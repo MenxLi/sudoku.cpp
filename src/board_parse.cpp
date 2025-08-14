@@ -3,7 +3,8 @@
 Board Board::from_string(
     const std::string& str_data, 
     std::string_view sp,
-    std::string_view nl
+    std::string_view nl, 
+    std::string_view empty
 ){
     auto board = Board();
 
@@ -32,8 +33,7 @@ Board Board::from_string(
         }
         for (unsigned int i = 0; i < sdata.size(); i++) {
             char c = sdata[i];
-            if (c == '.') { board_data[i] = 0; } 
-            else if (c == ' ') { board_data[i] = 0; } 
+            if (std::string(1, c) == empty) { board_data[i] = 0; } 
             else if (c >= '0' && c <= '9') { board_data[i] = static_cast<val_t>(c - '0'); } 
             else if (c >= 'a' && c <= 'f') { board_data[i] = static_cast<val_t>(c - 'a' + 10); } 
             else if (c >= 'A' && c <= 'F') { board_data[i] = static_cast<val_t>(c - 'A' + 10); } 
@@ -54,7 +54,7 @@ Board Board::from_string(
     std::vector<val_t> board_data(CELL_COUNT);
     for (unsigned int i = 0; i < CELL_COUNT; i++) {
         std::string c = vals[i];
-        c == "."?
+        c == empty?
             board_data[i] = 0 : 
             board_data[i] = static_cast<val_t>(std::stoi(c));
     }
@@ -62,14 +62,23 @@ Board Board::from_string(
     return board;
 }
 
-std::string Board::to_string(std::string_view sp, std::string_view nl) const
+std::string Board::to_string(
+    std::string_view sp, 
+    std::string_view nl, 
+    std::string_view empty
+) const
 {
     std::string result;
     for (unsigned int i = 0; i < BOARD_SIZE; i++)
     {
         for (unsigned int j = 0; j < BOARD_SIZE; j++)
         {
-            result += std::to_string(m_board[i][j].retrive());
+            val_t value = m_board[i][j].retrive();
+            if (value == 0) {
+                result += std::string(empty);
+            } else {
+                result += std::to_string(value);
+            }
             if (j < BOARD_SIZE - 1)
             {
                 result += sp;

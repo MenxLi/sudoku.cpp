@@ -205,11 +205,13 @@ public:
     static Board from_string(
         const std::string& str_data, 
         std::string_view sp = " ",
-        std::string_view nl = "\n"
+        std::string_view nl = "\n", 
+        std::string_view empty = "0"
     );
     std::string to_string(
         std::string_view sp = " ", 
-        std::string_view nl = "\n"
+        std::string_view nl = "\n", 
+        std::string_view empty= "0"
     ) const;
     std::string to_bitstring(
         std::string_view sp = " ", 
