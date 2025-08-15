@@ -16,4 +16,4 @@ def stream_gen_puzzles(min_clues: int, max_clues: int):
 
 if __name__ == "__main__":
     for puzzle, solution in stream_gen_puzzles(18, 36):
-        print(f"{puzzle.to_str(sp="", nl="", empty=".")},{solution.to_str(sp="", nl="", empty=".")}")
+        print(f"{puzzle.to_str(sp='', nl='', empty='.')},{solution.to_str(sp='', nl='', empty='.')}")
