@@ -1,4 +1,5 @@
 #include "board.h"
+#include <sstream>
 
 Board Board::from_string(
     const std::string& str_data, 
@@ -68,42 +69,41 @@ std::string Board::to_string(
     std::string_view empty
 ) const
 {
-    std::string result;
+    std::stringstream ss;
     for (unsigned int i = 0; i < BOARD_SIZE; i++)
     {
         for (unsigned int j = 0; j < BOARD_SIZE; j++)
         {
             val_t value = m_board[i][j].retrive();
-            if (value == 0) {
-                result += std::string(empty);
-            } else {
-                result += std::to_string(value);
+            if (value == 0) { 
+                ss << empty;
+            } else { 
+                ss << value; 
             }
-            if (j < BOARD_SIZE - 1)
-            {
-                result += sp;
+            if (j < BOARD_SIZE - 1) {
+                ss << sp;
             }
         }
-        result += nl;
+        ss << nl;
     }
-    return result;
+    return ss.str();
 }
 
 std::string Board::to_bitstring(std::string_view sp, std::string_view nl, std::string_view ld) const
 {
-    std::string result;
+    std::stringstream ss;
     for (unsigned int i = 0; i < BOARD_SIZE; i++)
     {
         for (unsigned int j = 0; j < BOARD_SIZE; j++)
         {
-            result += ld; 
-            result += m_board[i][j].bitmask().to_string();
+            ss << ld;
+            ss << m_board[i][j].bitmask().to_string();
             if (j < BOARD_SIZE - 1)
             {
-                result += sp;
+                ss << sp;
             }
         }
-        result += nl;
+        ss << nl;
     }
-    return result;
+    return ss.str();
 }
