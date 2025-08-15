@@ -152,6 +152,13 @@ private:
     bit_t m_bitmask;
 };
 
+/*
+A SingletonCell is a Cell that has exactly one candidate. 
+No gaurantee is made that the cell is indeed a singleton, 
+but just to indicate that it is intended to be one.
+ */
+typedef Cell UniCell;
+
 class Board
 {
 public:

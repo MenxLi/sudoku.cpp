@@ -80,9 +80,9 @@ OpStateTentative Solver::step_by_double() noexcept {
     bool maybe_updated = false;
 
     for (auto [v1, v2]: indexer.subvalue_combinations_2){
-        if (m_fstate->is_value_useup(v1) || m_fstate->is_value_useup(v2)){
-            continue; // skip if any value is already used up
-        }
+        // if (m_fstate->is_value_useup(v1) || m_fstate->is_value_useup(v2)){
+        //     continue; // skip if any value is already used up
+        // }
 
 
         for (auto unit_type : {UnitType::ROW, UnitType::COL, UnitType::GRID}){

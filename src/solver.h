@@ -34,7 +34,6 @@ class FillState{
     inline static Indexer indexer;
 
     std::bitset<CELL_COUNT> solved;         // solved cells, default to all 0s
-    unsigned int count[CANDIDATE_SIZE] = {0};
 
     Cell row[BOARD_SIZE];                   // use up is 0, bitmask default to all 1s
     Cell col[BOARD_SIZE];
@@ -47,7 +46,7 @@ public:
     e.g. a value is filled more than once in a row, column, or grid
     it will return false [When this happens, the fill object will be in a broken state]
     */
-    bool on_fill(unsigned int row, unsigned int col, val_t value);
+    bool on_fill(unsigned int row, unsigned int col, UniCell value_cell);
 
     inline bool is_cell_solved(unsigned int row, unsigned int col) const {
         return this->solved.test(indexer.coord_offset_lookup[row][col]);
@@ -56,29 +55,42 @@ public:
         return this->solved.test(offset);
     }
 
-    inline bool is_value_useup(val_t value) const {
-        unsigned int v_idx = static_cast<unsigned int>(value) - 1;
-        return this->count[v_idx] == BOARD_SIZE;
-    }
+    // inline bool is_value_useup(val_t value) const {
+    //     unsigned int v_idx = static_cast<unsigned int>(value) - 1;
+    //     return this->count[v_idx] == BOARD_SIZE;
+    // }
 
-    inline bool get_value_count(val_t value) const {
+    inline unsigned int get_value_count(val_t value) const {
         unsigned int v_idx = static_cast<unsigned int>(value) - 1;
-        return this->count[v_idx];
+        unsigned int total = 0;
+        for (unsigned int i = 0; i < UNIT_SIZE; i++){
+            if (!this->row[i].test(v_idx)) total++;
+        }
+        return total;
     }
 
     inline bool is_in_row(unsigned int row, val_t value) const {
         unsigned int v_idx = static_cast<unsigned int>(value) - 1;
         return !this->row[row].test(v_idx);
     }
+    inline bool is_in_row(unsigned int row, Cell value_cell) const {
+        return (this->row[row] & value_cell).is_empty();
+    }
 
     inline bool is_in_col(unsigned int col, val_t value) const {
         unsigned int v_idx = static_cast<unsigned int>(value) - 1;
         return !this->col[col].test(v_idx);
     }
+    inline bool is_in_col(unsigned int col, Cell value_cell) const {
+        return (this->col[col] & value_cell).is_empty();
+    }
 
     inline bool is_in_grid(unsigned int grid_row, unsigned int grid_col, val_t value) const {
         unsigned int v_idx = static_cast<unsigned int>(value) - 1;
         return !this->grid[grid_row][grid_col].test(v_idx);
+    }
+    inline bool is_in_grid(unsigned int grid_row, unsigned int grid_col, Cell value_cell) const {
+        return (this->grid[grid_row][grid_col] & value_cell).is_empty();
     }
 };
 
@@ -111,7 +123,7 @@ public:
     OpState step_by_guess() noexcept;
 
     // set the value of a cell, and propagate the value to change the states
-    OpState fill_propagate(unsigned int row, unsigned int col, val_t value) noexcept;
+    OpState fill_propagate(unsigned int row, unsigned int col, UniCell cell) noexcept;
 
     inline Solver_config& config() const { return *m_config; }
 

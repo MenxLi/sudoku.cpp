@@ -5,27 +5,22 @@
 #include <memory>
 #include <random>
 
-bool FillState::on_fill(unsigned int row, unsigned int col, val_t value){
-    unsigned int v_idx = static_cast<unsigned int>(value) - 1;
+bool FillState::on_fill(unsigned int row, unsigned int col, UniCell value_cell){
 
-    this -> count[v_idx]++;
-    if (this -> count[v_idx] > BOARD_SIZE) { return false; }
+    if ((this->row[row] & value_cell).is_empty()){ return false; }
+    this->row[row] &= ~value_cell;
 
-    if (!this->row[row].test(v_idx)) { return false; }
-    this->row[row].reset(v_idx);
-
-    if (!this->col[col].test(v_idx)) { return false; }
-    this->col[col].reset(v_idx);
+    if ((this->col[col] & value_cell).is_empty()){ return false; }
+    this->col[col] &= ~value_cell;
 
     unsigned int grid_row = indexer.grid_lookup[row][col][0];
     unsigned int grid_col = indexer.grid_lookup[row][col][1];
-    if (!this->grid[grid_row][grid_col].test(v_idx)) { return false; }
-    this->grid[grid_row][grid_col].reset(v_idx);
+    if ((this->grid[grid_row][grid_col] & value_cell).is_empty()){ return false; }
+    this->grid[grid_row][grid_col] &= ~value_cell;
 
     this->solved.set(indexer.coord_offset_lookup[row][col]);
     return true;
 }
-
 
 Solver::Solver(const Board& board) : 
     SolverBase(board), 
@@ -46,9 +41,10 @@ void Solver::init_states() {
     {
         for (unsigned int j = 0; j < BOARD_SIZE; j++)
         {
-            val_t filled_val = board().get(i, j).retrive();
-            if (filled_val == 0) continue;
-            fill_propagate(i, j, filled_val);
+            Cell& cell = board().get(i, j);
+            if (cell.count() == 1) {
+                fill_propagate(i, j, cell);
+            }
         }
     }
 };
@@ -77,7 +73,7 @@ OpState Solver::step_by_hidden_single(
     bool updated = false;
     for (unsigned int i = 0; i < CANDIDATE_SIZE; i++)
     {
-        if (m_fstate->is_value_useup(i+1)) continue;
+        // if (m_fstate->is_value_useup(i+1)) continue;
         OpState state = update_by_hidden_single(i + 1, unit_type);
         if (state == OpState::SUCCESS){
             updated = true;
@@ -150,15 +146,12 @@ bool Solver::step(){
     }
     return false;
 };
-
-OpState Solver::fill_propagate(unsigned int row, unsigned int col, val_t value) noexcept {
-    board().set(row, col, value);
-    bool success = m_fstate->on_fill(row, col, value);
+OpState Solver::fill_propagate(unsigned int row, unsigned int col, UniCell value_cell) noexcept {
+    board().set(row, col, value_cell);
+    bool success = m_fstate->on_fill(row, col, value_cell);
     if (!success){
         return OpState::VIOLATION; // fill failed, invalid board
     }
-
-    unsigned int v_idx = static_cast<unsigned int>(value) - 1;
 
     // clear the candidates for the neighbor cells
     for (unsigned int i = 0; i < indexer.N_NEIGHBORS; i++){
@@ -166,7 +159,7 @@ OpState Solver::fill_propagate(unsigned int row, unsigned int col, val_t value) 
         if (m_fstate->is_cell_solved(offset)) continue; // skip solved cells
 
         auto& cell = board().get(offset);
-        cell.reset(v_idx);
+        cell &= ~value_cell; // eliminate the candidates
     }
 
     return OpState::SUCCESS;
@@ -185,11 +178,11 @@ OpState Solver::update_by_naked_single(unsigned int row, unsigned int col){
     if (candidate_count > 1){
         return OpState::FAIL; // more than one candidate left, cannot fill
     }
-    val_t candidate_val = c.retrive_nocheck();
-    return fill_propagate(row, col, candidate_val);
+    return fill_propagate(row, col, c);
 };
 
 OpState Solver::update_by_hidden_single(val_t value, UnitType unit_type){
+    Cell value_cell(value);
     auto solve_for_unit = [&](const unsigned int* offset_start){
         int find_offset = -1;
         for (unsigned int i = 0; i < UNIT_SIZE; i++)
@@ -198,7 +191,7 @@ OpState Solver::update_by_hidden_single(val_t value, UnitType unit_type){
             if (m_fstate->is_cell_solved(offset)) continue; // skip solved cells
 
             auto& cell = this->board().get(offset);
-            if (!cell.test(value - 1)) continue; // skip non-candidates
+            if ((cell & value_cell).is_empty()) continue; // skip non-candidates
 
             // if we already found a candidate, then this is not a hidden single
             if (find_offset != -1) return OpState::FAIL; 
@@ -212,7 +205,7 @@ OpState Solver::update_by_hidden_single(val_t value, UnitType unit_type){
 
         auto row = indexer.offset_coord_lookup[find_offset][0];
         auto col = indexer.offset_coord_lookup[find_offset][1];
-        return fill_propagate(row, col, value);
+        return fill_propagate(row, col, value_cell);
     };
 
     // check for implicit only candidate in the grids
@@ -221,7 +214,7 @@ OpState Solver::update_by_hidden_single(val_t value, UnitType unit_type){
         {
             for (unsigned int g_j = 0; g_j < GRID_SIZE; g_j++)
             {
-                if (m_fstate->is_in_grid(g_i, g_j, value)){ continue; } // already filled
+                if (m_fstate->is_in_grid(g_i, g_j, value_cell)){ continue; } // already filled
                 OpState state = solve_for_unit(indexer.grid_index[g_i][g_j]);
                 if (state == OpState::SUCCESS || state == OpState::VIOLATION){
                     return state;
@@ -234,7 +227,7 @@ OpState Solver::update_by_hidden_single(val_t value, UnitType unit_type){
     if (unit_type == UnitType::ROW){
         for (unsigned int r = 0; r < BOARD_SIZE; r++)
         {
-            if (m_fstate->is_in_row(r, value)){ continue; } // already filled
+            if (m_fstate->is_in_row(r, value_cell)){ continue; } // already filled
             OpState state = solve_for_unit(indexer.row_index[r]);
             if (state == OpState::SUCCESS || state == OpState::VIOLATION){
                 return state;
@@ -245,7 +238,7 @@ OpState Solver::update_by_hidden_single(val_t value, UnitType unit_type){
     if (unit_type == UnitType::COL){
         for (unsigned int c = 0; c < BOARD_SIZE; c++)
         {
-            if (m_fstate->is_in_col(c, value)){ continue; } // already filled
+            if (m_fstate->is_in_col(c, value_cell)){ continue; } // already filled
             OpState state = solve_for_unit(indexer.col_index[c]);
             if (state == OpState::SUCCESS || state == OpState::VIOLATION){
                 return state;
@@ -270,7 +263,7 @@ OpState Solver::step_by_guess() noexcept {
         forked_solver.iteration_counter().limit = 
             this->iteration_counter().limit - this->iteration_counter().current;
 
-        forked_solver.fill_propagate(best_choice.row, best_choice.col, guess);
+        forked_solver.fill_propagate(best_choice.row, best_choice.col, Cell{guess});
         bool solved = forked_solver.solve();
 
         this->iteration_counter().current = forked_solver.iteration_counter().current;
@@ -383,8 +376,6 @@ std::pair<Coord, std::vector<val_t>> Solver::find_best_guess() noexcept {
     }
 
     // choose a candidate in the best choice location
-
-    // collect the candidates where the value is not 0
     struct CandidateFilledPair{
         val_t val;
         unsigned int count;
@@ -393,7 +384,6 @@ std::pair<Coord, std::vector<val_t>> Solver::find_best_guess() noexcept {
     auto candidate_filled_pairs = std::vector<CandidateFilledPair>(CANDIDATE_SIZE);
     unsigned int candidate_count = 0;
 
-    // candidate_values.reserve(CANDIDATE_SIZE);
     for (unsigned int i = 0; i < CANDIDATE_SIZE; i++)
     {
         val_t val = static_cast<val_t>(i + 1);
