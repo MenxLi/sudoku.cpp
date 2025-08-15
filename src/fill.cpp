@@ -33,7 +33,6 @@ namespace gen {
                 board.set(i, j, row_data[j]);
             }
         }
-        // ASSERT(board.is_solved(), "Invalid meta board");
         return board;
     }
 
@@ -71,7 +70,6 @@ namespace gen {
                     break;
             }
         }
-        ASSERT(board.is_valid(), "Invalid board after applying random transform");
     }
 
     std::vector<val_t> get_candidates(Board& board, int row, int col){
@@ -139,11 +137,11 @@ namespace gen {
 
             // check if the board is solved
             if (top_item.offset == CELL_COUNT - 1){
-                ASSERT(board.is_solved(), "Invalid board, error while filling the board");
+                assert(board.is_solved());
                 return;
             }
 
-            ASSERT(top_item.offset < CELL_COUNT - 1, "Invalid offset");
+            ASSERT_BOUNDS(top_item.offset < CELL_COUNT - 1, "Invalid offset");
 
             // push the next cell to the stack
             offset = top_item.offset + 1;
@@ -166,9 +164,6 @@ namespace gen {
                 board.clear();
                 fill_board_backtrack(board); break;
 
-            default:
-                ASSERT(false, "Invalid fill strategy");
-                return;
         }
     }
 

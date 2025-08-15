@@ -31,7 +31,8 @@ std::pair<
     std::vector<std::vector<val_t>> expected(BOARD_SIZE, std::vector<val_t>(BOARD_SIZE));
     std::string input_str = c.substr(0, 81);
     std::string expected_str = c.substr(82);
-    ASSERT(BOARD_SIZE * BOARD_SIZE == input_str.size(), "Invalid input size");
+
+    ASSERT_BOUNDS(BOARD_SIZE * BOARD_SIZE == input_str.size(), "Invalid input size");
     for (unsigned int i = 0; i < BOARD_SIZE; i++){
         for (unsigned int j = 0; j < BOARD_SIZE; j++){
             input[i][j] = input_str[i * BOARD_SIZE + j] - '0';

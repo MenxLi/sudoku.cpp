@@ -10,7 +10,7 @@
 
 void Board::set(unsigned int offset, val_t value)
 {
-    ASSERT(offset < BOARD_SIZE * BOARD_SIZE, "offset out of bounds: " + std::to_string(offset));
+    ASSERT_BOUNDS(offset < BOARD_SIZE * BOARD_SIZE, "offset out of bounds: " + std::to_string(offset));
     (data() + offset)->assign(value);
 };
 
@@ -110,9 +110,9 @@ void Board::save_to_file(const std::string& filename)
 }
 
 void Board::load_data(const std::vector<std::vector<val_t>> data){
-    ASSERT(data.size() == BOARD_SIZE, "invalid data row size");
+    ASSERT_BOUNDS(data.size() == BOARD_SIZE, "invalid data row size");
     for (unsigned int i = 0; i < BOARD_SIZE; i++){
-        ASSERT(data.size() == BOARD_SIZE, "invalid data column size");
+        ASSERT_BOUNDS(data.size() == BOARD_SIZE, "invalid data column size");
         for (unsigned int j = 0; j < BOARD_SIZE; j++){
             m_board[i][j].assign(data[i][j]);
         }
@@ -120,7 +120,7 @@ void Board::load_data(const std::vector<std::vector<val_t>> data){
 }
 
 void Board::load_data(const std::vector<val_t> data){
-    ASSERT(data.size() == BOARD_SIZE * BOARD_SIZE, "invalid data size");
+    ASSERT_BOUNDS(data.size() == BOARD_SIZE * BOARD_SIZE, "invalid data size");
     for (unsigned int i = 0; i < BOARD_SIZE; i++){
         for (unsigned int j = 0; j < BOARD_SIZE; j++){
             m_board[i][j].assign(data[i * BOARD_SIZE + j]);
@@ -175,7 +175,7 @@ void Board::load_data(const Board& board)
 void BoardEquivalenceTransform::swap_row(Board& board, unsigned int row1, unsigned int row2)
 {
     if (row1 == row2) return;
-    ASSERT(row1 < BOARD_SIZE && row2 < BOARD_SIZE, "Invalid row index");
+    ASSERT_BOUNDS(row1 < BOARD_SIZE && row2 < BOARD_SIZE, "Invalid row index");
     for (unsigned int j = 0; j < BOARD_SIZE; j++)
     {
         auto temp = board.get(row1, j);
@@ -187,7 +187,7 @@ void BoardEquivalenceTransform::swap_row(Board& board, unsigned int row1, unsign
 void BoardEquivalenceTransform::swap_row(Board& board, unsigned int band, unsigned int band_row1, unsigned int band_row2)
 {
     if (band_row1 == band_row2) return;
-    ASSERT(band_row1 < GRID_SIZE && band_row2 < GRID_SIZE && band < GRID_SIZE, "Invalid band index");
+    ASSERT_BOUNDS(band_row1 < GRID_SIZE && band_row2 < GRID_SIZE && band < GRID_SIZE, "Invalid band index");
     unsigned int row1 = band * GRID_SIZE + band_row1;
     unsigned int row2 = band * GRID_SIZE + band_row2;
     swap_row(board, row1, row2);
@@ -196,7 +196,7 @@ void BoardEquivalenceTransform::swap_row(Board& board, unsigned int band, unsign
 void BoardEquivalenceTransform::swap_band(Board& board, unsigned int band1, unsigned int band2)
 {
     if (band1 == band2) return;
-    ASSERT(band1 < GRID_SIZE && band2 < GRID_SIZE, "Invalid band index");
+    ASSERT_BOUNDS(band1 < GRID_SIZE && band2 < GRID_SIZE, "Invalid band index");
     for (unsigned int i = 0; i < GRID_SIZE; i++)
     {
         unsigned int row1 = band1 * GRID_SIZE + i;
@@ -208,7 +208,7 @@ void BoardEquivalenceTransform::swap_band(Board& board, unsigned int band1, unsi
 void BoardEquivalenceTransform::swap_value(Board& board, val_t value1, val_t value2)
 {
     if (value1 == value2) return;
-    ASSERT(value1 <= CANDIDATE_SIZE && value2 <= CANDIDATE_SIZE, "Invalid value");
+    ASSERT_BOUNDS(value1 <= CANDIDATE_SIZE && value2 <= CANDIDATE_SIZE, "Invalid value");
     for (unsigned int i = 0; i < BOARD_SIZE; i++)
     {
         for (unsigned int j = 0; j < BOARD_SIZE; j++)

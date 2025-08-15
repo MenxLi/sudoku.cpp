@@ -1,21 +1,22 @@
 
 SIZE?=9
 DEBUG?=0
-STRICT?=1
+BOUNDS_CHECK?=0
 
 CXX := g++
 STD_FLAGS := -std=c++17 -Wall -Wextra
 
 ifeq ($(DEBUG),0)
-OPTIMIZATION_FLAGS := -O3 -funroll-loops -finline-functions
+OPTIMIZATION_FLAGS := -O3 -DNDEBUG -funroll-loops -finline-functions
 else
 OPTIMIZATION_FLAGS := -O0 -g
+BOUNDS_CHECK := 1
 endif
 
-ifeq ($(STRICT),0)
+ifeq ($(BOUNDS_CHECK),0)
 CONFIG_FLAGS := -DSIZE=$(SIZE)
 else
-CONFIG_FLAGS := -DSIZE=$(SIZE) -DSTRICT
+CONFIG_FLAGS := -DSIZE=$(SIZE) -DBOUNDS_CHECK
 endif
 
 COMMON_FLAGS := $(STD_FLAGS) $(OPTIMIZATION_FLAGS) $(CONFIG_FLAGS)

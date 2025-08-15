@@ -39,7 +39,7 @@ setup(
             define_macros=[
                 ("PYBIND11_BUILD", "1"), 
                 ("SIZE", BOARD_SIZE),
-                ("STRICT", "1"), 
+                ("BOUNDS_CHECK", "1"), 
             ],
             extra_compile_args=compile_args,
         ),

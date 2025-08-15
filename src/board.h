@@ -14,12 +14,12 @@ providing methods to read / dump the board state.
 #include "config.h"
 
 #define ASSERT_COORD_BOUNDS(coord_row, coord_col) \
-    ASSERT(static_cast<unsigned int>(coord_row) < BOARD_SIZE, "row out of bounds: " + std::to_string(coord_row)); \
-    ASSERT(static_cast<unsigned int>(coord_col) < BOARD_SIZE, "column out of bounds: " + std::to_string(coord_col));
+    ASSERT_BOUNDS(static_cast<unsigned int>(coord_row) < BOARD_SIZE, "row out of bounds: " + std::to_string(coord_row)); \
+    ASSERT_BOUNDS(static_cast<unsigned int>(coord_col) < BOARD_SIZE, "column out of bounds: " + std::to_string(coord_col));
 #define ASSERT_CANDIDATE_BOUNDS(row, col, value) \
-    ASSERT(static_cast<unsigned int>(row) < BOARD_SIZE, "row out of bounds: " + std::to_string(row)); \
-    ASSERT(static_cast<unsigned int>(col) < BOARD_SIZE, "column out of bounds: " + std::to_string(col)); \
-    ASSERT(static_cast<unsigned int>(value) <= CANDIDATE_SIZE, "value out of bounds: " + std::to_string(value)); // value is 1-based, but we allow 0 to indicate empty
+    ASSERT_BOUNDS(static_cast<unsigned int>(row) < BOARD_SIZE, "row out of bounds: " + std::to_string(row)); \
+    ASSERT_BOUNDS(static_cast<unsigned int>(col) < BOARD_SIZE, "column out of bounds: " + std::to_string(col)); \
+    ASSERT_BOUNDS(static_cast<unsigned int>(value) <= CANDIDATE_SIZE, "value out of bounds: " + std::to_string(value)); // value is 1-based, but we allow 0 to indicate empty
 
 
 struct Coord
@@ -191,7 +191,7 @@ public:
     void set(int row, int col, val_t value);
     void set(const Coord& coord, val_t value);
     void set(unsigned int offset, Cell c) {
-        ASSERT(offset < BOARD_SIZE * BOARD_SIZE, "index out of bounds: " + std::to_string(offset));
+        ASSERT_BOUNDS(offset < BOARD_SIZE * BOARD_SIZE, "index out of bounds: " + std::to_string(offset));
         *(data() + offset) = c;
     };
     void set(int row, int col, Cell c){
@@ -249,7 +249,7 @@ inline Cell* Board::data(){
 
 inline Cell& Board::get(unsigned int idx)
 {
-    ASSERT(idx < BOARD_SIZE * BOARD_SIZE, "index out of bounds: " + std::to_string(idx));
+    ASSERT_BOUNDS(idx < BOARD_SIZE * BOARD_SIZE, "index out of bounds: " + std::to_string(idx));
     return *(data() + idx);
 };
 
