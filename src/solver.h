@@ -46,7 +46,7 @@ public:
     e.g. a value is filled more than once in a row, column, or grid
     it will return false [When this happens, the fill object will be in a broken state]
     */
-    bool on_fill(unsigned int row, unsigned int col, UniCell value_cell);
+    bool on_fill(unsigned int row, unsigned int col, const UniCell& value_cell);
 
     inline bool is_cell_solved(unsigned int row, unsigned int col) const {
         return this->solved.test(indexer.coord_offset_lookup[row][col]);
@@ -54,11 +54,6 @@ public:
     inline bool is_cell_solved(unsigned int offset) const {
         return this->solved.test(offset);
     }
-
-    // inline bool is_value_useup(val_t value) const {
-    //     unsigned int v_idx = static_cast<unsigned int>(value) - 1;
-    //     return this->count[v_idx] == BOARD_SIZE;
-    // }
 
     inline unsigned int get_value_count(val_t value) const {
         unsigned int v_idx = static_cast<unsigned int>(value) - 1;
@@ -73,7 +68,7 @@ public:
         unsigned int v_idx = static_cast<unsigned int>(value) - 1;
         return !this->row[row].test(v_idx);
     }
-    inline bool is_in_row(unsigned int row, Cell value_cell) const {
+    inline bool is_in_row(unsigned int row, const Cell& value_cell) const {
         return (this->row[row] & value_cell).is_empty();
     }
 
@@ -81,7 +76,7 @@ public:
         unsigned int v_idx = static_cast<unsigned int>(value) - 1;
         return !this->col[col].test(v_idx);
     }
-    inline bool is_in_col(unsigned int col, Cell value_cell) const {
+    inline bool is_in_col(unsigned int col, const Cell& value_cell) const {
         return (this->col[col] & value_cell).is_empty();
     }
 
@@ -89,7 +84,7 @@ public:
         unsigned int v_idx = static_cast<unsigned int>(value) - 1;
         return !this->grid[grid_row][grid_col].test(v_idx);
     }
-    inline bool is_in_grid(unsigned int grid_row, unsigned int grid_col, Cell value_cell) const {
+    inline bool is_in_grid(unsigned int grid_row, unsigned int grid_col, const Cell& value_cell) const {
         return (this->grid[grid_row][grid_col] & value_cell).is_empty();
     }
 };
@@ -123,7 +118,13 @@ public:
     OpState step_by_guess() noexcept;
 
     // set the value of a cell, and propagate the value to change the states
-    OpState fill_propagate(unsigned int row, unsigned int col, UniCell cell) noexcept;
+    inline OpState propagate(unsigned int row, unsigned int col, const UniCell& cell) noexcept{
+        board().set(row, col, cell);
+        return propagate(row, col);
+    };
+
+    // when known that a cell is solved, propagate it
+    OpState propagate(unsigned int row, unsigned int col) noexcept;
 
     inline Solver_config& config() const { return *m_config; }
 

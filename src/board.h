@@ -38,7 +38,7 @@ public:
 
     typedef std::bitset<N> bit_t;
 
-    static constexpr Cell empty() {
+    static Cell empty() {
         auto r = Cell();
         r.reset();
         return r;
@@ -160,7 +160,7 @@ private:
 };
 
 /*
-A SingletonCell is a Cell that has exactly one candidate. 
+A UniCell is a Cell that has exactly one candidate. 
 No gaurantee is made that the cell is indeed a singleton, 
 but just to indicate that it is intended to be one.
  */
