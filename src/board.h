@@ -33,9 +33,16 @@ struct Coord
 class Cell{
 
 public:
+
     static const unsigned int N = CANDIDATE_SIZE; // number of candidates
 
     typedef std::bitset<N> bit_t;
+
+    static constexpr Cell empty() {
+        auto r = Cell();
+        r.reset();
+        return r;
+    }
 
     constexpr explicit Cell(): m_bitmask(){
         m_bitmask.set(); // default to all candidates available (empty cell)

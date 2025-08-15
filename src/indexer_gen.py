@@ -9,7 +9,7 @@ from typing import TypeVar
 def as_cpp_array(
     dtype: str, 
     name: str,
-    arr: list[int, list], 
+    arr: list[int] | list[list[int]], 
 ):
     """ Turn a multi-dimensional array into a C++ array """
     def _get_dims(arr: list):
