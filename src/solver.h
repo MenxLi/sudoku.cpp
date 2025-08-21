@@ -55,15 +55,6 @@ public:
         return this->solved.test(offset);
     }
 
-    inline unsigned int get_value_count(val_t value) const {
-        unsigned int v_idx = static_cast<unsigned int>(value) - 1;
-        unsigned int total = 0;
-        for (unsigned int i = 0; i < UNIT_SIZE; i++){
-            if (!this->row[i].test(v_idx)) total++;
-        }
-        return total;
-    }
-
     inline bool is_in_row(unsigned int row, val_t value) const {
         unsigned int v_idx = static_cast<unsigned int>(value) - 1;
         return !this->row[row].test(v_idx);

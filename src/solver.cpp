@@ -298,6 +298,7 @@ std::pair<Coord, std::vector<val_t>> Solver::find_best_guess() noexcept {
     // by finding:
     // 1. the cell with the least number of candidates
     // 2. the cell with the largest number of unsolved neighbors (maximizing it's impact for quick feedback)
+    // 3. the candidate with the maximum number of occurences in the unsolved neighbors
     auto get_heuristic_choice = [&]()->Coord {
 
         std::vector<Coord> best_choices;
@@ -381,46 +382,52 @@ std::pair<Coord, std::vector<val_t>> Solver::find_best_guess() noexcept {
         unsigned int count;
     };
 
-    auto candidate_filled_pairs = std::vector<CandidateFilledPair>(CANDIDATE_SIZE);
+    auto candidate_states = std::vector<CandidateFilledPair>(CANDIDATE_SIZE);
     unsigned int candidate_count = 0;
 
     for (unsigned int i = 0; i < CANDIDATE_SIZE; i++)
     {
-        val_t val = static_cast<val_t>(i + 1);
         if (this->board().get(best_choice.row, best_choice.col).test(i)){
-            candidate_filled_pairs[candidate_count].val = val;
-            candidate_filled_pairs[candidate_count].count = this->m_fstate->get_value_count(val);
+            val_t val = static_cast<val_t>(i + 1);
+            candidate_states[candidate_count].val = val;
+
+            // count the number of occurences of the value in the possible neighbors
+            unsigned int count = 0;
+            for (auto offset : indexer.neighbor_index[best_choice.row][best_choice.col]){
+                if (this->board().get(offset).test(i)){
+                    count++;
+                }
+            }
+            candidate_states[candidate_count].count = count;
             candidate_count++;
         }
     }
 
     if (config().heuristic_guess){
-        // sort the candidate indices by the number of occurences in the board, 
+        // sort the candidate indices by the number of occurences in the neighbors, 
         // starting with the one with the least occurences
-        // this should facilitateos the backtracking process by increasing the value diversity
-        // but it seems not affecting the performance much...
-        util::sort_array_bubble<CandidateFilledPair>(&candidate_filled_pairs[0], candidate_count, 
-            [](CandidateFilledPair a, CandidateFilledPair b) { return a.count < b.count; }
+        util::sort_array_bubble<CandidateFilledPair>(&candidate_states[0], candidate_count, 
+            [](CandidateFilledPair a, CandidateFilledPair b) { return a.count > b.count; }
             );
     }
     else if (!config().deterministic_guess){
         // shuffle the candidate indices
-        util::shuffle_array<CandidateFilledPair>(&candidate_filled_pairs[0], candidate_count);
+        util::shuffle_array<CandidateFilledPair>(&candidate_states[0], candidate_count);
     }
 
     if (config().reverse_guess){
         // reverse the order of the candidates
         for (unsigned int i = 0; i < candidate_count / 2; i++){
-            CandidateFilledPair temp = candidate_filled_pairs[i];
-            candidate_filled_pairs[i] = candidate_filled_pairs[candidate_count - i - 1];
-            candidate_filled_pairs[candidate_count - i - 1] = temp;
+            CandidateFilledPair temp = candidate_states[i];
+            candidate_states[i] = candidate_states[candidate_count - i - 1];
+            candidate_states[candidate_count - i - 1] = temp;
         }
     }
 
     // return the best guess
     std::vector<val_t> candidate_values(candidate_count);
     for (unsigned int i = 0; i < candidate_count; i++){
-        candidate_values[i] = candidate_filled_pairs[i].val;
+        candidate_values[i] = candidate_states[i].val;
     }
 
     return {best_choice, candidate_values};
