@@ -29,35 +29,40 @@ Puzzle 3:   74 [us]
 Run on larger datasets.
 </summary>
 
+You can get the datasets from: 
+1. [maxbergmark/sudoku-solver](https://github.com/maxbergmark/sudoku-solver/tree/master/data-sets)
+2. [goomii17/16X16-Sudoku-Dataset](https://github.com/goomii17/16X16-Sudoku-Dataset/blob/main/16x16Dataset.csv)
+
+Below are some benchmark results on my machine (Mac mini M4):
 ```
 > ./bin/benchmark ~/repo/sudoku-dataset/hard_sudokus.txt
 Finished on 10000 cases
 Success rate: 100%
-Mean time: 32 [us]
-Median time: 27 [us]
-1st quartile time: 20 [us]
-3rd quartile time: 39 [us]
-Average guesses: 1.9085
+Mean time: 21 [us]
+Median time: 19 [us]
+1st quartile time: 15 [us]
+3rd quartile time: 25 [us]
+Average guesses: 1.6563
 Median guesses: 2
 
 > ./bin/benchmark ~/repo/sudoku-dataset/all_17_clue_sudokus.txt
 Finished on 49151 cases
 Success rate: 100%
-Mean time: 92 [us]
-Median time: 41 [us]
-1st quartile time: 33 [us]
-3rd quartile time: 63 [us]
-Average guesses: 11.7719
-Median guesses: 1
+Mean time: 29 [us]
+Median time: 23 [us]
+1st quartile time: 19 [us]
+3rd quartile time: 31 [us]
+Average guesses: 3.91835
+Median guesses: 3
 
 > ./bin/benchmark ~/Downloads/16x16Dataset.csv
 Finished on 3000 cases
 Success rate: 100%
-Mean time: 1105 [us]
-Median time: 215 [us]
-1st quartile time: 79 [us]
-3rd quartile time: 300 [us]
-Average guesses: 29.205
+Mean time: 253 [us]
+Median time: 120 [us]
+1st quartile time: 85 [us]
+3rd quartile time: 152 [us]
+Average guesses: 19.5367
 Median guesses: 0
 ```
 </details>
