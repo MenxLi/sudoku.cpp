@@ -45,7 +45,10 @@ public:
     }
 
     constexpr explicit Cell(): m_bitmask(){
-        m_bitmask.set(); // default to all candidates available (empty cell)
+        // default to all candidates available (empty cell)
+        for (val_t i = 0; i < N; ++i) {
+            m_bitmask |= (1 << i);
+        }
     }
     explicit Cell(const bit_t& init_bitmask): m_bitmask(init_bitmask) {}
     explicit Cell(unsigned int init_value): m_bitmask() { assign(init_value); }
